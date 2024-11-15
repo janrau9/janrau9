@@ -11,7 +11,7 @@ Welcome to my GitHub! I'm a **Software Developer** with a background in **C**, *
   - Equipment Engineer at **Texas Instruments**.  
     - Led conversion processes to enhance productivity.  
     - Reduced downtime by repairing and maintaining test machines.  
-  - Delivered a **car audio warning system project**, including PCB design and hardware integration, which received excellent customer feedback.  
+  - Delivered a **car audio warning system project**, including PCB design and hardware integration.
 - 🌍 Currently based in **Finland**, actively seeking my first role in the industry here.  
 
 ---
@@ -30,24 +30,9 @@ I believe that my **ability to quickly learn new concepts** and **adapt to new t
 
 ## 🌟 Featured Projects  
 
-### 1. **[C++ Webserver](https://github.com/your-webserver-repo)**  
-> A robust, efficient server implementation supporting static file hosting and CGI scripts.  
-- **Tech Stack**: C++, Epoll, HTTP1.1  
-- **Highlights**: Built from scratch with session management and logger implementation for trace, debug, and error levels.  
-
-### 2. **[Our Cubed](https://github.com/your-cubed-repo)**  
-> A raycasting game inspired by classic first-person shooters like Wolfenstein 3D.  
-- **Tech Stack**: C, MLX42  
-- **Highlights**: Features a raycasting engine and demon-shooting gameplay.  
-
-### 3. **[WebDev Challenge](https://github.com/your-webdev-challenge-repo)**  
-> A full-stack website with user authentication, external API integration, and a Dockerized PostgreSQL database.  
-- **Tech Stack**: JavaScript, Node.js, React, Docker, PostgreSQL  
-
-### 4. **[Minishell](https://github.com/your-minishell-repo)**  
-> A shell implementation mimicking bash functionality.  
-- **Tech Stack**: C  
-- **Highlights**: Handles commands, pipes, redirections, and more for seamless interaction.  
+- **[C++ Webserver](https://github.com/lassikon/webserv)**: A robust, efficient server supporting static file hosting and CGI scripts.  
+- **[Our Cubed](https://github.com/lassikon/Cub3d)**: A raycasting game inspired by classic first-person shooters like Wolfenstein 3D.  
+- **[WebDev Challenge](https://github.com/Lisly25/webdev-express)**: Full-stack website with user authentication, external API integration, and Dockerized PostgreSQL.
 
 ---
 
