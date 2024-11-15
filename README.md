@@ -1,4 +1,4 @@
-# 👋 Hello, I'm Jan Rau Beray  
+# 👋 Hello, I'm Janrau Beray  
 
 Welcome to my GitHub! I'm a **Software Developer** with a background in **C**, **C++**, **JavaScript**, and **React**. I thrive on building efficient, robust solutions and am open to opportunities that help me grow professionally.  
 
