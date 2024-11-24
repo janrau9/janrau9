@@ -46,7 +46,7 @@ I believe that my **ability to quickly learn new concepts** and **adapt to new t
 ## 🎸 Beyond Coding  
 
 - 🏀 **Basketball**: Team player with a knack for strategy and adaptability.  
-- 🎵 **Music Enthusiast**: Plays guitar and produces music in a band, drawing parallels between teamwork in music and development.  
+- 🎵 **Music Enthusiast**: Plays intruments and produces music in a band, drawing parallels between teamwork in music and development.  
 - 🛠️ **Problem Solver**: Finds joy in fixing and improving, whether it’s machines, code, or musical compositions.  
 
 ---
