@@ -1,17 +1,18 @@
 # 👋 Hello, I'm Janrau Beray  
 
-Welcome to my GitHub! I'm a **Software Developer** with a background in **C**, **C++**, **JavaScript**, and **React**. I thrive on building efficient, robust solutions and am open to opportunities that help me grow professionally.  
+Welcome to my GitHub! I'm a **Software Developer** with a background in **Electronics and Communications Engineering**. I’m passionate about bridging hardware and software to build impactful, innovative solutions and I am open to opportunities that help me grow professionally.  
 
 ---
 
 ## 🔍 About Me  
 
-- 🎓 **Education**: Electronics and Communications Engineer, graduated from the Philippines.  
-- 💼 **Previous Role**: 
-  - Equipment Engineer at **Texas Instruments**.  
-    - Led conversion processes to enhance productivity.  
-    - Reduced downtime by repairing and maintaining test machines.  
-  - Delivered a **car audio warning system project**, including PCB design and hardware integration.
+- 🎓 **Education**:
+  - Hive Helsinki Student
+  - Electronics and Communications Engineer.
+  - Kotoutumiskoulutus, moduuli 2/3 
+- 💼 **Licenses**: 
+  - Professional Electronics and Communications Engineer.
+  - Professional Electronics Technician.
 - 🌍 Currently based in **Finland**, actively seeking my first role in the industry here.  
 
 ---
