@@ -16,6 +16,10 @@ DELETE FROM applications WHERE slug = ${q(FIXTURE_SLUG)};
 INSERT INTO applications (slug, company, role, post_hash, status, created_at, published_at)
   VALUES (${q(FIXTURE_SLUG)}, 'Acme Events', 'Software Engineer', ${q(hash)}, 'applied', 0, 0);
 INSERT INTO variants (slug, variant_json, cv_version) VALUES (${q(FIXTURE_SLUG)}, ${q(JSON.stringify(JSON.parse(variant)))}, 'test');
+DELETE FROM applications WHERE slug = 'event-test-ev3nt';
+INSERT INTO applications (slug, company, role, post_hash, status, created_at, published_at)
+  VALUES ('event-test-ev3nt', 'Event Test', 'Engineer', 'h3', 'applied', 0, 0);
+INSERT INTO variants (slug, variant_json, cv_version) VALUES ('event-test-ev3nt', ${q(JSON.stringify(JSON.parse(variant)))}, 'test');
 INSERT INTO applications (slug, company, role, post_hash, status, created_at) VALUES ('withdrawn-co-wthdr', 'Withdrawn Co', 'X', 'h2', 'withdrawn', 0)
   ON CONFLICT DO NOTHING;
 INSERT INTO variants (slug, variant_json, cv_version) VALUES ('withdrawn-co-wthdr', ${q(JSON.stringify(JSON.parse(variant)))}, 'test')

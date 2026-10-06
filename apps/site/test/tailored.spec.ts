@@ -61,14 +61,19 @@ for (const [why, path] of [
     expect((await request.get(path, { maxRedirects: 0 })).status()).toBe(404);
   });
 
-test.describe("when the database fails", () => {
-  const broken: Db = {
-    prepare: () => ({
-      bind: () => ({
-        first: () => Promise.reject(new Error("D1 is down")),
-      }),
+/** A fake D1 whose first() answers with the given function. */
+const fakeDb = (first: () => Promise<unknown>): Db => ({
+  prepare: () => ({
+    bind: () => ({
+      first: first as <T>() => Promise<T | null>,
+      run: async () => ({}),
+      all: async <T>() => ({ results: [] as T[] }),
     }),
-  };
+  }),
+});
+
+test.describe("when the database fails", () => {
+  const broken = fakeDb(() => Promise.reject(new Error("D1 is down")));
 
   test("the lookup reports unavailable, not missing", async () => {
     expect(await lookup(broken, "acme-events-t3st1")).toEqual({ kind: "unavailable", reason: "database: D1 is down" });
@@ -79,9 +84,7 @@ test.describe("when the database fails", () => {
   });
 
   test("a stored variant that no longer parses is unavailable", async () => {
-    const corrupt: Db = {
-      prepare: () => ({ bind: () => ({ first: async <T>() => ({ variant_json: "{nope" }) as T }) }),
-    };
+    const corrupt = fakeDb(async () => ({ variant_json: "{nope", published_at: 0 }));
     expect((await lookup(corrupt, "acme-events-t3st1")).kind).toBe("unavailable");
   });
 });

@@ -1,6 +1,7 @@
 ---
 import { env } from "cloudflare:workers";
 import Base from "../../components/templates/Base.astro";
+import { classifyOpen, recordEvent } from "../../lib/events";
 import { lookup } from "../../lib/tailored";
 
 export const prerender = false;
@@ -15,6 +16,21 @@ if (result.kind === "unavailable") {
 }
 if (result.kind === "missing") Astro.response.status = 404;
 
+// ?preview: my own checks, never counted. Otherwise record the open without delaying the page,
+// keeping only whether it looks like a scanner, not who it was.
+const preview = Astro.url.searchParams.has("preview");
+if (result.kind === "found" && !preview && env.DB) {
+  const db = env.DB;
+  const cf = (Astro.request as Request & { cf?: { asn?: number } }).cf;
+  const verdict = classifyOpen({
+    userAgent: Astro.request.headers.get("user-agent"),
+    asn: cf?.asn,
+    secondsSincePublish: result.publishedAt === null ? undefined : Math.floor(Date.now() / 1000) - result.publishedAt,
+  });
+  const write = recordEvent(db, slug, "open", verdict).catch((err) => console.error(`event write failed: ${err}`));
+  Astro.locals.cfContext?.waitUntil(write);
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const month = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
 const view = result.kind === "found" ? result.view : undefined;
@@ -24,7 +40,7 @@ const pdf = `/for/${slug}/cv.pdf`;
 {
   view ? (
     <Base title={`Janrau Beray · for ${view.company}`} description={view.headline} noindex cvHref={pdf}>
-      <div class="page">
+      <div class="page" id="tailored" data-slug={slug} data-preview={preview ? "1" : undefined}>
         <header class="stack-24 measure">
           <p class="micro">
             Prepared for {view.company} · {view.role}
@@ -59,7 +75,7 @@ const pdf = `/for/${slug}/cv.pdf`;
           </div>
         </header>
 
-        <section class="section" aria-labelledby="fit-title">
+        <section class="section" id="fit" aria-labelledby="fit-title">
           <p class="micro" aria-hidden="true">
             01 — fit
           </p>
@@ -170,6 +186,52 @@ const pdf = `/for/${slug}/cv.pdf`;
     </Base>
   )
 }
+
+<script>
+  // Beacons: what a person did, never who they are. "human" fires only once the page has
+  // been visible for 3 seconds or the visitor scrolls, clicks or presses a key; link
+  // scanners rarely run scripts and never linger.
+  const page = document.getElementById("tailored");
+  const slug = page?.dataset.slug;
+  if (slug && !page?.dataset.preview) {
+    const sent = new Set<string>();
+    const send = (type: string) => {
+      if (sent.has(type)) return;
+      sent.add(type);
+      navigator.sendBeacon("/e", JSON.stringify({ slug, type }));
+    };
+    const human = () => send("human");
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const arm = () => {
+      clearTimeout(timer);
+      if (document.visibilityState === "visible") timer = setTimeout(human, 3000);
+    };
+    arm();
+    document.addEventListener("visibilitychange", arm);
+    for (const e of ["scroll", "pointerdown", "keydown"]) window.addEventListener(e, human, { once: true, passive: true });
+
+    const fit = document.getElementById("fit");
+    if (fit && "IntersectionObserver" in window) {
+      new IntersectionObserver((entries, obs) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          send("fit_viewed");
+          obs.disconnect();
+        }
+      }, { threshold: 0.5 }).observe(fit);
+    }
+    document.addEventListener("click", (e) => {
+      const a = (e.target as Element).closest("a");
+      const href = a?.getAttribute("href") ?? "";
+      if (href.endsWith("/cv.pdf")) {
+        human();
+        send("cv_download");
+      } else if (href.startsWith("/work/")) {
+        human();
+        send("case_click");
+      }
+    });
+  }
+</script>
 
 <style>
   .lede {

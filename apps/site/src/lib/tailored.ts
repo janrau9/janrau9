@@ -9,13 +9,19 @@ const data = siteData as unknown as { cv: Cv; work: WorkRef[] };
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*-[a-z0-9]{5}$/;
 
 export type Lookup =
-  | { kind: "found"; slug: string; view: TailoredView }
+  | { kind: "found"; slug: string; view: TailoredView; publishedAt: number | null }
   | { kind: "missing" }
   | { kind: "unavailable"; reason: string };
 
 /** Minimal D1 surface, so tests can pass a fake database. */
 export interface Db {
-  prepare(sql: string): { bind(...values: unknown[]): { first<T>(): Promise<T | null> } };
+  prepare(sql: string): {
+    bind(...values: unknown[]): {
+      first<T>(): Promise<T | null>;
+      run(): Promise<unknown>;
+      all<T>(): Promise<{ results: T[] }>;
+    };
+  };
 }
 
 /**
@@ -26,21 +32,26 @@ export interface Db {
 export async function lookup(db: Db | undefined, slug: string): Promise<Lookup> {
   if (!SLUG.test(slug)) return { kind: "missing" };
   if (!db) return { kind: "unavailable", reason: "no database binding" };
-  let row: { variant_json: string } | null;
+  let row: { variant_json: string; published_at: number | null } | null;
   try {
     row = await db
       .prepare(
-        "SELECT v.variant_json FROM variants v JOIN applications a ON a.slug = v.slug WHERE v.slug = ? AND a.status != 'withdrawn'",
+        "SELECT v.variant_json, a.published_at FROM variants v JOIN applications a ON a.slug = v.slug WHERE v.slug = ? AND a.status != 'withdrawn'",
       )
       .bind(slug)
-      .first<{ variant_json: string }>();
+      .first<{ variant_json: string; published_at: number | null }>();
   } catch (err) {
     return { kind: "unavailable", reason: `database: ${(err as Error).message}` };
   }
   if (!row) return { kind: "missing" };
   const parsed = Variant.safeParse(safeJson(row.variant_json));
   if (!parsed.success) return { kind: "unavailable", reason: "stored variant is invalid" };
-  return { kind: "found", slug, view: resolveVariant(data.cv, data.work, parsed.data) };
+  return {
+    kind: "found",
+    slug,
+    view: resolveVariant(data.cv, data.work, parsed.data),
+    publishedAt: row.published_at,
+  };
 }
 
 function safeJson(text: string): unknown {
