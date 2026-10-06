@@ -15,7 +15,7 @@ import { basename, dirname, resolve } from "node:path";
 import { loadContent } from "@janrau/schema";
 import { Variant, validateVariant } from "@janrau/schema/variant";
 import { buildTailoredDocument } from "./document.ts";
-import { renderPdf } from "./pdf.ts";
+import { renderCoverLetter, renderPdf } from "./pdf.ts";
 
 const SITE = "https://janrau.dev";
 const root = resolve(import.meta.dirname, "../../..");
@@ -49,11 +49,33 @@ if (issues.length > 0) fail(issues.map((i) => `${i.path}: ${i.message}`).join("\
 const variant = Variant.parse(raw);
 
 const slug = existsSync(slugPath) ? readFileSync(slugPath, "utf8").trim() : newSlug(variant.company);
-const pdf = renderPdf(buildTailoredDocument(content, variant, { site: SITE, phone: process.env.CV_PHONE }));
+const tailored = buildTailoredDocument(content, variant, { site: SITE, phone: process.env.CV_PHONE });
+const pdf = renderPdf(tailored);
 const outDir = resolve(dirname(variantPath), "out");
 mkdirSync(outDir, { recursive: true });
 const pdfPath = resolve(outDir, `${slug}.pdf`);
 writeFileSync(pdfPath, pdf);
+
+// Attachments for application forms: the CV without the cover note, and the note as a letter.
+const company = variant.company.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const { coverNote: _note, ...cvOnly } = tailored;
+const cvAttachment = resolve(outDir, `Janrau-Beray-CV-${company}.pdf`);
+writeFileSync(cvAttachment, renderPdf(cvOnly));
+const letterAttachment = resolve(outDir, `Janrau-Beray-Cover-Letter-${company}.pdf`);
+const c = tailored.contact;
+writeFileSync(
+  letterAttachment,
+  renderCoverLetter({
+    name: tailored.name,
+    headline: tailored.headline,
+    contact: [c.location, c.email, ...(c.phone ? [c.phone] : []), c.site],
+    date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+    company: variant.company,
+    role: variant.role,
+    paragraphs: tailored.coverNote?.paragraphs ?? [],
+    closing: `I would be glad to talk. A page tailored to this role, with the evidence behind each point: ${SITE.replace(/^https:\/\//, "")}/for/${slug}`,
+  }),
+);
 
 // The review: what the page will claim, and what it deliberately leaves out.
 const note = Object.values(variant.coverNote)
@@ -64,7 +86,8 @@ for (const row of variant.fit) console.log(`  “${row.requirement}”\n    → 
 console.log(`\n  projects: ${variant.projectIds.join(", ")}`);
 console.log(`  cover note: ${note.split(/\s+/).length} words`);
 console.log(`  gaps (private, never published): ${variant.gaps.join("; ") || "none"}`);
-console.log(`  PDF for review: ${pdfPath}\n`);
+console.log(`  PDF for review: ${pdfPath}`);
+console.log(`  attachments: ${cvAttachment}\n               ${letterAttachment}\n`);
 
 if (mode === "review") {
   console.log("Review only. Run again with --yes to publish.");
