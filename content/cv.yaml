@@ -23,10 +23,9 @@ person:
     moved to Finland in 2022 and trained at Hive Helsinki. Since August 2025 I have
     been the integrations developer at a localization SaaS startup.
   aiPractice: >-
-    I design the systems and direct the work; Claude writes much of the code under my
-    review. Every change runs through a loop I built: type checks and tests on each edit,
-    kiln (my code-intelligence tool) for exact references and type errors, and my review
-    before it ships.
+    I design the system and direct the work; AI coding agents write much of the code.
+    Nothing ships unchecked: types and tests run on every edit, my own tool kiln checks
+    references and type errors, and I review every change.
 
 headlines:
   # Default chosen from the Helsinki market scan (research/jobs/helsinki-market.md):
@@ -52,19 +51,19 @@ experience:
     highlights:
       - id: exp.current.h1
         # Disclosure risk: WordPress + Shopify + localization narrows the employer down.
-        text: Sole integrations developer; built 6 integration types end to end, from JavaScript/React SDKs and an edge proxy to a CLI, webhooks, a WordPress plugin and a Shopify app.
+        text: "Sole integrations developer: built and own 6 ways for customers to connect, from React SDKs and a CLI to WordPress and Shopify."
         tags: [integrations, frontend, backend, edge]
       - id: exp.current.h2
-        text: Built a multi-tenant translation proxy on Cloudflare Workers that serves many customer sites from one deployment.
+        text: Built a multi-tenant edge proxy on Cloudflare Workers, so one deployment serves every customer site.
         tags: [edge, backend, multi-tenant]
       - id: exp.current.h3
-        text: Built a CLI that syncs 8 translation file formats for iOS, Android and web projects.
+        text: Built a CLI that syncs 8 translation file formats, bringing iOS, Android and web apps onto the platform.
         tags: [tooling, mobile, integrations]
       - id: exp.current.h4
-        text: Maintain 5 public npm packages and 6 private packages in one TypeScript monorepo, with automated release workflows.
+        text: Ship 5 public npm packages from one TypeScript monorepo with automated releases.
         tags: [tooling, ci, frontend]
       - id: exp.current.h5
-        text: Built the integration, webhook and edge-proxy APIs in the company's Python/FastAPI backend.
+        text: Built the integration and webhook APIs in the Python/FastAPI backend.
         tags: [backend, python]
 
   - id: exp.studio
@@ -75,13 +74,13 @@ experience:
     end: 2022-08
     highlights:
       - id: exp.studio.h1
-        text: Ran a recording studio end to end, from equipment maintenance and troubleshooting to production workflows and client deadlines.
+        text: Ran my own studio for over 5 years, from equipment and troubleshooting to client deadlines.
         tags: [ownership, operations]
       - id: exp.studio.h2
-        text: Built a car warning accessory installed in more than 50 vehicles.
+        text: Built a car warning accessory installed in 50+ vehicles.
         tags: [hardware, embedded, product]
       - id: exp.studio.h3
-        text: Built a robot car controlled by hand gestures over Bluetooth, with 95% gesture-recognition accuracy.
+        text: Built a gesture-controlled robot car over Bluetooth with 95% recognition accuracy.
         tags: [hardware, embedded, algorithms]
 
   - id: exp.ti
@@ -92,10 +91,10 @@ experience:
     end: 2016-12
     highlights:
       - id: exp.ti.h1
-        text: Led machine conversion projects that cut downtime by 30% and raised production efficiency by 25%.
+        text: Led machine conversions that cut downtime 30% and raised production efficiency 25%.
         tags: [hardware, leadership, operations]
       - id: exp.ti.h2
-        text: Led a team of 5 engineers on conversions and upgrades that lowered operational costs by 15%.
+        text: Led 5 engineers on upgrades that cut operational costs 15%.
         tags: [leadership, hardware]
 
 education:

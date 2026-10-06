@@ -5,7 +5,7 @@ subtitle: Local-first chord charts that keep a whole band on the same bar
 status: live
 statusNote: Used in a live performance by my 4-piece band. Live and invite only.
 period: 2026-07 – present
-role: Solo. I designed the system and directed the work; Claude wrote much of the code under my review.
+role: Solo. I designed the system and directed the work; AI coding agents wrote much of the code under my review.
 stack: [React 19, TypeScript, Vite, PWA, Hono, Bun, PostgreSQL, PowerSync, WebSockets, Playwright, Cloudflare Workers]
 url: https://synchd.nurho.net
 repo: private   # code available on request

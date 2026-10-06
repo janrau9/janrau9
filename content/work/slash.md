@@ -5,7 +5,7 @@ subtitle: Live darts tournaments on three phones per match
 status: live
 statusNote: Used for 4 real pub tournaments so far. League ratings built, not yet in real use.
 period: 2026-07 – 2026-09
-role: Solo. I designed the system and directed the work; Claude wrote much of the code under my review.
+role: Solo. I designed the system and directed the work; AI coding agents wrote much of the code under my review.
 stack: [React 19, TypeScript, Vite, PWA, Hono, Bun, PostgreSQL, Drizzle, Zero, Cloudflare Workers, Coolify]
 url: https://slash.nurho.net
 repo: private   # code available on request

@@ -5,7 +5,7 @@ subtitle: Shift tracking, pay and auto-scheduling for Finnish nurses
 status: beta
 statusNote: 20 alpha testers on Android; 5 users through Apple's test channel; App Store review in progress. Paused since July 2026 while I focus elsewhere.
 period: 2025-10 – 2026-07
-role: Solo. I designed the product and the system and directed the work; Claude wrote much of the code under my review.
+role: Solo. I designed the product and the system and directed the work; AI coding agents wrote much of the code under my review.
 stack: [React Native, Expo, TypeScript, Supabase, PostgreSQL, Python, FastAPI, OR-Tools CP-SAT, Gemini, EAS]
 url: https://sisushift.net
 repo: private   # code available on request

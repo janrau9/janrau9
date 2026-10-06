@@ -5,7 +5,7 @@ subtitle: Grassroots basketball leagues with offline courtside scoring
 status: building
 statusNote: MVP. Onboarding the first league. Paused since August 2026 while I focus elsewhere.
 period: 2026-04 – 2026-08
-role: Solo. I designed the product and the system and directed the work; Claude wrote much of the code under my review.
+role: Solo. I designed the product and the system and directed the work; AI coding agents wrote much of the code under my review.
 stack: [React 19, TypeScript, PWA, Hono, Bun, PostgreSQL, Drizzle, PowerSync, Zero, WebRTC, Coolify]
 url: https://shotclock.nurho.net
 repo: private   # code available on request

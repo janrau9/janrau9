@@ -5,7 +5,7 @@ subtitle: IDE-grade code intelligence and runtime debugging for AI coding agents
 status: in-use
 statusNote: Used daily by my own coding agents across 41 projects. Private for now; going public once the open field reports are fixed.
 period: 2026-06 – present
-role: Solo. I designed the tool and directed the work; Claude wrote much of the code under my review, and kiln itself checks that code.
+role: Solo. I designed the tool and directed the work; AI coding agents wrote much of the code under my review, and kiln itself checks that code.
 stack: [TypeScript, Node.js, Language Server Protocol, Chrome DevTools Protocol, Debug Adapter Protocol, tree-sitter, pyright, Vitest]
 repo: private   # going public
 featured: true

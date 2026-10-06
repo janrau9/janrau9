@@ -5,7 +5,7 @@ subtitle: A personal goal system with an AI mentor and long-term memory
 status: in-use
 statusNote: I use it every day. Single user by design while I test its core value.
 period: 2026-05 – 2026-07
-role: Solo. I designed the product and the memory model and directed the work; Claude wrote much of the code under my review.
+role: Solo. I designed the product and the memory model and directed the work; AI coding agents wrote much of the code under my review.
 stack: [Python, FastAPI, PostgreSQL, pgvector, Telegram bot, Expo, React Native Web, OpenRouter]
 repo: private   # code available on request
 draft: true     # TODO (Janrau): review

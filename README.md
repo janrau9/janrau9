@@ -6,7 +6,7 @@
 
 Software engineer in Finland. I started in electronics: an engineering degree, then equipment engineering at Texas Instruments. I ran my own recording studio, moved to Finland in 2022 and trained at Hive Helsinki. Since August 2025 I have been the integrations developer at a localization SaaS startup.
 
-I design the systems and direct the work; Claude writes much of the code under my review. Every change runs through a loop I built: type checks and tests on each edit, kiln (my code-intelligence tool) for exact references and type errors, and my review before it ships.
+I design the system and direct the work; AI coding agents write much of the code. Nothing ships unchecked: types and tests run on every edit, my own tool kiln checks references and type errors, and I review every change.
 
 **[janrau.dev](https://janrau.dev)** · [CV (PDF)](https://janrau.dev/janrau-beray-cv.pdf) · [LinkedIn](https://www.linkedin.com/in/janrau-beray) · janraup356@gmail.com
 
@@ -14,9 +14,9 @@ I design the systems and direct the work; Claude writes much of the code under m
 
 Integrations Developer, Localization SaaS startup.
 
-- Sole integrations developer; built 6 integration types end to end, from JavaScript/React SDKs and an edge proxy to a CLI, webhooks, a WordPress plugin and a Shopify app.
-- Built a multi-tenant translation proxy on Cloudflare Workers that serves many customer sites from one deployment.
-- Built a CLI that syncs 8 translation file formats for iOS, Android and web projects.
+- Sole integrations developer: built and own 6 ways for customers to connect, from React SDKs and a CLI to WordPress and Shopify.
+- Built a multi-tenant edge proxy on Cloudflare Workers, so one deployment serves every customer site.
+- Built a CLI that syncs 8 translation file formats, bringing iOS, Android and web apps onto the platform.
 
 ## Selected work
 
