@@ -1,0 +1,115 @@
+---
+import { getEntry, render } from "astro:content";
+import type { CaseStudy } from "@janrau/schema";
+import Base from "../../components/templates/Base.astro";
+import { content, publishedWork } from "../../lib/content";
+
+export function getStaticPaths() {
+  return publishedWork().map((study) => ({ params: { slug: study.slug }, props: { study } }));
+}
+
+interface Props {
+  study: CaseStudy;
+}
+
+const { study } = Astro.props;
+const fm = study.frontmatter;
+const entry = await getEntry("work", study.slug);
+if (!entry) throw new Error(`no rendered body for ${study.slug}`);
+const { Content } = await render(entry);
+
+const STATUS: Record<string, string> = {
+  live: "Live",
+  "in-use": "In use",
+  beta: "Beta",
+  building: "Building",
+  archived: "Archived",
+};
+---
+
+<Base title={`${fm.title} · Janrau Beray`} description={fm.subtitle}>
+  <article class="page">
+    <header class="stack-24 measure">
+      <a class="micro back" href="/#work">← All work</a>
+      <h1 class="display">{fm.title}</h1>
+      <p class="lede text-2">{fm.subtitle}</p>
+      <dl class="meta">
+        <div>
+          <dt class="micro">Status</dt>
+          <dd class="status"><span class="seal" aria-hidden="true"></span><span>{STATUS[fm.status]}. {fm.statusNote}</span></dd>
+        </div>
+        <div>
+          <dt class="micro">When</dt>
+          <dd>{fm.period}</dd>
+        </div>
+        <div>
+          <dt class="micro">Role</dt>
+          <dd>{fm.role}</dd>
+        </div>
+        <div>
+          <dt class="micro">Stack</dt>
+          <dd>{fm.stack.join(", ")}</dd>
+        </div>
+      </dl>
+      <div class="row">
+        {fm.url && <a class="button button-outline" href={fm.url}>Open the app ↗</a>}
+        {
+          fm.repo === "private" ? (
+            <a class="small" href={`mailto:${content().cv.person.links.email}?subject=${encodeURIComponent(`Code: ${fm.title}`)}`}>
+              Code available on request
+            </a>
+          ) : (
+            <a class="small" href={fm.repo}>
+              Source ↗
+            </a>
+          )
+        }
+      </div>
+      {fm.draft && <p class="pill draft">Draft: not shown on the live site</p>}
+    </header>
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .back {
+    text-decoration: none;
+  }
+  .lede {
+    font-size: 20px;
+    line-height: 28px;
+  }
+  .meta {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+  }
+  .meta > div {
+    display: grid;
+    gap: 4px;
+  }
+  @media (min-width: 610px) {
+    .meta > div {
+      grid-template-columns: 1fr 4fr;
+      gap: 16px;
+    }
+  }
+  .meta dd {
+    margin: 0;
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .status {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .status .seal {
+    transform: translateY(-1px);
+  }
+  .draft {
+    align-self: flex-start;
+  }
+</style>

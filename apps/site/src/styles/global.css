@@ -1,0 +1,315 @@
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource/geist-mono/400.css";
+@import "./tokens.css";
+
+/* Correction, not a style choice: seiza's day --text-3 (L 0.55) measures 4.46:1 on the
+   ground, just under WCAG AA's 4.5:1 for small text. L 0.54 gives 4.64:1 on the ground
+   and 4.85:1 on surfaces. Dark --text-3 already passes (4.98:1). Fix upstream in seiza. */
+:root {
+  --text-3: #716e68;
+  --text-3: oklch(0.54 0.01 85);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --text-3: #7d7d89;
+    --text-3: oklch(0.6 0.01 270);
+  }
+}
+:root[data-theme="dark"] {
+  --text-3: #7d7d89;
+  --text-3: oklch(0.6 0.01 270);
+}
+
+:root {
+  --font-sans: "Geist Sans", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+  --pad: 24px;
+  --measure: 42rem;
+  --wide: 56rem;
+}
+@media (min-width: 610px) {
+  :root {
+    --pad: 40px;
+  }
+}
+
+html {
+  scroll-padding-top: 64px;
+}
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+main {
+  flex: 1;
+}
+
+/* ———— registers ———— */
+.micro {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
+.small {
+  font-size: 14px;
+  line-height: 20px;
+}
+.text-2 {
+  color: var(--text-2);
+}
+.display {
+  font-size: 40px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  margin: 0;
+}
+@media (min-width: 610px) {
+  .display {
+    font-size: 56px;
+    line-height: 56px;
+  }
+}
+h2,
+h3 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+p,
+ul,
+ol {
+  margin: 0;
+}
+
+/* ———— layout: the parent places, children own no margins ———— */
+.frame {
+  width: 100%;
+  max-width: calc(var(--wide) + 2 * var(--pad));
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+.measure {
+  max-width: var(--measure);
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.stack-8 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stack-24 {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+  padding-block: 104px 64px; /* the approach: emptiness before the first ink */
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.list-plain {
+  list-style: none;
+  padding: 0;
+}
+
+/* ———— the alcove: 1 : φ, label bay and content room ———— */
+.alcove {
+  display: grid;
+  gap: 8px;
+}
+@media (min-width: 610px) {
+  .alcove {
+    grid-template-columns: 1fr 1.618fr;
+    gap: 24px;
+  }
+}
+
+/* ———— hairline separation ———— */
+.rule {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 0;
+}
+.rows > * + * {
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ———— buttons: ink or outline, never the seal ———— */
+.button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color var(--t-hover) var(--settle),
+    border-color var(--t-hover) var(--settle);
+}
+.button-ink {
+  background: var(--ink);
+  color: var(--ground);
+  border: 1px solid var(--ink);
+}
+.button-ink:hover {
+  background: var(--ink-hover);
+}
+.button-outline {
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+}
+.button-outline:hover {
+  border-color: var(--ink);
+}
+
+/* ———— the seal: one per view ———— */
+.seal {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--seal);
+  flex: none;
+}
+
+/* ———— pills ———— */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+}
+
+/* ———— cards: a surface earned by objecthood ———— */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  box-shadow: var(--shadow-1);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color var(--t-hover) var(--settle);
+}
+a.card:hover {
+  background: var(--raised);
+}
+.grid-3 {
+  display: grid;
+  gap: 24px;
+}
+@media (min-width: 610px) {
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 987px) {
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ———— long-form prose: rhythm is the container's decree ———— */
+.prose {
+  font-size: 18px;
+  line-height: 32px;
+  max-width: var(--measure);
+}
+:root[data-theme="dark"] .prose {
+  letter-spacing: 0.01em;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .prose {
+    letter-spacing: 0.01em;
+  }
+}
+.prose > * + * {
+  margin-top: 16px;
+}
+.prose > h2 {
+  margin-top: 40px;
+}
+.prose ul,
+.prose ol {
+  padding-left: 24px;
+}
+.prose li + li {
+  margin-top: 8px;
+}
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 20px;
+}
+.prose th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.prose th,
+.prose td {
+  padding: 8px 16px 8px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

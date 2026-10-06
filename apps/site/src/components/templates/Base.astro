@@ -1,0 +1,55 @@
+---
+import "../../styles/global.css";
+import Footer from "../organisms/Footer.astro";
+import Strip from "../organisms/Strip.astro";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="theme-color" content="#f6f4f0" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0a11" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline src="/sky-init.js"></script>
+  </head>
+  <body>
+    <a class="skip micro" href="#main">Skip to content</a>
+    <Strip />
+    <main id="main" class="frame">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  .skip {
+    position: absolute;
+    left: 24px;
+    top: -64px;
+    z-index: var(--z-toast);
+    padding: 8px 16px;
+    background: var(--raised);
+    border-radius: 8px;
+  }
+  .skip:focus {
+    top: 8px;
+  }
+</style>

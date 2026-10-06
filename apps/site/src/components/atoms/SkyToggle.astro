@@ -1,0 +1,59 @@
+---
+// Two-state sky toggle (seiza, after Lea Verou): the label shows the current sky,
+// a click flips it, and flipping to what the system already prefers stores nothing.
+---
+
+<button type="button" id="sky-toggle" class="sky micro" aria-live="polite">sky</button>
+
+<script>
+  const root = document.documentElement;
+  const toggle = document.getElementById("sky-toggle");
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const names = { light: "day", dark: "night" } as const;
+  type Sky = keyof typeof names;
+
+  const resolved = (): Sky => (root.dataset.theme as Sky | undefined) ?? (mq.matches ? "dark" : "light");
+  const setLabel = () => {
+    if (!toggle) return;
+    const current = resolved();
+    toggle.textContent = `sky · ${names[current]}`;
+    toggle.setAttribute("aria-label", `Switch to ${names[current === "dark" ? "light" : "dark"]} sky`);
+  };
+  setLabel();
+  mq.addEventListener("change", setLabel);
+
+  let fade: ReturnType<typeof setTimeout> | undefined;
+  toggle?.addEventListener("click", () => {
+    const target: Sky = resolved() === "dark" ? "light" : "dark";
+    const system: Sky = mq.matches ? "dark" : "light";
+    root.classList.add("sky-fade");
+    clearTimeout(fade);
+    fade = setTimeout(() => root.classList.remove("sky-fade"), 660);
+    if (target === system) {
+      delete root.dataset.theme;
+      try {
+        localStorage.removeItem("seiza-sky");
+      } catch {}
+    } else {
+      root.dataset.theme = target;
+      try {
+        localStorage.setItem("seiza-sky", target);
+      } catch {}
+    }
+    setLabel();
+  });
+</script>
+
+<style>
+  .sky {
+    background: none;
+    border: 0;
+    padding: 0;
+    min-height: 40px;
+    cursor: pointer;
+    color: var(--text-3);
+  }
+  .sky:hover {
+    color: var(--ink);
+  }
+</style>

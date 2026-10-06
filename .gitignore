@@ -17,3 +17,5 @@ coverage/
 
 # Generated at build time
 apps/site/public/janrau-beray-cv.pdf
+test-results/
+playwright-report/

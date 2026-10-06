@@ -1,0 +1,170 @@
+---
+import WorkCard from "../components/molecules/WorkCard.astro";
+import Base from "../components/templates/Base.astro";
+import { CV_PDF, content, period, workHref } from "../lib/content";
+
+const { cv } = content();
+const { person } = cv;
+const headline = cv.headlines.find((h) => h.id === "hl.default")?.text ?? "";
+const current = cv.experience.find((e) => e.end === null);
+const featured = cv.projects.filter((p) => p.featured);
+const educationProjects = new Set(cv.education.flatMap((e) => e.projects ?? []));
+const more = cv.projects.filter((p) => !p.featured && !educationProjects.has(p.id) && p.status !== "archived");
+const prefs = person.workPreferences;
+const workMode = `Open to ${[prefs.remote && "remote", prefs.hybrid && "hybrid"].filter(Boolean).join(" or ")} work`;
+---
+
+<Base title={`${person.name} · Software Engineer`} description={headline}>
+  <div class="page">
+    <header class="stack-24 measure">
+      <h1 class="display">{person.name}</h1>
+      <p class="lede text-2">{headline}</p>
+      <ul class="facts list-plain row micro">
+        <li class="row avail"><span class="seal" aria-hidden="true"></span>Available · {person.availability}</li>
+        <li>{person.location}</li>
+        <li>{person.workRights}</li>
+        <li>{workMode}</li>
+      </ul>
+      <div class="row">
+        <a class="button button-ink" href={CV_PDF} download>Download CV</a>
+        <a class="button button-outline" href={`mailto:${person.links.email}`}>Email me</a>
+        <a class="small" href={person.links.github}>GitHub ↗</a>
+        <a class="small" href={person.links.linkedin}>LinkedIn ↗</a>
+      </div>
+      <nav class="row lanes small" aria-label="Ways to read this page">
+        <a href="#overview">The 60-second overview</a>
+        <a href="#work">The engineering deep dive</a>
+      </nav>
+    </header>
+
+    <section id="overview" class="section measure" aria-labelledby="overview-title">
+      <p class="micro" aria-hidden="true">01 — overview</p>
+      <h2 id="overview-title" class="visually-hidden">Overview</h2>
+      <div class="prose">
+        <p>{person.about}</p>
+        <p>{person.aiPractice}</p>
+      </div>
+      {
+        current && (
+          <div class="stack">
+            <h3>
+              Now: {current.role}, {current.org}
+            </h3>
+            <ul class="stack-8 now">
+              {current.highlights.slice(0, 3).map((h) => (
+                <li>{h.text}</li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </section>
+
+    <section id="work" class="section" aria-labelledby="work-title">
+      <p class="micro" aria-hidden="true">02 — work</p>
+      <h2 id="work-title">Selected work</h2>
+      <div class="grid-3">
+        {featured.map((p) => <WorkCard project={p} href={workHref(p.id)} />)}
+      </div>
+      <ul class="list-plain rows more">
+        {
+          more.map((p) => {
+            const href = workHref(p.id);
+            return (
+              <li class="alcove">
+                <p>{href ? <a href={href}>{p.name}</a> : p.name}</p>
+                <p class="small text-2">{p.summary}</p>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </section>
+
+    <section class="section" aria-labelledby="experience-title">
+      <p class="micro" aria-hidden="true">03 — experience</p>
+      <h2 id="experience-title">Experience</h2>
+      <ol class="list-plain rows">
+        {
+          cv.experience.map((e) => (
+            <li class="alcove">
+              <p class="micro">{period(e.start, e.end)}</p>
+              <div class="stack-8">
+                <h3>
+                  {e.role}, {e.org}
+                </h3>
+                <ul class="stack-8 small text-2 bullets">
+                  {e.highlights.map((h) => (
+                    <li>{h.text}</li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="section" aria-labelledby="education-title">
+      <p class="micro" aria-hidden="true">04 — education and recognition</p>
+      <h2 id="education-title">Education and recognition</h2>
+      <ul class="list-plain rows">
+        {
+          cv.education.map((e) => (
+            <li class="alcove">
+              <p class="micro">{period(e.start, e.end)}</p>
+              <div class="stack-8">
+                <h3>{e.programme}</h3>
+                <p class="small text-2">{e.org}</p>
+              </div>
+            </li>
+          ))
+        }
+        {
+          (cv.awards ?? []).map((a) => (
+            <li class="alcove">
+              <p class="micro">Recognition</p>
+              <p>{a.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="section" aria-labelledby="skills-title">
+      <p class="micro" aria-hidden="true">05 — skills</p>
+      <h2 id="skills-title">Skills</h2>
+      <ul class="list-plain row">
+        {
+          cv.skills.map((s) => (
+            <li class="pill">{s.name}</li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .lede {
+    font-size: 20px;
+    line-height: 28px;
+  }
+  .avail {
+    gap: 8px;
+    color: var(--text-2);
+  }
+  .facts {
+    gap: 8px 24px;
+  }
+  .lanes {
+    gap: 8px 24px;
+  }
+  .now,
+  .bullets {
+    padding-left: 16px;
+  }
+  .more {
+    padding-top: 16px;
+  }
+</style>

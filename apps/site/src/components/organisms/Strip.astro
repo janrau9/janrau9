@@ -1,0 +1,61 @@
+---
+import { CV_PDF } from "../../lib/content";
+import SkyToggle from "../atoms/SkyToggle.astro";
+---
+
+<header class="strip">
+  <nav class="frame strip-inner" aria-label="Main">
+    <a href="/" class="mark">janrau</a>
+    <div class="row links">
+      <a href="/#work">Work</a>
+      <a href={CV_PDF}>CV</a>
+      <SkyToggle />
+    </div>
+  </nav>
+</header>
+
+<style>
+  .strip {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-strip);
+    background: color-mix(in oklab, var(--ground) 85%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--t-hover) var(--settle);
+  }
+  /* The strip earns its hairline only once content scrolls beneath it. */
+  :global(html.scrolled) .strip {
+    border-bottom-color: var(--line);
+  }
+  .strip-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 64px;
+  }
+  .mark {
+    font-weight: 600;
+    text-decoration: none;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .links a {
+    font-size: 14px;
+    color: var(--text-2);
+    text-decoration: none;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .links a:hover {
+    color: var(--ink);
+  }
+</style>
+
+<script>
+  const mark = () => document.documentElement.classList.toggle("scrolled", window.scrollY > 8);
+  mark();
+  window.addEventListener("scroll", mark, { passive: true });
+</script>

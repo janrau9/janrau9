@@ -1,0 +1,28 @@
+---
+import type { Project } from "@janrau/schema";
+import type { z } from "astro/zod";
+
+interface Props {
+  project: z.infer<typeof Project>;
+  href: string | undefined;
+}
+
+const { project, href } = Astro.props;
+const Tag = href ? "a" : "article";
+---
+
+<Tag class="card" href={href}>
+  <div class="stack-8">
+    <h3>{project.name}</h3>
+    <p class="small text-2">{project.summary}</p>
+  </div>
+  <p class="micro">{project.stack.slice(0, 5).join(" · ")}</p>
+  {href && <p class="micro read">Read the case study →</p>}
+</Tag>
+
+<style>
+  .read {
+    color: var(--text-2);
+    margin-top: auto;
+  }
+</style>

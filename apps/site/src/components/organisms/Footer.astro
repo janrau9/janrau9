@@ -1,0 +1,35 @@
+---
+import { content } from "../../lib/content";
+
+const { person } = content().cv;
+---
+
+<footer class="footer">
+  <div class="frame row footer-inner">
+    <p class="micro">
+      <a href={`mailto:${person.links.email}`}>{person.links.email}</a> ·
+      <a href={person.links.github}>GitHub ↗</a> ·
+      <a href={person.links.linkedin}>LinkedIn ↗</a> ·
+      <a href="https://github.com/janrau9/janrau9">Source ↗</a>
+    </p>
+    <p class="micro">
+      Set in seiza · a design language by <a href="https://github.com/janrau9/claude-skills">janrau</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--line);
+    padding-block: 40px;
+  }
+  .footer-inner {
+    justify-content: space-between;
+  }
+  .footer a {
+    color: var(--text-3);
+  }
+  .footer a:hover {
+    color: var(--ink);
+  }
+</style>

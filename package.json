@@ -11,13 +11,14 @@
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
+    "test": "pnpm -r --filter '!@janrau/site' test",
     "validate": "pnpm --filter @janrau/schema validate ../../content",
     "schema:gen": "pnpm --filter @janrau/schema schema:gen ../../content/cv.schema.json",
     "schema:check": "pnpm schema:gen && git diff --exit-code content/cv.schema.json",
     "secrets:scan": "scripts/scan-secrets.sh",
     "render": "pnpm --filter @janrau/cv-render render",
-    "readme:check": "pnpm --filter @janrau/cv-render render readme && git diff --exit-code README.md"
+    "readme:check": "pnpm --filter @janrau/cv-render render readme && git diff --exit-code README.md",
+    "test:site": "pnpm --filter @janrau/site build && pnpm --filter @janrau/site test"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.0",
@@ -25,7 +26,8 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild"
+      "esbuild",
+      "workerd"
     ]
   }
 }

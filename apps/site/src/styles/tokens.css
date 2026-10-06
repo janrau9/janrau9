@@ -1,0 +1,213 @@
+/* ————————————————————————————————————————————————————————————————
+   seiza — design tokens (from the seiza skill, references/tokens.css)
+   One atmosphere (hue+chroma) per theme; only L moves.
+   Fonts are self-hosted via Fontsource (see global.css), not Google Fonts,
+   so the Content-Security-Policy stays self-only.
+   ———————————————————————————————————————————————————————————————— */
+
+:root {
+  color-scheme: light dark;
+
+  /* ———— adaptation points: the ONLY two free variables in the system ————
+     Voice: one superfamily — the mono must be the sans's sibling (or a pair
+     with matched x-height); sans needs real 400/500/600, mono 400/500.
+     Seal: only the HUE is free — lightness and chroma are law, so any hue
+     carries the same perceived weight in both themes. */
+  --font-sans: "Geist", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+  --seal-hue: 29; /* vermilion by default */
+
+  /* atmosphere: day — warm washi paper, oklch(L 0.006 85) */
+  --ground: #f6f4f0;
+  --ground: oklch(0.97 0.006 85);
+  --surface: #fbfaf7;
+  --surface: oklch(0.985 0.006 85);
+  --raised: #fefdfb;
+  --raised: oklch(0.995 0.004 85);
+  --overlay: #ffffff;
+  --overlay: oklch(1 0 0);
+  --line: #e4e1da;
+  --line: oklch(0.9 0.006 85);
+  --line-strong: #d2cec6;
+  --line-strong: oklch(0.84 0.006 85);
+  --text-3: #767066;
+  --text-3: oklch(0.55 0.01 85); /* readability floor */
+  --text-2: #5a554d;
+  --text-2: oklch(0.45 0.01 85);
+  --ink: #211e19;
+  --ink: oklch(0.23 0.01 85);
+  --ink-hover: #131110;
+  --ink-hover: oklch(0.16 0.01 85); /* further from the ground's light */
+  --seal: #e34a33;
+  --seal: oklch(0.62 0.19 var(--seal-hue)); /* ONE per view */
+
+  /* one light source, day: shadows drop straight down, in ink, ken geometry */
+  --shadow-1: 0 8px 24px -8px color-mix(in oklab, var(--ink) 10%, transparent);
+  --shadow-2: 0 16px 40px -16px color-mix(in oklab, var(--ink) 14%, transparent);
+  --shadow-3: 0 24px 64px -24px color-mix(in oklab, var(--ink) 18%, transparent);
+  --scrim: color-mix(in oklab, var(--ink) 30%, transparent);
+
+  /* texture: stars in ink (day = dust); glow clings to edges only */
+  --star-1: color-mix(in oklab, var(--ink) 20%, transparent);
+  --star-2: color-mix(in oklab, var(--ink) 12%, transparent);
+  --star-3: color-mix(in oklab, var(--ink) 7%, transparent);
+  --wash: color-mix(in oklab, var(--ink) 4%, transparent);
+
+  /* time on the golden ladder */
+  --t-micro: 144ms;
+  --t-hover: 233ms;
+  --t-reveal: 377ms;
+  --t-entrance: 610ms;
+  --t-ambient: 1597ms;
+  --settle: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* z-ladder: content 0 · strip 13 · dropdown 21 · scrim/modal 34 · toast 55 */
+  --z-strip: 13;
+  --z-dropdown: 21;
+  --z-modal: 34;
+  --z-toast: 55;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* atmosphere: night — blue-black sky, oklch(L 0.012 270). The native theme. */
+    --ground: #0a0a11;
+    --ground: oklch(0.15 0.012 270);
+    --surface: #15151d;
+    --surface: oklch(0.2 0.012 270);
+    --raised: #1e1e27;
+    --raised: oklch(0.24 0.012 270);
+    --overlay: #26262f;
+    --overlay: oklch(0.28 0.012 270);
+    --line: #24242d;
+    --line: oklch(0.27 0.012 270);
+    --line-strong: #33333e;
+    --line-strong: oklch(0.35 0.012 270);
+    --text-3: #7d7d89;
+    --text-3: oklch(0.6 0.01 270);
+    --text-2: #a8a8b3;
+    --text-2: oklch(0.75 0.008 270);
+    --ink: #eeedf4;
+    --ink: oklch(0.95 0.005 270); /* starlight — never pure #fff */
+    --ink-hover: #fafafd;
+    --ink-hover: oklch(0.98 0.003 270);
+    --seal: #f96146;
+    --seal: oklch(0.68 0.19 var(--seal-hue)); /* brighter at night, as a star should be */
+
+    /* one light source, night: shadows yield to a 1px edge-light on the top rim */
+    --shadow-1: inset 0 1px 0 color-mix(in oklab, var(--ink) 7%, transparent);
+    --shadow-2: inset 0 1px 0 color-mix(in oklab, var(--ink) 10%, transparent);
+    --shadow-3: inset 0 1px 0 color-mix(in oklab, var(--ink) 14%, transparent);
+    --scrim: rgb(0 0 8 / 0.6);
+
+    --star-1: color-mix(in oklab, var(--ink) 60%, transparent);
+    --star-2: color-mix(in oklab, var(--ink) 35%, transparent);
+    --star-3: color-mix(in oklab, var(--ink) 18%, transparent);
+    --wash: color-mix(in oklab, var(--ink) 8%, transparent);
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0a0a11;
+  --ground: oklch(0.15 0.012 270);
+  --surface: #15151d;
+  --surface: oklch(0.2 0.012 270);
+  --raised: #1e1e27;
+  --raised: oklch(0.24 0.012 270);
+  --overlay: #26262f;
+  --overlay: oklch(0.28 0.012 270);
+  --line: #24242d;
+  --line: oklch(0.27 0.012 270);
+  --line-strong: #33333e;
+  --line-strong: oklch(0.35 0.012 270);
+  --text-3: #7d7d89;
+  --text-3: oklch(0.6 0.01 270);
+  --text-2: #a8a8b3;
+  --text-2: oklch(0.75 0.008 270);
+  --ink: #eeedf4;
+  --ink: oklch(0.95 0.005 270);
+  --ink-hover: #fafafd;
+  --ink-hover: oklch(0.98 0.003 270);
+  --seal: #f96146;
+  --seal: oklch(0.68 0.19 var(--seal-hue));
+  --shadow-1: inset 0 1px 0 color-mix(in oklab, var(--ink) 7%, transparent);
+  --shadow-2: inset 0 1px 0 color-mix(in oklab, var(--ink) 10%, transparent);
+  --shadow-3: inset 0 1px 0 color-mix(in oklab, var(--ink) 14%, transparent);
+  --scrim: rgb(0 0 8 / 0.6);
+  --star-1: color-mix(in oklab, var(--ink) 60%, transparent);
+  --star-2: color-mix(in oklab, var(--ink) 35%, transparent);
+  --star-3: color-mix(in oklab, var(--ink) 18%, transparent);
+  --wash: color-mix(in oklab, var(--ink) 8%, transparent);
+}
+
+/* ———— base ———— */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ground); /* always explicit — no transparent body */
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--ground);
+}
+:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
+}
+
+a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--ink) 25%, transparent);
+  text-underline-offset: 2px;
+  transition: text-decoration-color var(--t-micro) ease;
+}
+a:hover {
+  text-decoration-color: var(--ink);
+}
+
+/* slim scrollbars — 1 ken */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+}
+
+/* theme crossfade — applied by the sky toggle for 610ms, then removed */
+.sky-fade,
+.sky-fade *,
+.sky-fade *::before,
+.sky-fade *::after {
+  transition:
+    background-color var(--t-entrance) ease,
+    border-color var(--t-entrance) ease,
+    color var(--t-entrance) ease,
+    box-shadow var(--t-entrance) ease !important;
+}
+
+/* the reduced-motion law: complete when perfectly still */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
