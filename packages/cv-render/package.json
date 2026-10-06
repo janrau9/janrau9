@@ -1,0 +1,24 @@
+{
+  "name": "@janrau/cv-render",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run",
+    "render": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@janrau/schema": "workspace:*",
+    "@myriaddreamin/typst-ts-node-compiler": "0.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "unpdf": "^1.4.0",
+    "vitest": "^3.2.0"
+  }
+}
