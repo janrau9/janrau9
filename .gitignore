@@ -14,3 +14,6 @@ dist/
 .playwright-mcp/
 coverage/
 *.tsbuildinfo
+
+# Generated at build time
+apps/site/public/janrau-beray-cv.pdf

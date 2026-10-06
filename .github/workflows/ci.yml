@@ -27,6 +27,8 @@ jobs:
       - run: pnpm validate
       # Fails if cv.schema.json is out of date with the Zod schema.
       - run: pnpm schema:check
+      # Fails if README.md (the GitHub profile) is out of date with cv.yaml.
+      - run: pnpm readme:check
 
   secrets:
     name: Secret scan

@@ -1,57 +1,40 @@
-# 👋 Hello, I'm Janrau Beray  
+<!-- Generated from content/cv.yaml by packages/cv-render. Do not edit by hand: run `pnpm render`. -->
 
-Welcome to my GitHub! I'm a **Software Developer** with a background in **Electronics and Communications Engineering**. I’m a purpose-driven software engineer with a background in electronics and embedded systems, now focused on building robust, real-time, and scalable backend applications. Currently deepening my expertise at Hive Helsinki, I’ve developed projects ranging from multiplayer 3D games to custom web servers, showcasing my ability to work across the full stack—from low-level memory management to Dockerized web APIs.  
+# Janrau Beray
 
-I'm now looking for opportunities where I can contribute to backend, devops, or system-level projects, continue leveling up, and make an impact from day one. Let’s connect if you're building something ambitious and need a strong developer with hands-on problem-solving skills and a deep curiosity for emerging tech.
+**Software Engineer — TypeScript, React and Python, shipping with AI agents** · Vantaa, Finland
 
----
+Software engineer in Finland. I started in electronics: an engineering degree, then equipment engineering at Texas Instruments. I ran my own recording studio, moved to Finland in 2022 and trained at Hive Helsinki. Since August 2025 I have been the integrations developer at a localization SaaS startup.
 
-## 🔍 About Me  
+I design the systems and direct the work; Claude writes much of the code under my review. Every change runs through a loop I built: type checks and tests on each edit, kiln (my code-intelligence tool) for exact references and type errors, and my review before it ships.
 
-- 🎓 **Education**:
-  - Hive Helsinki Software Development Student.
-  - Electronics and Communications Engineer.
-  - Kotoutumiskoulutus, moduuli 2/3.
-- 💼 **Licenses**: 
-  - Professional Electronics and Communications Engineer.
-  - Professional Electronics Technician.
-- 🌍 Currently based in **Finland**, actively seeking my first role in the industry here.  
+**[janrau.dev](https://janrau.dev)** · [CV (PDF)](https://janrau.dev/janrau-beray-cv.pdf) · [LinkedIn](https://www.linkedin.com/in/janrau-beray) · janraup356@gmail.com
 
----
+## Now
 
-## 🛠️ Technical Skills  
+Integrations Developer, Localization SaaS startup.
 
-While I may not have extensive experience in every technical area, I am passionate about **learning** and **growing**. I thrive on acquiring new skills and am excited about expanding my knowledge. Here's what I'm currently familiar with:
+- Sole integrations developer; built 6 integration types end to end, from JavaScript/React SDKs and an edge proxy to a CLI, webhooks, a WordPress plugin and a Shopify app.
+- Built a multi-tenant translation proxy on Cloudflare Workers that serves many customer sites from one deployment.
+- Built a CLI that syncs 8 translation file formats for iOS, Android and web projects.
 
-- **Languages**: C, C++, JavaScript, TypeScript, React, SQL (PostgreSQL), SQLite
-- **Tools & Frameworks**: Eagle PCB, MLX42, SFML, Docker  
-- **Other Skills**: Embedded systems, debugging, project management, system optimization  
+## Selected work
 
-I believe that my **ability to quickly learn new concepts** and **adapt to new technologies** is one of my strongest attributes. I enjoy the challenge of mastering new skills and bringing those to my projects.
+- **Slash**: Darts tournament app for pub nights. Players join by PIN or QR code, and every match syncs live across three phones.
+- **kiln**: Command-line tool that gives AI coding agents IDE-grade references, definitions, type errors and one-shot runtime debugging.
+- **Sisu Shift**: Mobile app for Finnish nurses that tracks shifts and calculates pay; team leads can generate schedules from members' preferences.
 
----
+<details><summary>More projects</summary>
 
-## 🌟 Featured Projects  
-- **[Transcendence](https://github.com/Jarnomer/transcendence)**: A Full-Stack Developer project using Babylon.js and WebSockets for real-time gameplay. Implemented JWT auth, live chat, and Dockerized services
-- **[C++ Webserver](https://github.com/lassikon/webserv)**: A robust, efficient server supporting static file hosting and CGI scripts.  
-- **[Our Cubed](https://github.com/lassikon/Cub3d)**: A raycasting game inspired by classic first-person shooters like Wolfenstein 3D.  
-- **[WebDev Challenge](https://github.com/Lisly25/webdev-express)**: Full-stack website with user authentication, external API integration, and Dockerized PostgreSQL.
+- **synchd**: Local-first chord charts on a beat grid; a live session keeps every band member's screen on the same bar.
+- **ShotClock**: Basketball league app for grassroots leagues in the Philippines, with offline courtside scoring and live standings.
+- **rhythm**: Personal goal system with a mentor voice, as a Telegram bot and an installable web app.
+- **Claude skills and Seiza**: Public repo of Claude Code skills, including Seiza, my design system, used in production by Slash and synchd.
 
----
+</details>
 
-## 🌐 Get in Touch  
+## About this repository
 
-- **LinkedIn**: [janrau-beray](https://www.linkedin.com/in/janrau-beray/)  
-- **Email**: janraup356@gmail.com  
+This repository is the source of [janrau.dev](https://janrau.dev). One file, `content/cv.yaml`, generates the website, the PDF CV and this README, and CI rejects any change that breaks the schema. Decisions are recorded in [`content/adr/`](content/adr/).
 
----
-
-## 🎸 Beyond Coding  
-
-- 🏀 **Basketball**: Team player with a knack for strategy and adaptability.  
-- 🎵 **Music Enthusiast**: Plays intruments and produces music in a band, drawing parallels between teamwork in music and development.  
-- 🛠️ **Problem Solver**: Finds joy in fixing and improving, whether it’s machines, code, or musical compositions.  
-
----
-
-Feel free to explore my projects or connect with me for opportunities! 🚀  
+<sub>Set in seiza · a design language by [janrau](https://github.com/janrau9/claude-skills)</sub>
