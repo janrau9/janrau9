@@ -70,7 +70,7 @@ Laptop (operator)                         Cloudflare (public)
 |---|---|---|
 | Repo: `content/` | `cv.yaml`, case studies, ADRs | Yes |
 | D1 (SQLite) | applications, variants, events | No |
-| R2 (object storage) | tailored PDFs, raw post snapshots | No (PDFs served only via their slug) |
+| KV (key-value store) | tailored PDFs (`cv:<slug>`), raw post snapshots (`post:<slug>`) | No (PDFs served only via their slug). KV, not R2: ADR-002 |
 
 ### Request paths
 
