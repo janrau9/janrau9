@@ -7,4 +7,10 @@ export default defineConfig({
     // External stylesheets only, so the Content-Security-Policy can forbid inline styles.
     inlineStylesheets: "never",
   },
+  vite: {
+    build: {
+      // Never inline scripts or fonts as data: URLs; the CSP allows only same-origin files.
+      assetsInlineLimit: 0,
+    },
+  },
 });
