@@ -64,8 +64,8 @@ jobs:
     runs-on: ubuntu-latest
     concurrency: production
     env:
+      # The account ID is in wrangler.jsonc; only the token is secret.
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4

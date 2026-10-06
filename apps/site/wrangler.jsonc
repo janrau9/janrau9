@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "janrau-dev",
+  "account_id": "89e482717ef4fe02bba6bb072e8673fa",
   // Static assets only for now: no Worker script runs. Tailored pages (phase 2) add one.
   "compatibility_date": "2026-10-06",
   "assets": {
