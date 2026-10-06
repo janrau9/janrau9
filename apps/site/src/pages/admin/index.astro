@@ -1,0 +1,192 @@
+---
+import { env } from "cloudflare:workers";
+import Base from "../../components/templates/Base.astro";
+import { verifyAccess } from "../../lib/access";
+import { accessConfig } from "../../lib/admin-env";
+import { type ApplicationRow, funnel, STATUSES } from "../../lib/events";
+
+export const prerender = false;
+
+const email = await verifyAccess(Astro.request.headers.get("cf-access-jwt-assertion"), accessConfig());
+if (!email) return new Response("Forbidden", { status: 403 });
+
+const rows: ApplicationRow[] = env.DB
+  ? (
+      await env.DB.prepare(
+        `SELECT a.slug, a.company, a.role, a.status, a.published_at,
+           COALESCE(SUM(e.type = 'human'), 0)                   AS human_opens,
+           COALESCE(SUM(e.type = 'open' AND e.scanner = 1), 0)  AS scanner_opens,
+           MAX(CASE WHEN e.type = 'human' THEN e.ts END)        AS last_human,
+           COALESCE(SUM(e.type = 'fit_viewed'), 0)              AS fit_views,
+           COALESCE(SUM(e.type = 'cv_download'), 0)             AS cv_downloads,
+           COALESCE(SUM(e.type = 'case_click'), 0)              AS case_clicks
+         FROM applications a LEFT JOIN events e ON e.slug = a.slug
+         GROUP BY a.slug ORDER BY a.published_at DESC`,
+      )
+        .bind()
+        .all<ApplicationRow>()
+    ).results
+  : [];
+
+const stages = funnel(rows);
+const ago = (ts: number | null) => {
+  if (!ts) return "never";
+  const s = Math.floor(Date.now() / 1000) - ts;
+  if (s < 3600) return `${Math.max(1, Math.floor(s / 60))} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  return `${Math.floor(s / 86400)} d ago`;
+};
+const label = (s: string) => s.replace("_", " ");
+---
+
+<Base title="Applications · admin" description="Private dashboard" noindex>
+  <div class="page">
+    <header class="stack-8">
+      <p class="micro">Signed in as {email}</p>
+      <h1 class="display">applications</h1>
+    </header>
+
+    <section class="section" aria-labelledby="funnel-title">
+      <h2 id="funnel-title">Funnel</h2>
+      <ol class="list-plain stats">
+        {
+          stages.map((s) => (
+            <li>
+              <span class="micro">{s.stage}</span>
+              <span class="count">{s.count}</span>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="section" aria-labelledby="list-title">
+      <h2 id="list-title">Every application</h2>
+      <p class="small text-2">
+        A person counts when the page stayed visible 3 seconds or they scrolled, clicked or typed. Scanner opens
+        are link checkers and previews, shown so you can see them, never counted.
+      </p>
+      <div class="table-scroll">
+        <table class="small">
+          <thead>
+            <tr>
+              <th scope="col">Company</th>
+              <th scope="col">Status</th>
+              <th scope="col">People</th>
+              <th scope="col">Last person</th>
+              <th scope="col">Fit seen</th>
+              <th scope="col">CV</th>
+              <th scope="col">Case studies</th>
+              <th scope="col">Scanners</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              rows.map((r) => (
+                <tr id={r.slug}>
+                  <td>
+                    <a href={`/for/${r.slug}?preview`}>{r.company}</a>
+                    <span class="micro block">{r.role}</span>
+                  </td>
+                  <td>
+                    <form method="post" action="/admin/status" class="row status-form">
+                      <input type="hidden" name="slug" value={r.slug} />
+                      <label class="visually-hidden" for={`status-${r.slug}`}>
+                        Status for {r.company}
+                      </label>
+                      <select id={`status-${r.slug}`} name="status">
+                        {STATUSES.map((s) => (
+                          <option value={s} selected={s === r.status}>
+                            {label(s)}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="submit" class="button button-outline">
+                        Save
+                      </button>
+                    </form>
+                  </td>
+                  <td class="num">{r.human_opens}</td>
+                  <td>{ago(r.last_human)}</td>
+                  <td class="num">{r.fit_views}</td>
+                  <td class="num">{r.cv_downloads}</td>
+                  <td class="num">{r.case_clicks}</td>
+                  <td class="num text-3">{r.scanner_opens}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      {rows.length === 0 && <p class="text-2">No applications yet. Publish one with pnpm publish-variant.</p>}
+    </section>
+  </div>
+</Base>
+
+<style>
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+  @media (min-width: 610px) {
+    .stats {
+      grid-template-columns: repeat(5, 1fr);
+    }
+  }
+  .stats li {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .count {
+    font-size: 40px;
+    line-height: 40px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-2);
+  }
+  th,
+  td {
+    padding: 8px 16px 8px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .text-3 {
+    color: var(--text-3);
+  }
+  .block {
+    display: block;
+  }
+  .status-form {
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+  select {
+    min-height: 40px;
+    padding: 8px 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: var(--ground);
+    color: var(--ink);
+    font: inherit;
+  }
+  select:focus-visible {
+    border-color: var(--ink);
+  }
+</style>
