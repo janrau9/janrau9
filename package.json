@@ -19,8 +19,8 @@
     "render": "pnpm --filter @janrau/cv-render render",
     "readme:check": "pnpm --filter @janrau/cv-render render readme && git diff --exit-code README.md",
     "test:site": "pnpm --filter @janrau/site build && pnpm --filter @janrau/site test",
-    "publish-variant": "pnpm --filter @janrau/cv-render publish-variant",
-    "dev": "pnpm --filter @janrau/cv-render render site-data && pnpm --filter @janrau/site dev"
+    "dev": "pnpm --filter @janrau/cv-render render site-data && pnpm --filter @janrau/site dev",
+    "job": "pnpm --filter @janrau/cv-render job"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.0",

@@ -9,17 +9,19 @@
     "typecheck": "tsc -p .",
     "test": "vitest run",
     "render": "tsx src/cli.ts",
-    "publish-variant": "tsx src/publish.ts"
+    "job": "tsx src/job.ts"
   },
   "dependencies": {
     "@janrau/schema": "workspace:*",
-    "@myriaddreamin/typst-ts-node-compiler": "0.7.0"
+    "@myriaddreamin/typst-ts-node-compiler": "0.7.0",
+    "@janrau/ingest": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
     "unpdf": "^1.4.0",
-    "vitest": "^3.2.0"
+    "vitest": "^3.2.0",
+    "@playwright/test": "^1.63.0"
   }
 }
