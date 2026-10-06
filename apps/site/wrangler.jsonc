@@ -23,6 +23,13 @@
     // Tailored PDFs and job-post snapshots. KV, not R2: R2 needs a payment method (ADR-002).
     { "binding": "CV_FILES", "id": "e253ab5e8b564f36b09a6fd0b1b698ab" }
   ],
+  "vars": {
+    // Cloudflare Access guards /admin; the Worker re-verifies Access's signed token with these.
+    // Neither is secret: the AUD tag only identifies which Access application issued a token,
+    // and Access itself shows it to every visitor in the /admin login redirect (?kid=).
+    "ACCESS_TEAM_DOMAIN": "janrau.cloudflareaccess.com",
+    "ACCESS_AUD": "d1a828d528d6a7a3d3c7b3c32415fdf60b666bdfaa26b4e07c1d38d7a049a1f7" // gitleaks:allow (public, see above)
+  },
   "routes": [{ "pattern": "janrau.dev", "custom_domain": true }],
   "observability": { "enabled": true }
 }
