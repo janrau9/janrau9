@@ -181,6 +181,10 @@ ol {
     border-color var(--t-hover) var(--settle);
 }
 .button-ink {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
   background: var(--ink);
   color: var(--ground);
   border: 1px solid var(--ink);
@@ -190,7 +194,12 @@ ol {
 }
 .button-outline {
   color: var(--ink);
+  background: transparent; /* not the browser's default button grey */
   border: 1px solid var(--line-strong);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
 }
 .button-outline:hover {
   border-color: var(--ink);
