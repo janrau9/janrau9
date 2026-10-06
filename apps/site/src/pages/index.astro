@@ -1,5 +1,6 @@
 ---
 import WorkCard from "../components/molecules/WorkCard.astro";
+import Lattice from "../components/organisms/Lattice.astro";
 import Base from "../components/templates/Base.astro";
 import { CV_PDF, content, period, workHref } from "../lib/content";
 
@@ -16,11 +17,12 @@ const workMode = `Open to ${[prefs.remote && "remote", prefs.hybrid && "hybrid"]
 
 <Base title={`${person.name} · Software Engineer`} description={headline}>
   <div class="page">
-    <header class="stack-24 measure">
+    <header class="hero stack-24">
+      <div class="texture"><Lattice /></div>
       <h1 class="display">{person.name}</h1>
       <p class="lede text-2">{headline}</p>
       <ul class="facts list-plain row micro">
-        <li class="row avail"><span class="seal" aria-hidden="true"></span>Available · {person.availability}</li>
+        <li class="row avail"><span class="dot" aria-hidden="true"></span>Available · {person.availability}</li>
         <li>{person.location}</li>
         <li>{person.workRights}</li>
         <li>{workMode}</li>
@@ -149,6 +151,42 @@ const workMode = `Open to ${[prefs.remote && "remote", prefs.hybrid && "hybrid"]
   .lede {
     font-size: 20px;
     line-height: 28px;
+  }
+  /* The hero's text keeps the measure; the lattice lives in the space around it. */
+  .hero {
+    position: relative;
+  }
+  .hero > :not(.texture) {
+    position: relative;
+    max-width: var(--measure);
+  }
+  /* room only: a field to the right of the measure, from the approach to the hero's foot.
+     On hand and table there is no room beside the text, so the view keeps its emptiness. */
+  .texture {
+    display: none;
+  }
+  @media (min-width: 987px) {
+    .texture {
+      display: block;
+      position: absolute;
+      top: -104px;
+      bottom: 0;
+      left: calc(var(--measure) + 24px);
+      right: calc(-1 * var(--pad));
+    }
+  }
+  /* One seal per view: below room the availability dot carries it; at room the lattice does. */
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--seal);
+    flex: none;
+  }
+  @media (min-width: 987px) {
+    .dot {
+      background: var(--text-2);
+    }
   }
   .avail {
     gap: 8px;

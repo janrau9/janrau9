@@ -1,0 +1,215 @@
+---
+// The kikkō lattice (seiza texture, locked construction): grid-true hexagons, edge 21,
+// drawn in the --line token; every exposed edge a ragged frontier rolled per visit;
+// the still pond answers the pointer; one lattice cell is the view's seal.
+// Decorative: aria-hidden, pointer-events none, hidden until its frontier mask exists.
+---
+
+<div class="field" id="lattice" aria-hidden="true">
+  <div class="lattice"></div>
+  <div class="cells"></div>
+</div>
+
+<script>
+  const HW = 36.3731; // cell width
+  const HM = HW / 2;
+  const PITCH = 31.5; // row pitch
+  const field = document.getElementById("lattice");
+  const cellsEl = field?.querySelector<HTMLElement>(".cells");
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  type Cell = { x: number; y: number; el: HTMLElement; t?: number; r?: number };
+  let cells: Cell[] = [];
+  let seal: Cell | undefined;
+
+  const hexPath = (cx: number, cy: number) =>
+    `M${cx} ${cy - 22}L${cx + 19.05} ${cy - 11}L${cx + 19.05} ${cy + 11}L${cx} ${cy + 22}L${cx - 19.05} ${cy + 11}L${cx - 19.05} ${cy - 11}Z`;
+
+  /** Random depth per column (or row): each edge stops at its own place, 0–2 whole cells in. */
+  const jitter = (n: number) => Array.from({ length: n + 3 }, () => Math.floor(Math.random() * 3));
+
+  function build() {
+    if (!field || !cellsEl) return;
+    const { width: w, height: h } = field.getBoundingClientRect();
+    // Hidden on narrow screens (see the page's layout): no field, no seal cell.
+    if (w === 0 || h === 0) {
+      cells = [];
+      seal = undefined;
+      cellsEl.replaceChildren();
+      return;
+    }
+    const rows = Math.ceil(h / PITCH) + 1;
+    const cols = Math.ceil(w / HW) + 1;
+    const jTop = jitter(cols);
+    const jBottom = jitter(cols);
+    const jLeft = jitter(rows);
+    const jRight = jitter(rows);
+
+    let d = "";
+    cells = [];
+    cellsEl.replaceChildren();
+    for (let r = 0; r < rows; r++) {
+      const cy = 21 + r * PITCH;
+      const off = r % 2 === 0 ? HM : 0;
+      for (let c = 0; c <= cols; c++) {
+        const cx = off + c * HW;
+        const col = Math.min(cols, Math.round(cx / HW));
+        // Whole cells only: a cell is kept when its full outline sits inside the box, minus
+        // 0–2 cells of jitter per column (top, bottom) and per row (left, right). The box
+        // edge never cuts a cell, so no edge is ever an aligned cutoff.
+        const keep =
+          cy - 21 >= (jTop[col] ?? 0) * PITCH &&
+          cy + 21 <= h - (jBottom[col] ?? 0) * PITCH &&
+          cx - HM >= (jLeft[r] ?? 0) * HW &&
+          cx + HM <= w - (jRight[r] ?? 0) * HW;
+        if (!keep) continue;
+        d += hexPath(Math.round(cx * 10) / 10, cy);
+        const el = document.createElement("div");
+        el.className = "hex-cell";
+        el.style.transform = `translate(${cx - HM}px, ${cy - 21}px)`;
+        cellsEl.append(el);
+        cells.push({ x: cx, y: cy, el });
+      }
+    }
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'><path d='${d}' fill='white'/></svg>`;
+    field.style.maskImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+    field.style.setProperty("-webkit-mask-image", field.style.maskImage);
+
+    // The seal: one kept cell, chosen away from the frontier so it never sits on an edge.
+    const inner = cells.filter((c) => cells.filter((o) => Math.hypot(o.x - c.x, o.y - c.y) < HW * 1.1).length >= 7);
+    seal = (inner.length ? inner : cells)[Math.floor(Math.random() * (inner.length || cells.length))];
+    seal?.el.classList.add("seal-cell");
+    field.classList.add("ready");
+  }
+
+  function surge(cell: Cell, amp: number, dwell: number, red = false) {
+    const el = cell.el;
+    clearTimeout(cell.t);
+    clearTimeout(cell.r);
+    el.classList.toggle("red", red);
+    el.style.transition = "opacity 144ms cubic-bezier(0.16, 1, 0.3, 1)";
+    el.style.opacity = String(amp);
+    cell.t = window.setTimeout(() => {
+      el.style.transition = "opacity 610ms ease";
+      el.style.opacity = "";
+      if (red) cell.r = window.setTimeout(() => el.classList.remove("red"), 640);
+    }, dwell);
+  }
+
+  /** The pointer moved on: the cell settles back over 610ms. */
+  function release(cell: Cell) {
+    cell.el.style.transition = "opacity 610ms ease";
+    cell.el.style.opacity = "";
+  }
+
+  /** A strike: a constant-speed circular front, amplitude = spreading × absorption. */
+  function wave(ox: number, oy: number, red = false) {
+    for (const cell of cells) {
+      const dist = Math.hypot(cell.x - ox, cell.y - oy);
+      const ring = dist / HW;
+      const amp = (0.55 * Math.exp(-ring / 13)) / Math.sqrt(1 + ring);
+      if (amp < 0.05) continue;
+      window.setTimeout(() => surge(cell, amp, 89, red), dist * (55 / HW));
+    }
+  }
+
+  const local = (e: PointerEvent | MouseEvent) => {
+    const box = field?.getBoundingClientRect();
+    return box ? { x: e.clientX - box.left, y: e.clientY - box.top } : { x: -1e9, y: -1e9 };
+  };
+  const nearest = (x: number, y: number) => {
+    let best: Cell | undefined;
+    let bestD = HM;
+    for (const c of cells) {
+      const dd = Math.hypot(c.x - x, c.y - y);
+      if (dd < bestD) {
+        bestD = dd;
+        best = c;
+      }
+    }
+    return best;
+  };
+
+  build();
+
+  if (!still && field) {
+    let resting: Cell | undefined;
+    let frame = 0;
+    document.addEventListener(
+      "pointermove",
+      (e) => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => {
+          const { x, y } = local(e);
+          const cell = nearest(x, y);
+          if (cell === resting) return;
+          if (resting) release(resting);
+          resting = cell;
+          if (!cell) return;
+          // Rest: the cell under the pointer rises and stays; ring-1 neighbours leave a dying wake.
+          clearTimeout(cell.t);
+          cell.el.style.transition = "opacity 144ms cubic-bezier(0.16, 1, 0.3, 1)";
+          cell.el.style.opacity = cell === seal ? "0.68" : "0.55";
+          for (const n of cells)
+            if (n !== cell && Math.hypot(n.x - cell.x, n.y - cell.y) < HW * 1.1) surge(n, 0.25, 144);
+        });
+      },
+      { passive: true },
+    );
+    document.addEventListener("click", (e) => {
+      const { x, y } = local(e);
+      if (!nearest(x, y)) return;
+      const onSeal = seal && Math.hypot(seal.x - x, seal.y - y) < HW * 0.75;
+      wave(x, y, Boolean(onSeal));
+    });
+    // Arrival: once, the seal strikes the water, then stillness.
+    window.setTimeout(() => seal && wave(seal.x, seal.y), 987);
+    let resize = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(resize);
+      resize = window.setTimeout(build, 233);
+    });
+  }
+</script>
+
+<style>
+  .field {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--t-entrance) ease;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+  }
+  .field.ready {
+    opacity: 1;
+  }
+  .lattice,
+  .cells {
+    position: absolute;
+    inset: 0;
+  }
+  .lattice {
+    background: var(--line);
+    mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='36.3731'%20height='63'%3E%3Cpath%20d='M0%2010.5%20L18.1865%200%20L36.3731%2010.5%20M0%2010.5%20V31.5%20M36.3731%2010.5%20V31.5%20M0%2031.5%20L18.1865%2042%20L36.3731%2031.5%20M18.1865%2042%20V63'%20fill='none'%20stroke='black'%20stroke-width='1'/%3E%3C/svg%3E");
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='36.3731'%20height='63'%3E%3Cpath%20d='M0%2010.5%20L18.1865%200%20L36.3731%2010.5%20M0%2010.5%20V31.5%20M36.3731%2010.5%20V31.5%20M0%2031.5%20L18.1865%2042%20L36.3731%2031.5%20M18.1865%2042%20V63'%20fill='none'%20stroke='black'%20stroke-width='1'/%3E%3C/svg%3E");
+  }
+  .cells :global(.hex-cell) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 36.3731px;
+    height: 42px;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: var(--line-strong);
+    opacity: 0;
+  }
+  .cells :global(.hex-cell.seal-cell) {
+    background: var(--seal);
+    opacity: 0.34;
+  }
+  .cells :global(.hex-cell.red) {
+    background: var(--seal);
+  }
+</style>
