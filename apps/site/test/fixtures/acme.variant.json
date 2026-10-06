@@ -1,0 +1,30 @@
+{
+  "company": "Acme Events",
+  "role": "Software Engineer",
+  "headlineId": "hl.default",
+  "fit": [
+    {
+      "requirement": "experience in TypeScript and React, comfortable with real-time sync",
+      "evidenceIds": ["proj.slash.h2", "proj.synchd.h2"]
+    },
+    { "requirement": "integrations with third-party APIs", "evidenceIds": ["exp.current.h1", "exp.current.h5"] },
+    { "requirement": "own features end to end", "evidenceIds": ["proj.slash.h4", "proj.sisu-shift.h5"] }
+  ],
+  "projectIds": ["proj.slash", "proj.synchd", "proj.kiln"],
+  "skillIds": ["skill.typescript", "skill.react", "skill.sync"],
+  "gaps": [],
+  "coverNote": {
+    "whyRole": {
+      "text": "Acme builds tools for event organisers, and that is a problem I already work on: I built Slash to run pub darts tournaments from phones.",
+      "postQuotes": ["builds tools for event organisers"]
+    },
+    "whyMe": {
+      "text": "Slash has run 4 real pub tournaments, with live sync across three phones per match. synchd keeps a band on the same bar with a three-layer clock.",
+      "evidenceIds": ["proj.slash.h1", "proj.synchd.h2"]
+    },
+    "howIWork": {
+      "text": "I design the system and let AI coding agents write much of the code. Tests and my own tool, kiln, check every change before it ships.",
+      "evidenceIds": ["proj.kiln.h1", "proj.slash.h4"]
+    }
+  }
+}

@@ -1,6 +1,12 @@
 ---
 import { CV_PDF } from "../../lib/content";
 import SkyToggle from "../atoms/SkyToggle.astro";
+
+interface Props {
+  /** Tailored pages link their own PDF. */
+  cvHref?: string | undefined;
+}
+const { cvHref = CV_PDF } = Astro.props;
 ---
 
 <header class="strip">
@@ -8,7 +14,7 @@ import SkyToggle from "../atoms/SkyToggle.astro";
     <a href="/" class="mark">janrau</a>
     <div class="row links">
       <a href="/#work">Work</a>
-      <a href={CV_PDF}>CV</a>
+      <a href={cvHref}>CV</a>
       <SkyToggle />
     </div>
   </nav>

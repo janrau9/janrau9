@@ -1,7 +1,7 @@
 ---
 import { getEntry, render } from "astro:content";
-import type { CaseStudy } from "@janrau/schema";
 import Base from "../../components/templates/Base.astro";
+import type { CaseStudyMeta } from "../../lib/content";
 import { content, publishedWork } from "../../lib/content";
 
 export function getStaticPaths() {
@@ -9,7 +9,7 @@ export function getStaticPaths() {
 }
 
 interface Props {
-  study: CaseStudy;
+  study: CaseStudyMeta;
 }
 
 const { study } = Astro.props;

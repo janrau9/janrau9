@@ -1,0 +1,200 @@
+---
+import { env } from "cloudflare:workers";
+import Base from "../../components/templates/Base.astro";
+import { lookup } from "../../lib/tailored";
+
+export const prerender = false;
+
+const slug = Astro.params.slug ?? "";
+const result = await lookup(env.DB, slug);
+
+// The link may be fine but the database isn't: show the general page, never an error.
+if (result.kind === "unavailable") {
+  console.error(`tailored page ${slug} unavailable: ${result.reason}`);
+  return Astro.redirect("/", 302);
+}
+if (result.kind === "missing") Astro.response.status = 404;
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const month = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
+const view = result.kind === "found" ? result.view : undefined;
+const pdf = `/for/${slug}/cv.pdf`;
+---
+
+{
+  view ? (
+    <Base title={`Janrau Beray · for ${view.company}`} description={view.headline} noindex cvHref={pdf}>
+      <div class="page">
+        <header class="stack-24 measure">
+          <p class="micro">
+            Prepared for {view.company} · {view.role}
+          </p>
+          <h1 class="display">{view.person.name}</h1>
+          <p class="lede text-2">{view.headline}</p>
+          <ul class="facts list-plain row micro">
+            <li class="row avail">
+              <span class="seal" aria-hidden="true" />
+              Available · {view.person.availability}
+            </li>
+            <li>{view.person.location}</li>
+            <li>{view.person.workRights}</li>
+            <li>{view.person.workMode}</li>
+          </ul>
+          <div class="row">
+            <a class="button button-ink" href={pdf}>
+              Download CV
+            </a>
+            <a
+              class="button button-outline"
+              href={`mailto:${view.person.email}?subject=${encodeURIComponent(`${view.role} at ${view.company}`)}`}
+            >
+              Email me
+            </a>
+            <a class="small" href={view.person.github}>
+              GitHub ↗
+            </a>
+            <a class="small" href={view.person.linkedin}>
+              LinkedIn ↗
+            </a>
+          </div>
+        </header>
+
+        <section class="section" aria-labelledby="fit-title">
+          <p class="micro" aria-hidden="true">
+            01 — fit
+          </p>
+          <h2 id="fit-title">What you asked for, and what I've done</h2>
+          <ul class="list-plain rows">
+            {view.fit.map((row) => (
+              <li class="alcove">
+                <p class="requirement">“{row.requirement}”</p>
+                <ul class="stack-8 small evidence">
+                  {row.evidence.map((e) => (
+                    <li>{e.href ? <a href={e.href}>{e.text}</a> : e.text}</li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section class="section" aria-labelledby="work-title">
+          <p class="micro" aria-hidden="true">
+            02 — work
+          </p>
+          <h2 id="work-title">Most relevant work</h2>
+          <div class="grid-3">
+            {view.projects.map((p) => {
+              const Tag = p.href ? "a" : "article";
+              return (
+                <Tag class="card" href={p.href}>
+                  <div class="stack-8">
+                    <h3>{p.name}</h3>
+                    <p class="small text-2">{p.summary}</p>
+                  </div>
+                  <p class="micro">{p.stack.slice(0, 5).join(" · ")}</p>
+                  {p.href && <p class="micro read">Read the case study →</p>}
+                </Tag>
+              );
+            })}
+          </div>
+        </section>
+
+        <section class="section measure" aria-labelledby="why-title">
+          <p class="micro" aria-hidden="true">
+            03 — why {view.company.toLowerCase()}
+          </p>
+          <h2 id="why-title">Why {view.company}</h2>
+          <div class="prose">
+            <p>{view.coverNote.whyRole}</p>
+            <p>{view.coverNote.whyMe}</p>
+            <p>{view.coverNote.howIWork}</p>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="experience-title">
+          <p class="micro" aria-hidden="true">
+            04 — experience
+          </p>
+          <h2 id="experience-title">Experience</h2>
+          <ol class="list-plain rows">
+            {view.experience.map((e) => (
+              <li class="alcove">
+                <p class="micro">
+                  {month(e.start)} – {e.end ? month(e.end) : "present"}
+                </p>
+                <div class="stack-8">
+                  <h3>
+                    {e.role}, {e.org}
+                  </h3>
+                  <ul class="stack-8 small text-2 bullets">
+                    {e.highlights.map((h) => (
+                      <li>{h}</li>
+                    ))}
+                  </ul>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section class="section" aria-labelledby="skills-title">
+          <p class="micro" aria-hidden="true">
+            05 — skills
+          </p>
+          <h2 id="skills-title">Skills</h2>
+          <ul class="list-plain row">
+            {view.skills.map((s) => (
+              <li class="pill">{s}</li>
+            ))}
+          </ul>
+        </section>
+
+        <p class="micro measure">
+          This page was made for this application by my own pipeline: one source file, validated and rendered per
+          job. <a href="https://github.com/janrau9/janrau9">How it works ↗</a>
+        </p>
+      </div>
+    </Base>
+  ) : (
+    <Base title="Link not found · Janrau Beray" description="This link does not exist." noindex>
+      <div class="page measure stack-24">
+        <h1 class="display">link not found</h1>
+        <p class="text-2">This link doesn't exist. It may be mistyped. My general portfolio is one click away.</p>
+        <p>
+          <a class="button button-outline" href="/">
+            Go to the portfolio
+          </a>
+        </p>
+      </div>
+    </Base>
+  )
+}
+
+<style>
+  .lede {
+    font-size: 20px;
+    line-height: 28px;
+  }
+  .facts {
+    gap: 8px 24px;
+  }
+  .avail {
+    gap: 8px;
+    color: var(--text-2);
+  }
+  .requirement {
+    color: var(--text-2);
+  }
+  .evidence {
+    padding-left: 16px;
+    list-style: disc;
+  }
+  .bullets {
+    padding-left: 16px;
+  }
+  .read {
+    color: var(--text-2);
+    margin-top: auto;
+  }
+</style>

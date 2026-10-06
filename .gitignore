@@ -19,3 +19,4 @@ coverage/
 apps/site/public/janrau-beray-cv.pdf
 test-results/
 playwright-report/
+apps/site/src/generated/

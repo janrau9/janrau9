@@ -1,0 +1,5 @@
+Software Engineer, Acme Events (fictional test fixture)
+
+Acme builds tools for event organisers. We are looking for a developer with
+experience in TypeScript and React, comfortable with real-time sync. You will build
+integrations with third-party APIs and own features end to end. Our team ships weekly.

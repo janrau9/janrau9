@@ -24,3 +24,13 @@ if (target === "pdf" || target === "all") {
   write("apps/site/public/janrau-beray-cv.pdf", renderPdf(doc));
 }
 if (target === "readme" || target === "all") write("README.md", renderReadme(content, SITE));
+if (target === "site-data" || target === "all") {
+  // Tailored pages render on the Worker, which can't read content/ from disk: bundle what they need.
+  const work = content.work.map((w) => ({
+    slug: w.slug,
+    id: w.frontmatter.id,
+    draft: w.frontmatter.draft,
+    frontmatter: w.frontmatter,
+  }));
+  write("apps/site/src/generated/site-data.json", `${JSON.stringify({ cv: content.cv, work })}\n`);
+}
