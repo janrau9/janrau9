@@ -54,6 +54,7 @@ test("the tailored PDF is served, and the strip links to it", async ({ page, req
 for (const [why, path] of [
   ["an unknown link", "/for/nobody-here-zzzzz"],
   ["a withdrawn application", "/for/withdrawn-co-wthdr"],
+  ["a staged application that isn't published yet", "/for/staged-co-st4gd"],
   ["a malformed slug", "/for/DROP-TABLE"],
   ["an unknown PDF", "/for/nobody-here-zzzzz/cv.pdf"],
 ] as const)

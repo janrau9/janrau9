@@ -1,0 +1,208 @@
+---
+import { env } from "cloudflare:workers";
+import TailoredPage from "../../../components/organisms/TailoredPage.astro";
+import Base from "../../../components/templates/Base.astro";
+import { verifyAccess } from "../../../lib/access";
+import { adminEmail } from "../../../lib/admin-env";
+import { lookup } from "../../../lib/tailored";
+
+export const prerender = false;
+
+if (!(await adminEmail(Astro.request, verifyAccess))) return new Response("Forbidden", { status: 403 });
+const slug = Astro.params.slug ?? "";
+const result = await lookup(env.DB, slug, { includeUnpublished: true });
+if (result.kind !== "found") return new Response("Not found", { status: 404 });
+
+const row = await env.DB?.prepare(
+  "SELECT a.published_at, a.status, v.variant_json FROM applications a JOIN variants v ON v.slug = a.slug WHERE a.slug = ?",
+)
+  .bind(slug)
+  .first<{ published_at: number | null; status: string; variant_json: string }>();
+const variant = JSON.parse(row?.variant_json ?? "{}") as {
+  gaps?: string[];
+  formAnswers?: { question: string; limit?: number; answer: string }[];
+};
+const published = row?.published_at != null;
+const publicUrl = `https://janrau.dev/for/${slug}`;
+const { view } = result;
+---
+
+<Base title={`Review · ${view.company}`} description="Private review" noindex cvHref={`/admin/files/${slug}/cv.pdf`}>
+  <aside class="review frame" aria-labelledby="review-title">
+    <div class="panel stack-24">
+      <div class="row between">
+        <div class="stack-8">
+          <p class="micro"><a href="/admin">← Applications</a></p>
+          <h2 id="review-title">Review: {view.company} · {view.role}</h2>
+        </div>
+        <publish-button data-slug={slug} data-published={published ? "1" : undefined} data-url={publicUrl}>
+          <button type="button" class="button button-ink publish">{published ? "Published" : "Publish"}</button>
+          <p class="micro state" role="status" aria-live="polite">
+            {published ? `Live at ${publicUrl.replace("https://", "")}` : "Not published: only you can see this page."}
+          </p>
+        </publish-button>
+      </div>
+
+      <div class="alcove">
+        <p class="micro">Attachments</p>
+        <p class="row small">
+          <a href={`/admin/files/${slug}/cv.pdf`}>CV (PDF)</a>
+          <a href={`/admin/files/${slug}/cover-letter.pdf`}>Cover letter (PDF)</a>
+          <a href={`/for/${slug}/cv.pdf`}>Page CV with note</a>
+        </p>
+      </div>
+
+      <div class="alcove">
+        <p class="micro">Gaps (never published)</p>
+        {
+          variant.gaps?.length ? (
+            <ul class="small text-2 bullets">
+              {variant.gaps.map((g) => (
+                <li>{g}</li>
+              ))}
+            </ul>
+          ) : (
+            <p class="small text-2">None listed.</p>
+          )
+        }
+      </div>
+
+      {
+        variant.formAnswers?.length ? (
+          <div class="alcove">
+            <p class="micro">Form answers</p>
+            <ul class="list-plain stack-24">
+              {variant.formAnswers.map((f) => (
+                <li class="stack-8">
+                  <p class="small text-2">
+                    {f.question}
+                    {f.limit ? ` · ${f.answer.length} / ${f.limit} characters` : ` · ${f.answer.length} characters`}
+                  </p>
+                  <p class="answer small">{f.answer}</p>
+                  <copy-text data-text={f.answer}>
+                    <button type="button" class="link-button micro">
+                      Copy answer
+                    </button>
+                  </copy-text>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null
+      }
+    </div>
+  </aside>
+
+  <TailoredPage view={view} slug={slug} pdf={`/for/${slug}/cv.pdf`} track={false} />
+</Base>
+
+<script>
+  const REVERT_MS = 1597;
+
+  /** Publish island: confirmed by the server, then offers the public link. */
+  class PublishButton extends HTMLElement {
+    connectedCallback() {
+      const button = this.querySelector("button");
+      const state = this.querySelector<HTMLElement>(".state");
+      const { slug, url } = this.dataset;
+      if (!button || !state || !slug || !url) return;
+      if (this.dataset.published) button.disabled = true;
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        button.textContent = "Publishing…";
+        this.dataset.state = "saving";
+        try {
+          const res = await fetch("/admin/api/publish", {
+            method: "POST",
+            headers: { "content-type": "application/json", accept: "application/json" },
+            body: JSON.stringify({ slug }),
+          });
+          const data = (await res.json()) as { ok: boolean; message?: string };
+          if (!res.ok || !data.ok) throw new Error(data.message ?? `HTTP ${res.status}`);
+          button.textContent = "Published";
+          this.dataset.state = "saved";
+          this.dataset.published = "1";
+          state.textContent = `Live ✓ ${url.replace("https://", "")}`;
+        } catch (err) {
+          button.disabled = false;
+          button.textContent = "Publish";
+          this.dataset.state = "error";
+          state.textContent = `Not published: ${err instanceof Error ? err.message : "no connection"}. The link is still private.`;
+        }
+      });
+    }
+  }
+
+  /** Copies a form answer, with a short-lived cue. */
+  class CopyText extends HTMLElement {
+    connectedCallback() {
+      const button = this.querySelector("button");
+      const text = this.dataset.text;
+      if (!button || text === undefined) return;
+      let revert: ReturnType<typeof setTimeout> | undefined;
+      button.addEventListener("click", async () => {
+        clearTimeout(revert);
+        try {
+          await navigator.clipboard.writeText(text);
+          button.textContent = "Copied ✓";
+        } catch {
+          button.textContent = "Copy failed: select the text instead";
+        }
+        revert = setTimeout(() => (button.textContent = "Copy answer"), REVERT_MS);
+      });
+    }
+  }
+
+  customElements.define("publish-button", PublishButton);
+  customElements.define("copy-text", CopyText);
+</script>
+
+<style>
+  .review {
+    padding-top: 40px;
+  }
+  /* The panel is a surface: a thing acted on as a unit, above the page it reviews. */
+  .panel {
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    box-shadow: var(--shadow-1);
+  }
+  .between {
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  publish-button {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .publish:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  publish-button[data-state="saved"] .state {
+    color: var(--ink);
+  }
+  publish-button[data-state="error"] .state {
+    color: var(--seal);
+  }
+  .bullets {
+    padding-left: 16px;
+  }
+  .answer {
+    white-space: pre-wrap;
+    padding: 8px 16px;
+    border-left: 1px solid var(--line-strong);
+  }
+  .link-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+</style>

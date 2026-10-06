@@ -72,8 +72,13 @@ const label = (s: string) => s.replace("_", " ");
                 <tr id={r.slug}>
                   <td>
                     <div class="stack-8">
-                      <a href={`/for/${r.slug}?preview`}>{r.company}</a>
+                      <a href={`/admin/review/${r.slug}`}>{r.company}</a>
                       <span class="micro">{r.role}</span>
+                      <span class="micro">
+                        {r.published_at === null ? "Not published" : "Public"} ·{" "}
+                        <a href={`/admin/files/${r.slug}/cv.pdf`}>CV</a> ·{" "}
+                        <a href={`/admin/files/${r.slug}/cover-letter.pdf`}>Letter</a>
+                      </span>
                       <copy-link data-url={`https://janrau.dev/for/${r.slug}`}>
                         <button type="button" class="link-button micro">
                           Copy link

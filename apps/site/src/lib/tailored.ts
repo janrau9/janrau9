@@ -29,14 +29,20 @@ export interface Db {
  * means the link may exist but can't be served right now, so the visitor gets the
  * general page instead of an error.
  */
-export async function lookup(db: Db | undefined, slug: string): Promise<Lookup> {
+export async function lookup(
+  db: Db | undefined,
+  slug: string,
+  /** The private review shows staged applications; the public link never does. */
+  options: { includeUnpublished?: boolean } = {},
+): Promise<Lookup> {
   if (!SLUG.test(slug)) return { kind: "missing" };
   if (!db) return { kind: "unavailable", reason: "no database binding" };
   let row: { variant_json: string; published_at: number | null } | null;
   try {
     row = await db
       .prepare(
-        "SELECT v.variant_json, a.published_at FROM variants v JOIN applications a ON a.slug = v.slug WHERE v.slug = ? AND a.status != 'withdrawn'",
+        "SELECT v.variant_json, a.published_at FROM variants v JOIN applications a ON a.slug = v.slug WHERE v.slug = ? AND a.status != 'withdrawn'" +
+          (options.includeUnpublished ? "" : " AND a.published_at IS NOT NULL"),
       )
       .bind(slug)
       .first<{ variant_json: string; published_at: number | null }>();

@@ -29,7 +29,7 @@ export const fetchAccessKeys: KeyFetcher = async (teamDomain) => {
   return keys;
 };
 
-/** The verified email, or null. Never throws: any doubt means no access. */
+/** The verified email (or service token id), or null. Never throws: any doubt means no access. */
 export async function verifyAccess(
   token: string | null,
   config: AccessConfig | undefined,
@@ -41,7 +41,15 @@ export async function verifyAccess(
     const [h, p, sig] = token.split(".");
     if (!h || !p || !sig) return null;
     const header = json<{ alg: string; kid?: string }>(h);
-    const payload = json<{ aud?: string | string[]; iss?: string; exp?: number; nbf?: number; email?: string }>(p);
+    const payload = json<{
+      aud?: string | string[];
+      iss?: string;
+      exp?: number;
+      nbf?: number;
+      email?: string;
+      /** Service tokens (the CLI) carry their client id here instead of an email. */
+      common_name?: string;
+    }>(p);
     if (header.alg !== "RS256") return null;
     const auds = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
     if (!auds.includes(config.aud)) return null;
@@ -54,7 +62,7 @@ export async function verifyAccess(
       "verify",
     ]);
     const ok = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, b64url(sig), new TextEncoder().encode(`${h}.${p}`));
-    return ok ? (payload.email ?? "unknown") : null;
+    return ok ? (payload.email ?? (payload.common_name ? `service:${payload.common_name}` : "unknown")) : null;
   } catch {
     return null;
   }

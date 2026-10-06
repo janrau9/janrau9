@@ -1,5 +1,6 @@
 ---
 import { env } from "cloudflare:workers";
+import TailoredPage from "../../components/organisms/TailoredPage.astro";
 import Base from "../../components/templates/Base.astro";
 import { classifyOpen, recordEvent } from "../../lib/events";
 import { lookup } from "../../lib/tailored";
@@ -31,8 +32,6 @@ if (result.kind === "found" && !preview && env.DB) {
   Astro.locals.cfContext?.waitUntil(write);
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const month = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
 const view = result.kind === "found" ? result.view : undefined;
 const pdf = `/for/${slug}/cv.pdf`;
 ---
@@ -40,137 +39,7 @@ const pdf = `/for/${slug}/cv.pdf`;
 {
   view ? (
     <Base title={`Janrau Beray · for ${view.company}`} description={view.headline} noindex cvHref={pdf}>
-      <div class="page" id="tailored" data-slug={slug} data-preview={preview ? "1" : undefined}>
-        <header class="stack-24 measure">
-          <p class="micro">
-            Prepared for {view.company} · {view.role}
-          </p>
-          <h1 class="display">{view.person.name}</h1>
-          <p class="lede text-2">{view.headline}</p>
-          <ul class="facts list-plain row micro">
-            <li class="row avail">
-              <span class="seal" aria-hidden="true" />
-              Available · {view.person.availability}
-            </li>
-            <li>{view.person.location}</li>
-            <li>{view.person.workRights}</li>
-            <li>{view.person.workMode}</li>
-          </ul>
-          <div class="row">
-            <a class="button button-ink" href={pdf}>
-              Download CV
-            </a>
-            <a
-              class="button button-outline"
-              href={`mailto:${view.person.email}?subject=${encodeURIComponent(`${view.role} at ${view.company}`)}`}
-            >
-              Email me
-            </a>
-            <a class="small" href={view.person.github}>
-              GitHub ↗
-            </a>
-            <a class="small" href={view.person.linkedin}>
-              LinkedIn ↗
-            </a>
-          </div>
-        </header>
-
-        <section class="section" id="fit" aria-labelledby="fit-title">
-          <p class="micro" aria-hidden="true">
-            01 — fit
-          </p>
-          <h2 id="fit-title">What you asked for, and what I've done</h2>
-          <ul class="list-plain rows">
-            {view.fit.map((row) => (
-              <li class="alcove">
-                <p class="requirement">“{row.requirement}”</p>
-                <ul class="stack-8 small evidence">
-                  {row.evidence.map((e) => (
-                    <li>{e.href ? <a href={e.href}>{e.text}</a> : e.text}</li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section class="section" aria-labelledby="work-title">
-          <p class="micro" aria-hidden="true">
-            02 — work
-          </p>
-          <h2 id="work-title">Most relevant work</h2>
-          <div class="grid-3">
-            {view.projects.map((p) => {
-              const Tag = p.href ? "a" : "article";
-              return (
-                <Tag class="card" href={p.href}>
-                  <div class="stack-8">
-                    <h3>{p.name}</h3>
-                    <p class="small text-2">{p.summary}</p>
-                  </div>
-                  <p class="micro">{p.stack.slice(0, 5).join(" · ")}</p>
-                  {p.href && <p class="micro read">Read the case study →</p>}
-                </Tag>
-              );
-            })}
-          </div>
-        </section>
-
-        <section class="section measure" aria-labelledby="why-title">
-          <p class="micro" aria-hidden="true">
-            03 — why {view.company.toLowerCase()}
-          </p>
-          <h2 id="why-title">Why {view.company}</h2>
-          <div class="prose">
-            <p>{view.coverNote.whyRole}</p>
-            <p>{view.coverNote.whyMe}</p>
-            <p>{view.coverNote.howIWork}</p>
-          </div>
-        </section>
-
-        <section class="section" aria-labelledby="experience-title">
-          <p class="micro" aria-hidden="true">
-            04 — experience
-          </p>
-          <h2 id="experience-title">Experience</h2>
-          <ol class="list-plain rows">
-            {view.experience.map((e) => (
-              <li class="alcove">
-                <p class="micro">
-                  {month(e.start)} – {e.end ? month(e.end) : "present"}
-                </p>
-                <div class="stack-8">
-                  <h3>
-                    {e.role}, {e.org}
-                  </h3>
-                  <ul class="stack-8 small text-2 bullets">
-                    {e.highlights.map((h) => (
-                      <li>{h}</li>
-                    ))}
-                  </ul>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section class="section" aria-labelledby="skills-title">
-          <p class="micro" aria-hidden="true">
-            05 — skills
-          </p>
-          <h2 id="skills-title">Skills</h2>
-          <ul class="list-plain row">
-            {view.skills.map((s) => (
-              <li class="pill">{s}</li>
-            ))}
-          </ul>
-        </section>
-
-        <p class="micro measure">
-          This page was made for this application by my own pipeline: one source file, validated and rendered per
-          job. <a href="https://github.com/janrau9/janrau9">How it works ↗</a>
-        </p>
-      </div>
+      <TailoredPage view={view} slug={slug} pdf={pdf} track={!preview} />
     </Base>
   ) : (
     <Base title="Link not found · Janrau Beray" description="This link does not exist." noindex>
@@ -186,77 +55,3 @@ const pdf = `/for/${slug}/cv.pdf`;
     </Base>
   )
 }
-
-<script>
-  // Beacons: what a person did, never who they are. "human" fires only once the page has
-  // been visible for 3 seconds or the visitor scrolls, clicks or presses a key; link
-  // scanners rarely run scripts and never linger.
-  const page = document.getElementById("tailored");
-  const slug = page?.dataset.slug;
-  if (slug && !page?.dataset.preview) {
-    const sent = new Set<string>();
-    const send = (type: string) => {
-      if (sent.has(type)) return;
-      sent.add(type);
-      navigator.sendBeacon("/e", JSON.stringify({ slug, type }));
-    };
-    const human = () => send("human");
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const arm = () => {
-      clearTimeout(timer);
-      if (document.visibilityState === "visible") timer = setTimeout(human, 3000);
-    };
-    arm();
-    document.addEventListener("visibilitychange", arm);
-    for (const e of ["scroll", "pointerdown", "keydown"]) window.addEventListener(e, human, { once: true, passive: true });
-
-    const fit = document.getElementById("fit");
-    if (fit && "IntersectionObserver" in window) {
-      new IntersectionObserver((entries, obs) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          send("fit_viewed");
-          obs.disconnect();
-        }
-      }, { threshold: 0.5 }).observe(fit);
-    }
-    document.addEventListener("click", (e) => {
-      const a = (e.target as Element).closest("a");
-      const href = a?.getAttribute("href") ?? "";
-      if (href.endsWith("/cv.pdf")) {
-        human();
-        send("cv_download");
-      } else if (href.startsWith("/work/")) {
-        human();
-        send("case_click");
-      }
-    });
-  }
-</script>
-
-<style>
-  .lede {
-    font-size: 20px;
-    line-height: 28px;
-  }
-  .facts {
-    gap: 8px 24px;
-  }
-  .avail {
-    gap: 8px;
-    color: var(--text-2);
-  }
-  .requirement {
-    color: var(--text-2);
-  }
-  .evidence {
-    padding-left: 16px;
-    list-style: disc;
-  }
-  .bullets {
-    padding-left: 16px;
-  }
-  .read {
-    color: var(--text-2);
-    margin-top: auto;
-  }
-</style>
