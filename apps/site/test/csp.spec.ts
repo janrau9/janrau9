@@ -27,7 +27,8 @@ test("the sky toggle works under the CSP", async ({ page }) => {
   await page.goto("/");
   await page.click("#sky-toggle");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("#sky-toggle")).toHaveText("sky · night");
+  await expect(page.locator("#sky-toggle")).toHaveAttribute("data-sky", "dark");
+  await expect(page.locator("#sky-toggle")).toHaveAccessibleName(/Sky: night/);
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   // Flipping back to what the system prefers stores nothing.

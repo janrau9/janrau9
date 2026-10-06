@@ -1,9 +1,18 @@
 ---
-// Two-state sky toggle (seiza, after Lea Verou): the label shows the current sky,
+// Two-state sky toggle (seiza, after Lea Verou): the icon shows the current sky,
 // a click flips it, and flipping to what the system already prefers stores nothing.
+// Icons: outline only, 1.5px stroke, round caps, a 16px box (Lucide geometry).
 ---
 
-<button type="button" id="sky-toggle" class="sky micro" aria-live="polite">sky</button>
+<button type="button" id="sky-toggle" class="sky" aria-label="Switch sky">
+  <svg class="icon sun" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+  </svg>
+  <svg class="icon moon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+  </svg>
+</button>
 
 <script>
   const root = document.documentElement;
@@ -16,8 +25,8 @@
   const setLabel = () => {
     if (!toggle) return;
     const current = resolved();
-    toggle.textContent = `sky · ${names[current]}`;
-    toggle.setAttribute("aria-label", `Switch to ${names[current === "dark" ? "light" : "dark"]} sky`);
+    toggle.dataset.sky = current;
+    toggle.setAttribute("aria-label", `Sky: ${names[current]}. Switch to ${names[current === "dark" ? "light" : "dark"]}`);
   };
   setLabel();
   mq.addEventListener("change", setLabel);
@@ -46,14 +55,42 @@
 
 <style>
   .sky {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
     background: none;
     border: 0;
+    border-radius: 8px;
     padding: 0;
-    min-height: 40px;
     cursor: pointer;
-    color: var(--text-3);
+    color: var(--text-2);
+    transition: color var(--t-hover) var(--settle);
   }
   .sky:hover {
     color: var(--ink);
+  }
+  .icon {
+    grid-area: 1 / 1;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: opacity var(--t-micro) var(--settle), transform var(--t-micro) var(--settle);
+  }
+  /* Show the current sky: the incoming face rises 4px, the outgoing one fades. */
+  .moon,
+  .sky[data-sky="light"] .moon,
+  .sky[data-sky="dark"] .sun {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  .sky[data-sky="dark"] .moon,
+  .sky[data-sky="light"] .sun {
+    opacity: 1;
+    transform: none;
   }
 </style>
