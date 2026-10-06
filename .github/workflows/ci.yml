@@ -30,6 +30,22 @@ jobs:
       # Fails if README.md (the GitHub profile) is out of date with cv.yaml.
       - run: pnpm readme:check
 
+  site:
+    name: Site build, accessibility, page weight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @janrau/site exec playwright install --with-deps chromium
+      # Drafts included, so every case study is checked before it can be published.
+      - run: pnpm --filter @janrau/site build:drafts
+      - run: pnpm --filter @janrau/site test
+
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
@@ -40,3 +56,24 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    name: Deploy to janrau.dev
+    needs: [check, site, secrets]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Production build: drafts excluded.
+      - run: pnpm --filter @janrau/site build
+      - run: pnpm --filter @janrau/site exec wrangler deploy
