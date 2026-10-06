@@ -1,0 +1,368 @@
+# yaml-language-server: $schema=./cv.schema.json
+# Single source of truth for the site, the PDFs and every tailored link.
+# Draft 1 (2026-10-03), built from the project fact sheets, Janrau's answers
+# and the previous CV ("Janrau Beray Full Stack.pdf").
+# Rules: IDs never change once published. One verifiable claim per highlight.
+# Lines marked TODO need Janrau's answer before publishing.
+
+person:
+  name: Janrau Beray
+  location: Vantaa, Finland
+  workRights: Eligible to work in Finland
+  availability: 14 days' notice        # TODO: confirm against the employment contract
+  workPreferences: { remote: true, hybrid: true, relocation: false }
+  languages:
+    - { name: English, level: professional }
+  links:
+    email: janraup356@gmail.com
+    github: https://github.com/janrau9
+    linkedin: https://www.linkedin.com/in/janrau
+  about: >-
+    Software engineer in Finland. I started in electronics: an engineering degree,
+    then equipment engineering at Texas Instruments. I ran my own recording studio,
+    moved to Finland in 2022 and trained at Hive Helsinki. Since August 2025 I have
+    been the integrations developer at a localization SaaS startup.
+  aiPractice: >-
+    I design the systems and direct the work; Claude writes much of the code under my
+    review. Every change runs through a loop I built: type checks and tests on each edit,
+    kiln (my code-intelligence tool) for exact references and type errors, and my review
+    before it ships.
+
+headlines:
+  # Default chosen from the Helsinki market scan (research/jobs/helsinki-market.md):
+  # TypeScript, Python and SQL each appear in 11 of 20 posts; AI tools or LLMs in 10.
+  - id: hl.default
+    text: Software Engineer — TypeScript, React and Python, shipping with AI agents
+  - id: hl.realtime
+    text: Software Engineer — real-time, local-first and edge systems
+  - id: hl.product
+    text: Software Engineer — mobile, web and AI
+  - id: hl.integrations
+    text: Software Engineer — integrations, SDKs and edge
+  - id: hl.tooling
+    text: Software Engineer — developer tooling and AI-assisted engineering
+
+experience:
+  - id: exp.current
+    org: Localization SaaS startup        # employer not named publicly; name on request
+    role: Integrations Developer
+    location: Finland
+    start: 2025-08
+    end: null
+    highlights:
+      - id: exp.current.h1
+        # Disclosure risk: WordPress + Shopify + localization narrows the employer down.
+        text: Sole integrations developer; built 6 integration types end to end, from JavaScript/React SDKs and an edge proxy to a CLI, webhooks, a WordPress plugin and a Shopify app.
+        tags: [integrations, frontend, backend, edge]
+      - id: exp.current.h2
+        text: Built a multi-tenant translation proxy on Cloudflare Workers that serves many customer sites from one deployment.
+        tags: [edge, backend, multi-tenant]
+      - id: exp.current.h3
+        text: Built a CLI that syncs 8 translation file formats for iOS, Android and web projects.
+        tags: [tooling, mobile, integrations]
+      - id: exp.current.h4
+        text: Maintain 5 public npm packages and 6 private packages in one TypeScript monorepo, with automated release workflows.
+        tags: [tooling, ci, frontend]
+      - id: exp.current.h5
+        text: Built the integration, webhook and edge-proxy APIs in the company's Python/FastAPI backend.
+        tags: [backend, python]
+
+  - id: exp.studio
+    org: Own multimedia production studio
+    role: Founder and Audio Engineer
+    location: La Trinidad, Philippines
+    start: 2017-01
+    end: 2022-08
+    highlights:
+      - id: exp.studio.h1
+        text: Ran a recording studio end to end, from equipment maintenance and troubleshooting to production workflows and client deadlines.
+        tags: [ownership, operations]
+      - id: exp.studio.h2
+        text: Built a car warning accessory installed in more than 50 vehicles.
+        tags: [hardware, embedded, product]
+      - id: exp.studio.h3
+        text: Built a robot car controlled by hand gestures over Bluetooth, with 95% gesture-recognition accuracy.
+        tags: [hardware, embedded, algorithms]
+
+  - id: exp.ti
+    org: Texas Instruments
+    role: Equipment Engineer
+    location: Baguio, Philippines
+    start: 2014-05
+    end: 2016-12
+    highlights:
+      - id: exp.ti.h1
+        text: Led machine conversion projects that cut downtime by 30% and raised production efficiency by 25%.
+        tags: [hardware, leadership, operations]
+      - id: exp.ti.h2
+        text: Led a team of 5 engineers on conversions and upgrades that lowered operational costs by 15%.
+        tags: [leadership, hardware]
+
+education:
+  - id: edu.hive
+    org: Hive Helsinki
+    programme: Software development (42 network core curriculum)
+    start: 2023-10
+    end: 2025-05
+    projects: [proj.transcendence, proj.webserv, proj.cub3d, proj.minishell, proj.philosophers, proj.inception]
+  - id: edu.slu
+    org: Saint Louis University, Baguio
+    programme: B.S. Electronics and Communications Engineering (DOST-SEI scholar)
+    start: 2007-06
+    end: 2013-04
+  - id: edu.forssa
+    org: Forssan ammatti-instituutti
+    programme: Integration training for immigrants (kotoutumiskoulutus)
+    start: 2022-09
+    end: 2023-05
+
+licenses:
+  - Professional Electronics and Communications Engineer (Philippines)
+  - Professional Electronics and Communications Technician (Philippines)
+
+awards:
+  - id: award.junction
+    text: 2nd place, Supercell × Junction AI Hackathon (May 2025), with a 48-hour AI interrogation game.
+    project: proj.haiv
+    tags: [ai, teamwork]
+
+projects:
+  - id: proj.slash
+    name: Slash
+    status: live                          # slash.nurho.net; domain moving soon
+    summary: Darts tournament app for pub nights. Players join by PIN or QR code, and every match syncs live across three phones.
+    url: https://slash.nurho.net
+    repo: private                         # code on request
+    stack: [react, typescript, vite, pwa, hono, bun, postgres, drizzle, zero]
+    featured: true
+    highlights:
+      - id: proj.slash.h1
+        text: Used for 4 real pub tournaments so far; live sync across three phones per match held up from the first night.
+        tags: [real-time, sync, product]
+      - id: proj.slash.h2
+        text: Designed scoring as an append-only visit log with device-generated UUIDv7 keys, so several phones can score one match safely.
+        tags: [real-time, data-modelling, sync]
+      - id: proj.slash.h3
+        text: A test caught tournament PINs leaking to anonymous clients through the sync layer; I fixed it at the Postgres publication and kept the test in CI.
+        tags: [security, testing, sync]
+      - id: proj.slash.h4
+        text: First commit to production in about 9 weeks, with about 760 automated tests in CI.
+        tags: [testing, ci, delivery]
+      - id: proj.slash.h5
+        text: Implemented Glicko-2 player ratings from Glickman's paper, with deterministic replay as the only correction path.
+        tags: [algorithms, data-modelling]
+    decisions:
+      - id: proj.slash.d.zero
+        chose: Zero for live sync, with all writes going through the Hono API
+        over: Polling or server-sent events
+        because: Three phones per match plus spectators need the same state within a moment; Zero proved the better fit in use.
+        tags: [real-time, sync]
+
+  - id: proj.kiln
+    name: kiln
+    status: in-use
+    summary: Command-line tool that gives AI coding agents IDE-grade references, definitions, type errors and one-shot runtime debugging.
+    repo: private                         # going public after open field reports are fixed
+    stack: [typescript, node, lsp, cdp, dap, python]
+    featured: true
+    highlights:
+      - id: proj.kiln.h1
+        text: Built a CLI giving coding agents language-server-exact references, definitions and type errors for TypeScript and Python.
+        tags: [tooling, ai, developer-experience]
+      - id: proj.kiln.h2
+        text: Used it across 41 of my own projects; 1,114 agent calls logged from July to October 2026.
+        tags: [tooling, dogfooding]
+      - id: proj.kiln.h3
+        text: Run a dogfooding loop where every wrong answer becomes a field report; 39 reports logged so far.
+        tags: [dogfooding, quality]
+      - id: proj.kiln.h4
+        text: Added Python runtime debugging through the Debug Adapter Protocol without changing the four debug commands' interface.
+        tags: [tooling, architecture]
+      - id: proj.kiln.h5
+        text: Keep an append-only log of 30 dated design decisions with their reasons.
+        tags: [architecture, documentation]
+
+  - id: proj.sisu-shift
+    name: Sisu Shift
+    status: beta                          # 20 alpha testers, 5 users via Apple's test channel
+    summary: Mobile app for Finnish nurses that tracks shifts and calculates pay; team leads can generate schedules from members' preferences.
+    url: https://sisushift.net
+    repo: private
+    stack: [react-native, expo, typescript, supabase, postgres, python, fastapi, or-tools, gemini]
+    featured: true
+    highlights:
+      - id: proj.sisu-shift.h1
+        text: Tested with 20 alpha testers and 5 users through Apple's test channel.
+        tags: [mobile, product]
+      - id: proj.sisu-shift.h2
+        text: Built a shift-scheduling solver with OR-Tools CP-SAT that enforces Finnish rest and hour rules and balances fairness.
+        tags: [algorithms, optimisation, backend, python]
+      - id: proj.sisu-shift.h3
+        text: Built photo-to-schedule import; Gemini vision turns a printed roster into shifts the user reviews before saving.
+        tags: [ai, mobile]
+      - id: proj.sisu-shift.h4
+        text: Calculated Finnish nurse pay per shift, with correct hours across daylight-saving changes and a config snapshot on every result.
+        tags: [data-modelling, correctness]
+      - id: proj.sisu-shift.h5
+        text: Set up CI where merging to main migrates the database first, then builds and submits the iOS and Android apps.
+        tags: [ci, mobile, delivery]
+    decisions:
+      - id: proj.sisu-shift.d.solver
+        chose: Isolated FastAPI + CP-SAT service
+        over: Running optimisation inside the main API
+        because: Solving is CPU-heavy; isolation keeps the app responsive and costs flat.
+        tags: [backend, performance]
+      - id: proj.sisu-shift.d.offline
+        chose: TanStack Query with encrypted MMKV persistence and paused-mutation replay
+        over: A custom sync engine with a conflict UI
+        because: The server stays the source of truth, and the simpler design covered the offline need.
+        tags: [mobile, sync]
+
+  - id: proj.synchd
+    name: synchd
+    status: live                          # invite only
+    summary: Local-first chord charts on a beat grid; a live session keeps every band member's screen on the same bar.
+    url: https://synchd.nurho.net
+    repo: private
+    stack: [react, typescript, vite, pwa, hono, bun, postgres, powersync, playwright]
+    highlights:
+      - id: proj.synchd.h1
+        text: Built it for my own band and used it in a live performance with 4 members, replacing printed sheets.
+        tags: [product, real-time]
+      - id: proj.synchd.h2
+        text: "Synced band screens with a three-layer clock: a monotonic tick, an NTP-style server offset and a wall-clock fallback."
+        tags: [real-time, sync, architecture]
+      - id: proj.synchd.h3
+        text: Kept beat-time animation out of React; a plain TypeScript engine updates the DOM on 16th-note ticks.
+        tags: [frontend, performance]
+      - id: proj.synchd.h4
+        text: Wrote about 2,255 unit tests and 132 Playwright end-to-end tests, run in CI against a real Postgres.
+        tags: [testing, ci]
+      - id: proj.synchd.h5
+        text: Fixed a cross-tenant write bug found in a security review; writes now authorize from the stored row, not the request.
+        tags: [security, backend]
+      - id: proj.synchd.h6
+        text: Imported a catalogue of 45,916 charts; 97.5% of source rows parse to a chart with both chords and lyrics.
+        tags: [data, parsing]
+
+  - id: proj.shotclock
+    name: ShotClock
+    status: building                      # onboarding 1 league
+    summary: Basketball league app for grassroots leagues in the Philippines, with offline courtside scoring and live standings.
+    url: https://shotclock.nurho.net
+    repo: private
+    stack: [react, typescript, pwa, hono, bun, postgres, powersync, zero, webrtc]
+    highlights:
+      - id: proj.shotclock.h1
+        text: Designed offline-first scoring; taps save on the phone and upload idempotently on reconnect, so no event is counted twice.
+        tags: [sync, mobile, data-modelling]
+      - id: proj.shotclock.h2
+        text: Ran two sync engines side by side, PowerSync for offline scorekeeping and Zero for live views.
+        tags: [sync, architecture, real-time]
+      - id: proj.shotclock.h3
+        text: Rejected a hosted video service on cost and prototyped a fixed-cost WebRTC relay for live game broadcasts.
+        tags: [cost, architecture]
+      - id: proj.shotclock.h4
+        text: "Set up production operations: error tracking, a release per commit, Postgres backups and a deploy-day runbook."
+        tags: [operations, ci]
+
+  - id: proj.rhythm
+    name: rhythm
+    status: in-use                        # Janrau uses it daily
+    summary: Personal goal system with a mentor voice, as a Telegram bot and an installable web app.
+    repo: private
+    stack: [python, postgres, pgvector, expo, telegram, llm]
+    highlights:
+      - id: proj.rhythm.h1
+        text: Designed an LLM agent's memory as an append-only event log with pgvector embeddings instead of a graph database.
+        tags: [ai, data-modelling]
+      - id: proj.rhythm.h2
+        text: Rebuilt v1 as v2 after daily use showed it lacked a goal hierarchy and time awareness.
+        tags: [product, dogfooding]
+
+  - id: proj.claude-skills
+    name: Claude skills and Seiza
+    status: live
+    summary: Public repo of Claude Code skills, including Seiza, my design system, used in production by Slash and synchd.
+    repo: https://github.com/janrau9/claude-skills
+    stack: [css, oklch, markdown]
+    highlights:
+      - id: proj.claude-skills.h1
+        text: Designed Seiza, a design system with 12 laws, OKLCH tokens for light and dark themes, and Fibonacci spacing and motion scales.
+        tags: [design, frontend, accessibility]
+      - id: proj.claude-skills.h2
+        text: Seiza runs in production in two of my apps, Slash and synchd.
+        tags: [design, frontend]
+
+  - id: proj.haiv
+    name: HAIV (hackathon)
+    status: archived
+    summary: AI interrogation game built in 48 hours; suspects answer in natural language and clues unlock as suspicion builds.
+    repo: https://github.com/janrau9/HAIV
+    stack: [react, node, openai]
+    highlights:
+      - id: proj.haiv.h1
+        text: Placed 2nd at the Supercell × Junction AI Hackathon with an AI game built in 48 hours.
+        tags: [ai, teamwork]
+
+  # Hive projects (education section, not featured)
+  - id: proj.transcendence
+    name: transcendence
+    status: archived
+    summary: Real-time multiplayer web game, built by a team of 4 at Hive.
+    repo: https://github.com/Jarnomer/transcendence
+    stack: [typescript, react, node, sqlite, docker, websockets]
+    highlights:
+      - id: proj.transcendence.h1
+        text: In a team of 4, owned remote players, the backend database and user management.
+        tags: [teamwork, backend, real-time]
+  - id: proj.webserv
+    name: webserv
+    status: archived
+    summary: HTTP server in C++ from scratch, with CGI, sessions and cookies.
+    repo: https://github.com/lassikon/webserv   # team project
+    stack: [cpp, posix, http]
+  - id: proj.cub3d
+    name: cub3D
+    status: archived
+    summary: Raycasting 3D engine in C, in the style of Wolfenstein 3D.
+    repo: https://github.com/lassikon/Cub3d      # team project
+    stack: [c, graphics]
+  - id: proj.minishell
+    name: minishell
+    status: archived
+    summary: Unix shell in C with pipes, redirections and process handling.
+    repo: https://github.com/janrau9/minishell
+    stack: [c, posix]
+  - id: proj.philosophers
+    name: philosophers
+    status: archived
+    summary: Dining philosophers in C; threads and mutexes without deadlocks.
+    repo: https://github.com/janrau9/philosophers
+    stack: [c, threads]
+  - id: proj.inception
+    name: Inception
+    status: archived
+    summary: Multi-service web stack in Docker Compose, each service in its own container.
+    repo: https://github.com/janrau9/Inception
+    stack: [docker, nginx, shell]
+
+# Skills: only those with evidence above. Dropped from the old CV for lack of
+# evidence: Go, Django, Vue, Fastify (TODO: add back with a project if you have one).
+skills:
+  - { id: skill.typescript, name: "TypeScript", tags: [frontend, backend] }
+  - { id: skill.react, name: "React", tags: [frontend] }
+  - { id: skill.react-native, name: "React Native / Expo", tags: [mobile] }
+  - { id: skill.node-bun, name: "Node.js and Bun", tags: [backend] }
+  - { id: skill.hono, name: "Hono", tags: [backend] }
+  - { id: skill.python, name: "Python and FastAPI", tags: [backend, python] }
+  - { id: skill.postgres, name: "PostgreSQL", tags: [backend, data-modelling] }
+  - { id: skill.sync, name: "Sync engines (Zero, PowerSync)", tags: [sync, real-time] }
+  - { id: skill.cloudflare, name: "Cloud: Cloudflare Workers, KV, R2 and Pages; Docker on a VPS", tags: [edge, cloud] }
+  - { id: skill.docker, name: "Docker", tags: [operations] }
+  - { id: skill.testing, name: "Testing (Vitest/Jest, Playwright, pytest)", tags: [testing] }
+  - { id: skill.ci, name: "CI/CD with GitHub Actions and EAS", tags: [ci] }
+  - { id: skill.llm, name: "LLM integration (Claude, Gemini, OpenAI)", tags: [ai] }
+  - { id: skill.or-tools, name: "Constraint optimisation (OR-Tools CP-SAT)", tags: [optimisation, algorithms] }
+  - { id: skill.c-cpp, name: "C and C++", tags: [systems] }
+  - { id: skill.electronics, name: "Electronics engineering", tags: [hardware] }
