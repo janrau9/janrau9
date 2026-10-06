@@ -11,7 +11,9 @@ const SECURITY_HEADERS = parseGlobalHeaders(headersFile);
 export const onRequest = defineMiddleware(async (context, next) => {
   const response = await next();
   if (context.isPrerendered) return response;
-  for (const [name, value] of SECURITY_HEADERS) response.headers.set(name, value);
+  // In dev, Vite injects styles inline, which the production CSP forbids; production
+  // builds use external stylesheets only (astro.config.mjs), so the CSP applies there.
+  if (!import.meta.env.DEV) for (const [name, value] of SECURITY_HEADERS) response.headers.set(name, value);
   // Tailored pages are private links: never indexed, never cached by shared caches.
   response.headers.set("X-Robots-Tag", "noindex, nofollow");
   response.headers.set("Cache-Control", "private, no-store");
