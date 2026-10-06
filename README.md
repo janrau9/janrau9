@@ -8,7 +8,7 @@ Software engineer in Finland. I started in electronics: an engineering degree, t
 
 I design the system and direct the work; AI coding agents write much of the code. Nothing ships unchecked: types and tests run on every edit, my own tool kiln checks references and type errors, and I review every change.
 
-**[janrau.dev](https://janrau.dev)** · [CV (PDF)](https://janrau.dev/janrau-beray-cv.pdf) · [LinkedIn](https://www.linkedin.com/in/janrau-beray) · janraup356@gmail.com
+**[janrau.dev](https://janrau.dev)** · [CV (PDF)](https://janrau.dev/janrau-beray-cv.pdf) · [LinkedIn](https://www.linkedin.com/in/janrau-beray) · janrau@janrau.dev
 
 ## Now
 
