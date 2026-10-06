@@ -35,3 +35,13 @@ test("the sky toggle works under the CSP", async ({ page }) => {
   await page.click("#sky-toggle");
   await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
 });
+
+test("case study links resolve without a redirect", async ({ page, request }) => {
+  await page.goto("/");
+  const hrefs = await page.locator('a[href^="/work/"]').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+  for (const href of hrefs) {
+    expect(href).not.toMatch(/\/$/);
+    const res = await request.get(href as string, { maxRedirects: 0 });
+    expect(res.status(), href as string).toBe(200);
+  }
+});
