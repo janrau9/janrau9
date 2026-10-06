@@ -1,0 +1,16 @@
+# Private research notes: never commit
+research/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Tooling
+node_modules/
+dist/
+.astro/
+.wrangler/
+.playwright-mcp/
+coverage/
+*.tsbuildinfo
