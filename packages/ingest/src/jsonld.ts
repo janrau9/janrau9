@@ -1,5 +1,5 @@
 import { parseHTML } from "linkedom";
-import { htmlToText } from "./text.ts";
+import { htmlToText, unescapeHtml } from "./text.ts";
 
 export interface StructuredPost {
   role?: string | undefined;
@@ -52,6 +52,7 @@ function toStructured(p: Node): StructuredPost {
     company: typeof org === "string" ? str(org) : str(org?.name),
     location: location || undefined,
     remote: p.jobLocationType === "TELECOMMUTE" ? true : undefined,
-    text: description ? htmlToText(description) : undefined,
+    // Some boards (Teamtailor) escape the description's HTML once more inside the JSON.
+    text: description ? htmlToText(unescapeHtml(description)) : undefined,
   };
 }

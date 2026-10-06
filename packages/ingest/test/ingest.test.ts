@@ -69,6 +69,14 @@ describe("the fetch ladder", () => {
     expect(post.text).toContain("office presence twice a week");
   });
 
+  test("step 2: embedded job data whose HTML is escaped twice (Teamtailor) still becomes text", async () => {
+    const { fetcher } = fakeWeb({ "https://careers.acme.example/": { body: fixture("jsonld-escaped.html") } });
+    const post = await fetchPost("https://careers.acme.example/jobs/7-devex", { fetcher });
+    expect(post.source.step).toBe("json-ld");
+    expect(post.text).not.toMatch(/<\/?(p|span|li)>|&lt;/);
+    expect(post.text).toContain("- Experience with CI/CD systems");
+  });
+
   test("step 3: a plain page's main text, without navigation or footer", async () => {
     const { fetcher } = fakeWeb({ "https://careers.acme.example/": { body: fixture("plain.html") } });
     const post = await fetchPost("https://careers.acme.example/frontend", { fetcher });
