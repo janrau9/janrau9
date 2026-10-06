@@ -1,5 +1,7 @@
 export * from "./cv.ts";
 export * from "./load.ts";
 export * from "./tags.ts";
+export * from "./tailor.ts";
 export * from "./validate.ts";
+export * from "./variant.ts";
 export * from "./work.ts";

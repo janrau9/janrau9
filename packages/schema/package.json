@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./variant": "./src/variant.ts",
+    "./cv": "./src/cv.ts",
+    "./tailor": "./src/tailor.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",
