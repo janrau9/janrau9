@@ -1,13 +1,43 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { parse } from "yaml";
+import type { Cv } from "./cv.ts";
 import { type Issue, validateCv, validateWork } from "./validate.ts";
-import type { WorkFile } from "./work.ts";
+import { type WorkFile, WorkFrontmatter } from "./work.ts";
+
+export interface CaseStudy {
+  /** URL slug: the file name without `.md`. */
+  slug: string;
+  frontmatter: WorkFrontmatter;
+  body: string;
+}
+
+export interface Content {
+  cv: Cv;
+  work: CaseStudy[];
+}
 
 const FRONTMATTER = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
 
 /** Validate everything under a content directory. Returns every issue, not just the first. */
 export function validateContentDir(dir: string): Issue[] {
+  return readContentDir(dir).issues;
+}
+
+/** Load validated content for rendering. Throws with every issue listed if anything is invalid. */
+export function loadContent(dir: string): Content {
+  const { cv, files, issues } = readContentDir(dir);
+  if (issues.length > 0 || !cv)
+    throw new Error(`invalid content:\n${issues.map((i) => `  ${i.file} ${i.path}: ${i.message}`).join("\n")}`);
+  const work = files.map((f) => ({
+    slug: f.file.replace(/^.*\//, "").replace(/\.md$/, ""),
+    frontmatter: WorkFrontmatter.parse(f.frontmatter),
+    body: f.body,
+  }));
+  return { cv, work };
+}
+
+function readContentDir(dir: string): { cv?: Cv; files: WorkFile[]; issues: Issue[] } {
   // pnpm runs scripts inside the package; report paths from where the command was typed.
   const base = process.env.INIT_CWD ?? process.cwd();
   const rel = (p: string) => relative(base, p) || p;
@@ -17,10 +47,13 @@ export function validateContentDir(dir: string): Issue[] {
   try {
     raw = parse(readFileSync(cvPath, "utf8"));
   } catch (err) {
-    return [{ file: rel(cvPath), path: "", message: `cannot read YAML: ${(err as Error).message}` }];
+    return {
+      files: [],
+      issues: [{ file: rel(cvPath), path: "", message: `cannot read YAML: ${(err as Error).message}` }],
+    };
   }
   const { cv, issues } = validateCv(raw, rel(cvPath));
-  if (!cv) return issues;
+  if (!cv) return { files: [], issues };
 
   const workDir = join(dir, "work");
   const files: WorkFile[] = [];
@@ -39,5 +72,5 @@ export function validateContentDir(dir: string): Issue[] {
       issues.push({ file: rel(path), path: "frontmatter", message: `cannot read YAML: ${(err as Error).message}` });
     }
   }
-  return [...issues, ...validateWork(files, cv)];
+  return { cv, files, issues: [...issues, ...validateWork(files, cv)] };
 }
