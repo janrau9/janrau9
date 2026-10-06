@@ -1,9 +1,9 @@
 name: CI
 
+# Every branch lives in this repo, so a push trigger covers branches and pull requests alike.
 on:
   push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
