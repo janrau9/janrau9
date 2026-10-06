@@ -1,0 +1,8 @@
+{
+  "title": "Software Engineer",
+  "company_name": "Acme Events",
+  "location": {
+    "name": "Helsinki, Finland"
+  },
+  "content": "&lt;p&gt;We build scheduling tools for event organisers across Europe. You will design, build and run TypeScript services and React interfaces, integrate third-party APIs, and own features from idea to production. You have shipped production software, write tests by habit, and use AI coding tools with judgement. We offer a small team, real ownership and a calm pace.&lt;/p&gt;&lt;h3&gt;Requirements&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;Experience with TypeScript and React&lt;/li&gt;&lt;li&gt;Comfortable with real-time sync&lt;/li&gt;&lt;/ul&gt;"
+}
