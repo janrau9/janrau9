@@ -48,6 +48,18 @@ export const Variant = z.strictObject({
     whyMe: EvidenceParagraph,
     howIWork: EvidenceParagraph,
   }),
+  /** Answers to the application form's own questions. Private: shown in review, never published. */
+  formAnswers: z
+    .array(
+      z.strictObject({
+        question: z.string().min(3),
+        /** The form's character limit, if it has one. */
+        limit: z.number().int().positive().optional(),
+        answer: z.string().min(1),
+        evidenceIds: z.array(z.string()).min(1),
+      }),
+    )
+    .optional(),
 });
 
 export type Variant = z.infer<typeof Variant>;
@@ -112,6 +124,21 @@ export function validateVariant(raw: unknown, cv: Cv, postText: string, file = "
   for (const phrase of BANNED_PHRASES)
     if (normalise(note).includes(phrase)) add("coverNote", `uses the banned phrase "${phrase}"`);
 
+  for (const [i, f] of (v.formAnswers ?? []).entries()) {
+    const path = `formAnswers[${i}]`;
+    if (f.limit !== undefined && f.answer.length > f.limit)
+      add(`${path}.answer`, `${f.answer.length} characters; the form allows ${f.limit}`);
+    for (const [j, id] of f.evidenceIds.entries())
+      if (!ids.has(id)) add(`${path}.evidenceIds[${j}]`, `unknown id "${id}"`);
+    const grounding = `${f.evidenceIds.map((id) => ids.get(id) ?? "").join(" ")} ${postText}`;
+    for (const n of f.answer.match(/\d[\d,.]*%?/g) ?? [])
+      if (!grounding.includes(n.replace(/[.,]$/, "")))
+        add(`${path}.answer`, `the number "${n}" appears in no cited item or the post`);
+    for (const problem of countMismatches(f.answer)) add(`${path}.answer`, problem);
+  }
+  for (const [name, para] of Object.entries(v.coverNote))
+    for (const problem of countMismatches(para.text)) add(`coverNote.${name}`, problem);
+
   // Numbers in the note must appear in a cited item, so the note can't inflate a claim.
   const cited = [...whyMe.evidenceIds, ...howIWork.evidenceIds].map((id) => ids.get(id) ?? "").join(" ");
   const sources = `${cited} ${postText}`;
@@ -119,4 +146,30 @@ export function validateVariant(raw: unknown, cv: Cv, postText: string, file = "
     if (!sources.includes(n)) add("coverNote", `the number "${n}" appears in no cited item or the post`);
 
   return issues;
+}
+
+const NUMBER_WORDS: Record<string, number> = {
+  two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+};
+
+/**
+ * "I built 6 ways to connect: A, B and C" promises six items and lists three. Finds a
+ * count followed by a colon-introduced list and checks the list adds up. Lists split
+ * on commas and a final "and"/"or"; reword the sentence if an item contains a comma.
+ */
+export function countMismatches(text: string): string[] {
+  const problems: string[] = [];
+  const pattern = /\b(\d+|two|three|four|five|six|seven|eight|nine|ten)\s+([a-z][a-z -]{0,60}?):\s*([^.;]+)/gi;
+  for (const m of text.matchAll(pattern)) {
+    const [, rawCount = "", noun = "", list = ""] = m;
+    const promised = Number(rawCount) || NUMBER_WORDS[rawCount.toLowerCase()];
+    if (!promised) continue;
+    const items = list
+      .split(/,\s*(?:and\s+|or\s+)?|\s+(?:and|or)\s+/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+    if (items.length > 1 && items.length !== promised)
+      problems.push(`says ${rawCount} ${noun.trim()} but lists ${items.length}: ${items.join(" | ")}`);
+  }
+  return problems;
 }
