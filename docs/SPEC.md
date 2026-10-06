@@ -116,7 +116,7 @@ Defaults. Each gets an ADR. Suggest an alternative if a default is clearly worse
 | Monorepo | pnpm workspaces, TypeScript | One language across site, CLI and schema |
 | Schema | Zod, plus generated JSON Schema for editor validation of `cv.yaml` | Shared by site, CLI and API |
 | Site | Astro on Cloudflare Workers: static assets plus on-demand routes for `/for`, `/e`, `/admin` | One codebase for static and dynamic; Cloudflare's recommended target for new projects |
-| Design | Seiza design system | Dogfooding; one vermilion accent on the primary action |
+| Design | Seiza design system | Dogfooding. The one vermilion seal marks availability (home) or project status (case study), never a button: Seiza's seal law |
 | Data | Cloudflare D1 + R2 | Free tier, private, no server to run |
 | Admin auth | Cloudflare Access (free tier) | No custom auth code |
 | PDF | Typst | Millisecond compiles, reads YAML/JSON directly, little escaping, WASM build exists |
