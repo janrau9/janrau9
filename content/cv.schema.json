@@ -1,0 +1,690 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "person": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workRights": {
+          "type": "string",
+          "minLength": 1
+        },
+        "availability": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workPreferences": {
+          "type": "object",
+          "properties": {
+            "remote": {
+              "type": "boolean"
+            },
+            "hybrid": {
+              "type": "boolean"
+            },
+            "relocation": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "remote",
+            "hybrid",
+            "relocation"
+          ],
+          "additionalProperties": false
+        },
+        "languages": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "level": {
+                "type": "string",
+                "enum": [
+                  "native",
+                  "professional",
+                  "conversational",
+                  "basic"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "level"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            },
+            "github": {
+              "type": "string",
+              "format": "uri"
+            },
+            "linkedin": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "required": [
+            "email",
+            "github",
+            "linkedin"
+          ],
+          "additionalProperties": false
+        },
+        "about": {
+          "type": "string",
+          "minLength": 20
+        },
+        "aiPractice": {
+          "type": "string",
+          "minLength": 20
+        }
+      },
+      "required": [
+        "name",
+        "location",
+        "workRights",
+        "availability",
+        "workPreferences",
+        "languages",
+        "links",
+        "about",
+        "aiPractice"
+      ],
+      "additionalProperties": false
+    },
+    "headlines": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^hl\\.[a-z0-9-]+(\\.[a-z0-9-]+)*$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 90
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "experience": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^exp\\.[a-z0-9-]+(\\.[a-z0-9-]+)*$"
+          },
+          "org": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1
+          },
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "highlights": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 10,
+                  "maxLength": 220
+                },
+                "tags": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "accessibility",
+                      "ai",
+                      "algorithms",
+                      "architecture",
+                      "backend",
+                      "ci",
+                      "cloud",
+                      "correctness",
+                      "cost",
+                      "data",
+                      "data-modelling",
+                      "delivery",
+                      "design",
+                      "developer-experience",
+                      "documentation",
+                      "dogfooding",
+                      "edge",
+                      "embedded",
+                      "frontend",
+                      "hardware",
+                      "integrations",
+                      "leadership",
+                      "mobile",
+                      "multi-tenant",
+                      "operations",
+                      "optimisation",
+                      "ownership",
+                      "parsing",
+                      "performance",
+                      "product",
+                      "python",
+                      "quality",
+                      "real-time",
+                      "security",
+                      "sync",
+                      "systems",
+                      "teamwork",
+                      "testing",
+                      "tooling"
+                    ]
+                  }
+                },
+                "projects": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "text",
+                "tags"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "org",
+          "role",
+          "location",
+          "start",
+          "end",
+          "highlights"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^edu\\.[a-z0-9-]+(\\.[a-z0-9-]+)*$"
+          },
+          "org": {
+            "type": "string",
+            "minLength": 1
+          },
+          "programme": {
+            "type": "string",
+            "minLength": 1
+          },
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "org",
+          "programme",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "licenses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "awards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^award\\.[a-z0-9-]+(\\.[a-z0-9-]+)*$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 10
+          },
+          "project": {
+            "type": "string"
+          },
+          "tags": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "accessibility",
+                "ai",
+                "algorithms",
+                "architecture",
+                "backend",
+                "ci",
+                "cloud",
+                "correctness",
+                "cost",
+                "data",
+                "data-modelling",
+                "delivery",
+                "design",
+                "developer-experience",
+                "documentation",
+                "dogfooding",
+                "edge",
+                "embedded",
+                "frontend",
+                "hardware",
+                "integrations",
+                "leadership",
+                "mobile",
+                "multi-tenant",
+                "operations",
+                "optimisation",
+                "ownership",
+                "parsing",
+                "performance",
+                "product",
+                "python",
+                "quality",
+                "real-time",
+                "security",
+                "sync",
+                "systems",
+                "teamwork",
+                "testing",
+                "tooling"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "tags"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "projects": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^proj\\.[a-z0-9-]+(\\.[a-z0-9-]+)*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "live",
+              "in-use",
+              "beta",
+              "building",
+              "archived"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 220
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "repo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "private"
+              },
+              {
+                "type": "string",
+                "format": "uri"
+              }
+            ]
+          },
+          "stack": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 10,
+                  "maxLength": 220
+                },
+                "tags": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "accessibility",
+                      "ai",
+                      "algorithms",
+                      "architecture",
+                      "backend",
+                      "ci",
+                      "cloud",
+                      "correctness",
+                      "cost",
+                      "data",
+                      "data-modelling",
+                      "delivery",
+                      "design",
+                      "developer-experience",
+                      "documentation",
+                      "dogfooding",
+                      "edge",
+                      "embedded",
+                      "frontend",
+                      "hardware",
+                      "integrations",
+                      "leadership",
+                      "mobile",
+                      "multi-tenant",
+                      "operations",
+                      "optimisation",
+                      "ownership",
+                      "parsing",
+                      "performance",
+                      "product",
+                      "python",
+                      "quality",
+                      "real-time",
+                      "security",
+                      "sync",
+                      "systems",
+                      "teamwork",
+                      "testing",
+                      "tooling"
+                    ]
+                  }
+                },
+                "projects": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "text",
+                "tags"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "chose": {
+                  "type": "string",
+                  "minLength": 3
+                },
+                "over": {
+                  "type": "string",
+                  "minLength": 3
+                },
+                "because": {
+                  "type": "string",
+                  "minLength": 10
+                },
+                "tags": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "accessibility",
+                      "ai",
+                      "algorithms",
+                      "architecture",
+                      "backend",
+                      "ci",
+                      "cloud",
+                      "correctness",
+                      "cost",
+                      "data",
+                      "data-modelling",
+                      "delivery",
+                      "design",
+                      "developer-experience",
+                      "documentation",
+                      "dogfooding",
+                      "edge",
+                      "embedded",
+                      "frontend",
+                      "hardware",
+                      "integrations",
+                      "leadership",
+                      "mobile",
+                      "multi-tenant",
+                      "operations",
+                      "optimisation",
+                      "ownership",
+                      "parsing",
+                      "performance",
+                      "product",
+                      "python",
+                      "quality",
+                      "real-time",
+                      "security",
+                      "sync",
+                      "systems",
+                      "teamwork",
+                      "testing",
+                      "tooling"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "chose",
+                "over",
+                "because",
+                "tags"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "summary",
+          "repo",
+          "stack"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "skills": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^skill\\.[a-z0-9-]+(\\.[a-z0-9-]+)*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tags": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "accessibility",
+                "ai",
+                "algorithms",
+                "architecture",
+                "backend",
+                "ci",
+                "cloud",
+                "correctness",
+                "cost",
+                "data",
+                "data-modelling",
+                "delivery",
+                "design",
+                "developer-experience",
+                "documentation",
+                "dogfooding",
+                "edge",
+                "embedded",
+                "frontend",
+                "hardware",
+                "integrations",
+                "leadership",
+                "mobile",
+                "multi-tenant",
+                "operations",
+                "optimisation",
+                "ownership",
+                "parsing",
+                "performance",
+                "product",
+                "python",
+                "quality",
+                "real-time",
+                "security",
+                "sync",
+                "systems",
+                "teamwork",
+                "testing",
+                "tooling"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "tags"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "person",
+    "headlines",
+    "experience",
+    "education",
+    "projects",
+    "skills"
+  ],
+  "additionalProperties": false
+}

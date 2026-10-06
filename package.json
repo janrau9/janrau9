@@ -1,0 +1,29 @@
+{
+  "name": "janrau-portfolio",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.19.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm validate && pnpm schema:check",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "validate": "pnpm --filter @janrau/schema validate ../../content",
+    "schema:gen": "pnpm --filter @janrau/schema schema:gen ../../content/cv.schema.json",
+    "schema:check": "pnpm schema:gen && git diff --exit-code content/cv.schema.json",
+    "secrets:scan": "scripts/scan-secrets.sh"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.0",
+    "typescript": "^5.9.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
