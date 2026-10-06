@@ -75,3 +75,27 @@ describe("README", () => {
     expect(readme).toContain("Set in seiza · a design language by");
   });
 });
+
+describe("tailored PDF", async () => {
+  const { Variant } = await import("@janrau/schema/variant");
+  const { buildTailoredDocument } = await import("../src/document.ts");
+  const { readFileSync } = await import("node:fs");
+  const fixture = resolve(import.meta.dirname, "../../../apps/site/test/fixtures/acme.variant.json");
+  const variant = Variant.parse(JSON.parse(readFileSync(fixture, "utf8")));
+  const doc = buildTailoredDocument(content, variant, { site: SITE, phone: "+358 00 000 0000" });
+  const { text } = await extractText(new Uint8Array(renderPdf(doc)), { mergePages: true });
+  const pdf = flat(text);
+
+  test("puts the variant's projects first", () => {
+    expect(doc.projects.slice(0, 3).map((p) => p.name)).toEqual(["Slash", "synchd", "kiln"]);
+  });
+
+  test("prints the cover note under the company's name", () => {
+    expect(pdf).toContain("Why Acme Events");
+    for (const p of doc.coverNote?.paragraphs ?? []) expect(pdf).toContain(flat(p));
+  });
+
+  test("prints the phone number, because the link is private", () => {
+    expect(pdf).toContain("+358 00 000 0000");
+  });
+});

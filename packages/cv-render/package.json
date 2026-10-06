@@ -8,7 +8,8 @@
   "scripts": {
     "typecheck": "tsc -p .",
     "test": "vitest run",
-    "render": "tsx src/cli.ts"
+    "render": "tsx src/cli.ts",
+    "publish-variant": "tsx src/publish.ts"
   },
   "dependencies": {
     "@janrau/schema": "workspace:*",

@@ -20,3 +20,6 @@ apps/site/public/janrau-beray-cv.pdf
 test-results/
 playwright-report/
 apps/site/src/generated/
+
+# Hand-written variants and job posts: private application data
+private/

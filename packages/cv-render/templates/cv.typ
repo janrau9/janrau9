@@ -54,6 +54,11 @@
 #v(4pt)
 #text(fill: text2, d.about)
 
+#if "coverNote" in d [
+  #section[Why #d.coverNote.company]
+  #for p in d.coverNote.paragraphs [ #p #parbreak() ]
+]
+
 #section[Experience]
 #for e in d.experience {
   entry(e.role + ", " + e.org, e.period, sub: e.location)

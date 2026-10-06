@@ -1,4 +1,6 @@
 import type { Content } from "@janrau/schema";
+import { resolveVariant } from "@janrau/schema/tailor";
+import type { Variant } from "@janrau/schema/variant";
 
 /**
  * The data a CV template renders: already selected and ordered, so templates
@@ -16,6 +18,8 @@ export interface CvDocument {
   awards: string[];
   licenses: string[];
   skills: string[];
+  /** Tailored CVs only: the 3-paragraph note for one company. */
+  coverNote?: { company: string; paragraphs: string[] };
 }
 
 export interface DocumentOptions {
@@ -88,4 +92,43 @@ export function buildCvDocument({ cv }: Content, options: DocumentOptions): CvDo
 function workPreference(p: { remote: boolean; hybrid: boolean; relocation: boolean }): string {
   const modes = [p.remote && "remote", p.hybrid && "hybrid"].filter(Boolean).join(" or ");
   return `Open to ${modes || "on-site"} work${p.relocation ? " and relocation" : ""}`;
+}
+
+/**
+ * The tailored CV for one application: the variant's headline, its chosen projects
+ * first, cited highlights first, its skills first, and the cover note. Built from the
+ * same resolver as the tailored page, so the page and the PDF always agree.
+ */
+export function buildTailoredDocument(content: Content, variant: Variant, options: DocumentOptions): CvDocument {
+  const { cv } = content;
+  const refs = content.work.map((w) => ({ slug: w.slug, id: w.frontmatter.id, draft: w.frontmatter.draft }));
+  const view = resolveVariant(cv, refs, variant);
+  const general = buildCvDocument(content, { ...options, headlineId: variant.headlineId });
+
+  const chosen = variant.projectIds.flatMap((id) => cv.projects.filter((p) => p.id === id));
+  const educationProjects = new Set(cv.education.flatMap((e) => e.projects ?? []));
+  const rest = cv.projects.filter(
+    (p) => !variant.projectIds.includes(p.id) && !educationProjects.has(p.id) && p.status !== "archived",
+  );
+  const projects = [...chosen, ...rest].slice(0, GENERAL_PROJECT_LIMIT).map((p) => ({
+    name: p.name,
+    summary: p.summary,
+    stack: p.stack.join(", "),
+    status: STATUS[p.status] ?? p.status,
+    highlights: (p.highlights ?? []).slice(0, variant.projectIds.includes(p.id) ? 3 : 1).map((h) => h.text),
+  }));
+
+  return {
+    ...general,
+    experience: general.experience.map((e, i) => ({
+      ...e,
+      highlights: view.experience[i]?.highlights ?? e.highlights,
+    })),
+    projects,
+    skills: view.skills,
+    coverNote: {
+      company: variant.company,
+      paragraphs: [view.coverNote.whyRole, view.coverNote.whyMe, view.coverNote.howIWork],
+    },
+  };
 }

@@ -18,7 +18,8 @@
     "secrets:scan": "scripts/scan-secrets.sh",
     "render": "pnpm --filter @janrau/cv-render render",
     "readme:check": "pnpm --filter @janrau/cv-render render readme && git diff --exit-code README.md",
-    "test:site": "pnpm --filter @janrau/site build && pnpm --filter @janrau/site test"
+    "test:site": "pnpm --filter @janrau/site build && pnpm --filter @janrau/site test",
+    "publish-variant": "pnpm --filter @janrau/cv-render publish-variant"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.0",
