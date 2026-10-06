@@ -2,32 +2,16 @@
 import { env } from "cloudflare:workers";
 import Base from "../../components/templates/Base.astro";
 import { verifyAccess } from "../../lib/access";
-import { accessConfig } from "../../lib/admin-env";
-import { type ApplicationRow, funnel, STATUSES } from "../../lib/events";
+import { loadApplications } from "../../lib/admin-data";
+import { adminEmail } from "../../lib/admin-env";
+import { funnel, STATUSES } from "../../lib/events";
 
 export const prerender = false;
 
-const email = await verifyAccess(Astro.request.headers.get("cf-access-jwt-assertion"), accessConfig());
+const email = await adminEmail(Astro.request, verifyAccess);
 if (!email) return new Response("Forbidden", { status: 403 });
 
-const rows: ApplicationRow[] = env.DB
-  ? (
-      await env.DB.prepare(
-        `SELECT a.slug, a.company, a.role, a.status, a.published_at,
-           COALESCE(SUM(e.type = 'human'), 0)                   AS human_opens,
-           COALESCE(SUM(e.type = 'open' AND e.scanner = 1), 0)  AS scanner_opens,
-           MAX(CASE WHEN e.type = 'human' THEN e.ts END)        AS last_human,
-           COALESCE(SUM(e.type = 'fit_viewed'), 0)              AS fit_views,
-           COALESCE(SUM(e.type = 'cv_download'), 0)             AS cv_downloads,
-           COALESCE(SUM(e.type = 'case_click'), 0)              AS case_clicks
-         FROM applications a LEFT JOIN events e ON e.slug = a.slug
-         GROUP BY a.slug ORDER BY a.published_at DESC`,
-      )
-        .bind()
-        .all<ApplicationRow>()
-    ).results
-  : [];
-
+const rows = await loadApplications(env.DB);
 const stages = funnel(rows);
 const ago = (ts: number | null) => {
   if (!ts) return "never";
@@ -48,12 +32,14 @@ const label = (s: string) => s.replace("_", " ");
 
     <section class="section" aria-labelledby="funnel-title">
       <h2 id="funnel-title">Funnel</h2>
-      <ol class="list-plain stats">
+      <ol class="list-plain stats" id="funnel">
         {
           stages.map((s) => (
             <li>
               <span class="micro">{s.stage}</span>
-              <span class="count">{s.count}</span>
+              <span class="count" data-stage={s.stage}>
+                {s.count}
+              </span>
             </li>
           ))
         }
@@ -85,26 +71,36 @@ const label = (s: string) => s.replace("_", " ");
               rows.map((r) => (
                 <tr id={r.slug}>
                   <td>
-                    <a href={`/for/${r.slug}?preview`}>{r.company}</a>
-                    <span class="micro block">{r.role}</span>
+                    <div class="stack-8">
+                      <a href={`/for/${r.slug}?preview`}>{r.company}</a>
+                      <span class="micro">{r.role}</span>
+                      <copy-link data-url={`https://janrau.dev/for/${r.slug}`}>
+                        <button type="button" class="link-button micro">
+                          Copy link
+                        </button>
+                      </copy-link>
+                    </div>
                   </td>
                   <td>
-                    <form method="post" action="/admin/status" class="row status-form">
-                      <input type="hidden" name="slug" value={r.slug} />
-                      <label class="visually-hidden" for={`status-${r.slug}`}>
-                        Status for {r.company}
-                      </label>
-                      <select id={`status-${r.slug}`} name="status">
-                        {STATUSES.map((s) => (
-                          <option value={s} selected={s === r.status}>
-                            {label(s)}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="submit" class="button button-outline">
-                        Save
-                      </button>
-                    </form>
+                    <status-control data-saved={r.status}>
+                      <form method="post" action="/admin/status" class="status-form">
+                        <input type="hidden" name="slug" value={r.slug} />
+                        <label class="visually-hidden" for={`status-${r.slug}`}>
+                          Status for {r.company}
+                        </label>
+                        <select id={`status-${r.slug}`} name="status">
+                          {STATUSES.map((s) => (
+                            <option value={s} selected={s === r.status}>
+                              {label(s)}
+                            </option>
+                          ))}
+                        </select>
+                        <button type="submit" class="button button-outline save">
+                          Save
+                        </button>
+                      </form>
+                      <p class="micro state" role="status" aria-live="polite" />
+                    </status-control>
                   </td>
                   <td class="num">{r.human_opens}</td>
                   <td>{ago(r.last_human)}</td>
@@ -122,6 +118,95 @@ const label = (s: string) => s.replace("_", " ");
     </section>
   </div>
 </Base>
+
+<script>
+  /** Seiza's timings: state changes in 144ms, cues revert after 1597ms. */
+  const REVERT_MS = 1597;
+
+  /**
+   * Status island. Enhances the plain form: Save is enabled only when the choice differs
+   * from what the database holds, and every outcome is confirmed by the server, never
+   * assumed. On failure the choice stays for a retry, and the row says what is still saved.
+   */
+  class StatusControl extends HTMLElement {
+    connectedCallback() {
+      const form = this.querySelector("form");
+      const select = this.querySelector("select");
+      const save = this.querySelector<HTMLButtonElement>("button.save");
+      const state = this.querySelector<HTMLElement>(".state");
+      if (!form || !select || !save || !state) return;
+      let revert: ReturnType<typeof setTimeout> | undefined;
+
+      const show = (kind: "idle" | "unsaved" | "saving" | "saved" | "error", text = "") => {
+        clearTimeout(revert);
+        this.dataset.state = kind;
+        state.textContent = text;
+        save.disabled = kind === "idle" || kind === "saving" || kind === "saved";
+        save.textContent = kind === "saving" ? "Saving…" : "Save";
+        this.setAttribute("aria-busy", String(kind === "saving"));
+      };
+      const sync = () =>
+        select.value === this.dataset.saved ? show("idle") : show("unsaved", `Unsaved: was ${this.dataset.saved?.replace("_", " ")}`);
+
+      select.addEventListener("change", sync);
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        show("saving", "Saving…");
+        try {
+          const res = await fetch(form.action, { method: "POST", body: new FormData(form), headers: { accept: "application/json" } });
+          const data = (await res.json()) as { ok: boolean; status?: string; message?: string; funnel?: { stage: string; count: number }[] };
+          if (!res.ok || !data.ok || !data.status) throw new Error(data.message ?? `HTTP ${res.status}`);
+          this.dataset.saved = data.status;
+          select.value = data.status;
+          show("saved", `Saved ✓ ${data.status.replace("_", " ")}`);
+          for (const s of data.funnel ?? []) {
+            const el = document.querySelector<HTMLElement>(`[data-stage="${s.stage}"]`);
+            if (el && el.textContent !== String(s.count)) {
+              el.textContent = String(s.count);
+              el.classList.remove("changed");
+              void el.offsetWidth; // restart the rise
+              el.classList.add("changed");
+            }
+          }
+          revert = setTimeout(() => show("idle"), REVERT_MS);
+        } catch (err) {
+          // Keep the choice so Save can retry it, and say what the database still holds.
+          const why = err instanceof Error && err.message !== "Failed to fetch" ? err.message : "No connection.";
+          show("error", `Not saved: ${why} Still ${this.dataset.saved?.replace("_", " ")} in the database.`);
+        }
+      });
+      show("idle");
+    }
+  }
+
+  /** Copy-link island: puts the public tailored link (no ?preview) on the clipboard. */
+  class CopyLink extends HTMLElement {
+    connectedCallback() {
+      const button = this.querySelector("button");
+      const url = this.dataset.url;
+      if (!button || !url) return;
+      let revert: ReturnType<typeof setTimeout> | undefined;
+      button.addEventListener("click", async () => {
+        clearTimeout(revert);
+        try {
+          await navigator.clipboard.writeText(url);
+          button.textContent = "Copied ✓";
+          this.dataset.state = "copied";
+        } catch {
+          button.textContent = "Copy failed: select the link instead";
+          this.dataset.state = "error";
+        }
+        revert = setTimeout(() => {
+          button.textContent = "Copy link";
+          delete this.dataset.state;
+        }, REVERT_MS);
+      });
+    }
+  }
+
+  customElements.define("status-control", StatusControl);
+  customElements.define("copy-link", CopyLink);
+</script>
 
 <style>
   .stats {
@@ -149,6 +234,16 @@ const label = (s: string) => s.replace("_", " ");
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
+  /* A changed number arrives by rising, like every state change in seiza. */
+  .count.changed {
+    animation: rise var(--t-micro) var(--settle);
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -160,9 +255,9 @@ const label = (s: string) => s.replace("_", " ");
   }
   th,
   td {
-    padding: 8px 16px 8px 0;
+    padding: 16px 16px 16px 0;
     border-bottom: 1px solid var(--line);
-    vertical-align: middle;
+    vertical-align: top;
   }
   .num {
     font-variant-numeric: tabular-nums;
@@ -170,12 +265,15 @@ const label = (s: string) => s.replace("_", " ");
   .text-3 {
     color: var(--text-3);
   }
-  .block {
-    display: block;
+  status-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 232px;
   }
   .status-form {
+    display: flex;
     gap: 8px;
-    flex-wrap: nowrap;
   }
   select {
     min-height: 40px;
@@ -185,8 +283,49 @@ const label = (s: string) => s.replace("_", " ");
     background: var(--ground);
     color: var(--ink);
     font: inherit;
+    transition: border-color var(--t-hover) var(--settle);
   }
   select:focus-visible {
     border-color: var(--ink);
+  }
+  /* Unsaved: the field rises toward the ink, so the pending change is the nearest thing. */
+  status-control[data-state="unsaved"] select {
+    border-color: var(--ink);
+  }
+  .save:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .state {
+    min-height: 16px;
+  }
+  status-control[data-state="unsaved"] .state,
+  status-control[data-state="saving"] .state {
+    color: var(--text-2);
+  }
+  status-control[data-state="saved"] .state {
+    color: var(--ink);
+    animation: rise var(--t-micro) var(--settle);
+  }
+  /* An error claims the view's seal: the only red sentence on the page. */
+  status-control[data-state="error"] .state {
+    color: var(--seal);
+  }
+  .link-button {
+    align-self: flex-start;
+    min-height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--text-3) 40%, transparent);
+    text-underline-offset: 2px;
+  }
+  copy-link[data-state="copied"] .link-button {
+    color: var(--ink);
+  }
+  copy-link[data-state="error"] .link-button {
+    color: var(--seal);
   }
 </style>
