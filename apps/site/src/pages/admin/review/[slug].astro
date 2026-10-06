@@ -36,7 +36,17 @@ const { view } = result;
           <h2 id="review-title">Review: {view.company} · {view.role}</h2>
         </div>
         <publish-button data-slug={slug} data-published={published ? "1" : undefined} data-url={publicUrl}>
-          <button type="button" class="button button-ink publish">{published ? "Published" : "Publish"}</button>
+          <div class="row actions">
+            <button type="button" class="button button-ink publish" hidden={published}>Publish</button>
+            <button type="button" class="button button-outline unpublish" hidden={!published}>Unpublish</button>
+          </div>
+          <div class="confirm stack-8" hidden>
+            <p class="small">Unpublish? Anyone with the link will see “not found” until you publish again.</p>
+            <div class="row">
+              <button type="button" class="button button-outline confirm-yes">Take it offline</button>
+              <button type="button" class="link-button small confirm-no">Keep it live</button>
+            </div>
+          </div>
           <p class="micro state" role="status" aria-live="polite">
             {published ? `Live at ${publicUrl.replace("https://", "")}` : "Not published: only you can see this page."}
           </p>
@@ -99,35 +109,70 @@ const { view } = result;
 <script>
   const REVERT_MS = 1597;
 
-  /** Publish island: confirmed by the server, then offers the public link. */
+  /**
+   * Publish island: Publish and Unpublish, each confirmed by the server. Unpublishing is
+   * destructive for anyone holding the link, so it asks first, in words (never red).
+   */
   class PublishButton extends HTMLElement {
     connectedCallback() {
-      const button = this.querySelector("button");
+      const publishBtn = this.querySelector<HTMLButtonElement>(".publish");
+      const unpublishBtn = this.querySelector<HTMLButtonElement>(".unpublish");
+      const confirm = this.querySelector<HTMLElement>(".confirm");
+      const yes = this.querySelector<HTMLButtonElement>(".confirm-yes");
+      const no = this.querySelector<HTMLButtonElement>(".confirm-no");
       const state = this.querySelector<HTMLElement>(".state");
       const { slug, url } = this.dataset;
-      if (!button || !state || !slug || !url) return;
-      if (this.dataset.published) button.disabled = true;
-      button.addEventListener("click", async () => {
-        button.disabled = true;
-        button.textContent = "Publishing…";
-        this.dataset.state = "saving";
+      if (!publishBtn || !unpublishBtn || !confirm || !yes || !no || !state || !slug || !url) return;
+      const link = url.replace("https://", "");
+
+      const show = (published: boolean, message: string, kind: "saved" | "error" | "idle" = "idle") => {
+        publishBtn.hidden = published;
+        unpublishBtn.hidden = !published;
+        confirm.hidden = true;
+        publishBtn.disabled = unpublishBtn.disabled = false;
+        publishBtn.textContent = "Publish";
+        unpublishBtn.textContent = "Unpublish";
+        this.dataset.state = kind;
+        state.textContent = message;
+      };
+      const call = async (path: string) => {
+        const res = await fetch(path, {
+          method: "POST",
+          headers: { "content-type": "application/json", accept: "application/json" },
+          body: JSON.stringify({ slug }),
+        });
+        const data = (await res.json()) as { ok: boolean; message?: string };
+        if (!res.ok || !data.ok) throw new Error(data.message ?? `HTTP ${res.status}`);
+      };
+      const why = (err: unknown) => (err instanceof Error ? err.message : "no connection");
+
+      publishBtn.addEventListener("click", async () => {
+        publishBtn.disabled = true;
+        publishBtn.textContent = "Publishing…";
         try {
-          const res = await fetch("/admin/api/publish", {
-            method: "POST",
-            headers: { "content-type": "application/json", accept: "application/json" },
-            body: JSON.stringify({ slug }),
-          });
-          const data = (await res.json()) as { ok: boolean; message?: string };
-          if (!res.ok || !data.ok) throw new Error(data.message ?? `HTTP ${res.status}`);
-          button.textContent = "Published";
-          this.dataset.state = "saved";
-          this.dataset.published = "1";
-          state.textContent = `Live ✓ ${url.replace("https://", "")}`;
+          await call("/admin/api/publish");
+          show(true, `Live ✓ ${link}`, "saved");
         } catch (err) {
-          button.disabled = false;
-          button.textContent = "Publish";
-          this.dataset.state = "error";
-          state.textContent = `Not published: ${err instanceof Error ? err.message : "no connection"}. The link is still private.`;
+          show(false, `Not published: ${why(err)}. The link is still private.`, "error");
+        }
+      });
+      unpublishBtn.addEventListener("click", () => {
+        unpublishBtn.hidden = true;
+        confirm.hidden = false;
+        yes.focus();
+      });
+      no.addEventListener("click", () => show(true, `Live at ${link}`));
+      yes.addEventListener("click", async () => {
+        yes.disabled = true;
+        yes.textContent = "Taking it offline…";
+        try {
+          await call("/admin/api/unpublish");
+          yes.textContent = "Take it offline";
+          show(false, "Offline ✓ The link shows “not found”. Publish again to restore it.", "saved");
+        } catch (err) {
+          yes.disabled = false;
+          yes.textContent = "Take it offline";
+          show(true, `Still live: ${why(err)}.`, "error");
         }
       });
     }
@@ -179,9 +224,22 @@ const { view } = result;
     align-items: flex-end;
     gap: 8px;
   }
-  .publish:disabled {
+  .publish:disabled,
+  .unpublish:disabled,
+  .confirm-yes:disabled {
     opacity: 0.6;
     cursor: default;
+  }
+  .actions {
+    justify-content: flex-end;
+  }
+  .confirm {
+    align-items: flex-end;
+    text-align: right;
+    max-width: 21rem;
+  }
+  [hidden] {
+    display: none !important;
   }
   publish-button[data-state="saved"] .state {
     color: var(--ink);

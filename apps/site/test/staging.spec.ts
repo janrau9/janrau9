@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { Variant } from "@janrau/schema/variant";
 import { expect, test } from "@playwright/test";
 import siteData from "../src/generated/site-data.json" with { type: "json" };
-import { newSlug, postHash, publish, stage } from "../src/lib/staging";
+import { newSlug, postHash, publish, stage, unpublish } from "../src/lib/staging";
 import type { Db } from "../src/lib/tailored";
 
 // Staging logic against an in-memory fake of D1 and KV.
@@ -30,7 +30,10 @@ function fakeStore() {
             apps.set(String(v[0]), { slug: v[0], company: v[1], role: v[2], post_hash: v[4], published_at: null });
           else if (sql.startsWith("UPDATE applications SET company"))
             Object.assign(apps.get(String(v[3])) ?? {}, { company: v[0] });
-          else if (sql.startsWith("UPDATE applications SET published_at")) {
+          else if (sql.startsWith("UPDATE applications SET published_at = NULL")) {
+            const a = apps.get(String(v[0]));
+            if (a) a.published_at = null;
+          } else if (sql.startsWith("UPDATE applications SET published_at")) {
             const a = apps.get(String(v[1]));
             if (a) a.published_at ??= v[0];
           } else if (sql.startsWith("INSERT INTO variants")) variants.set(String(v[0]), String(v[1]));
@@ -99,4 +102,16 @@ test("the post hash ignores whitespace and case, so a re-paste is the same post"
 
 test("slugs never use ambiguous characters", () => {
   for (let i = 0; i < 200; i++) expect(newSlug("Acme")).toMatch(/^acme-[0-9a-hjkmnp-tv-z]{5}$/);
+});
+
+test("unpublishing clears the date; publishing again sets a new one", async () => {
+  const s = fakeStore();
+  const r = await stage(s.db, s.kv, cv, input());
+  if (!r.ok) throw new Error("stage failed");
+  await publish(s.db, r.slug, 100);
+  expect(await unpublish(s.db, r.slug)).toBe(true);
+  expect(s.apps.get(r.slug)?.published_at).toBeNull();
+  await publish(s.db, r.slug, 300);
+  expect(s.apps.get(r.slug)?.published_at).toBe(300);
+  expect(await unpublish(s.db, "nobody-zzzzz")).toBe(false);
 });

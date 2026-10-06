@@ -81,3 +81,34 @@ test("stage, review, publish: a new application goes public only when published"
   await expect(page.getByRole("status").first()).toHaveText(`Live ✓ janrau.dev/for/${slug}`);
   expect((await request.get(`/for/${slug}`)).status()).toBe(200);
 });
+
+test("unpublish asks first, takes the link offline, and publishing again restores it", async ({ page, request }) => {
+  const fixture = (n: string) => readFileSync(new URL(`fixtures/${n}`, import.meta.url), "utf8");
+  const pdf = Buffer.from("%PDF-1.7 test").toString("base64");
+  const text = `${fixture("acme.post.txt")}\nUnpublish test ${Date.now()}.`;
+  const staged = await request.post("/admin/api/stage", {
+    data: {
+      variant: JSON.parse(fixture("acme.variant.json")),
+      post: { text },
+      pdfs: { page: pdf, cv: pdf, letter: pdf },
+      cvVersion: "test",
+    },
+  });
+  const { slug } = (await staged.json()) as { slug: string };
+  await request.post("/admin/api/publish", { data: { slug } });
+  expect((await request.get(`/for/${slug}`)).status()).toBe(200);
+
+  await page.goto(`/admin/review/${slug}`);
+  await page.getByRole("button", { name: "Unpublish" }).click();
+  await page.getByRole("button", { name: "Keep it live" }).click();
+  expect((await request.get(`/for/${slug}`)).status()).toBe(200);
+
+  await page.getByRole("button", { name: "Unpublish" }).click();
+  await page.getByRole("button", { name: "Take it offline" }).click();
+  await expect(page.getByRole("status").first()).toHaveText(/^Offline ✓/);
+  expect((await request.get(`/for/${slug}`)).status()).toBe(404);
+
+  await page.getByRole("button", { name: "Publish" }).click();
+  await expect(page.getByRole("status").first()).toHaveText(`Live ✓ janrau.dev/for/${slug}`);
+  expect((await request.get(`/for/${slug}`)).status()).toBe(200);
+});

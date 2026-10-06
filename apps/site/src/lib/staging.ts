@@ -131,3 +131,14 @@ export async function publish(db: Db, slug: string, now = Math.floor(Date.now() 
     .run();
   return true;
 }
+
+/**
+ * Take a link offline again: the public page answers "not found" until it is published
+ * again, at the same address. Status and tracking history are untouched.
+ */
+export async function unpublish(db: Db, slug: string): Promise<boolean> {
+  const row = await db.prepare("SELECT slug FROM applications WHERE slug = ?").bind(slug).first<{ slug: string }>();
+  if (!row) return false;
+  await db.prepare("UPDATE applications SET published_at = NULL WHERE slug = ?").bind(slug).run();
+  return true;
+}
