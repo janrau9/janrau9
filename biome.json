@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!content/cv.schema.json"]
+    "includes": ["**", "!content/cv.schema.json", "!**/test/fixtures"]
   },
   "formatter": {
     "indentStyle": "space",
