@@ -20,16 +20,16 @@ Integrations Developer, Localization SaaS startup.
 
 ## Selected work
 
-- **Slash**: Darts tournament app for pub nights. Players join by PIN or QR code, and every match syncs live across three phones.
-- **kiln**: Command-line tool that gives AI coding agents IDE-grade references, definitions, type errors and one-shot runtime debugging.
-- **Sisu Shift**: Mobile app for Finnish nurses that tracks shifts and calculates pay; team leads can generate schedules from members' preferences.
+- [Slash](https://janrau.dev/work/slash): Darts tournament app for pub nights. Players join by PIN or QR code, and every match syncs live across three phones.
+- [kiln](https://janrau.dev/work/kiln): Command-line tool that gives AI coding agents IDE-grade references, definitions, type errors and one-shot runtime debugging.
+- [Sisu Shift](https://janrau.dev/work/sisu-shift): Mobile app for Finnish nurses that tracks shifts and calculates pay; team leads can generate schedules from members' preferences.
 
 <details><summary>More projects</summary>
 
-- **synchd**: Local-first chord charts on a beat grid; a live session keeps every band member's screen on the same bar.
-- **ShotClock**: Basketball league app for grassroots leagues in the Philippines, with offline courtside scoring and live standings.
-- **rhythm**: Personal goal system with a mentor voice, as a Telegram bot and an installable web app.
-- **Claude skills and Seiza**: Public repo of Claude Code skills, including Seiza, my design system, used in production by Slash and synchd.
+- [synchd](https://janrau.dev/work/synchd): Local-first chord charts on a beat grid; a live session keeps every band member's screen on the same bar.
+- [ShotClock](https://janrau.dev/work/shotclock): Basketball league app for grassroots leagues in the Philippines, with offline courtside scoring and live standings.
+- [rhythm](https://janrau.dev/work/rhythm): Personal goal system with a mentor voice, as a Telegram bot and an installable web app.
+- [Claude skills and Seiza](https://janrau.dev/work/claude-skills): Public repo of Claude Code skills, including Seiza, my design system, used in production by Slash and synchd.
 
 </details>
 

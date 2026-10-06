@@ -9,7 +9,7 @@ role: Solo. I designed the product and the system and directed the work; AI codi
 stack: [React 19, TypeScript, PWA, Hono, Bun, PostgreSQL, Drizzle, PowerSync, Zero, WebRTC, Coolify]
 url: https://shotclock.nurho.net
 repo: private   # code available on request
-draft: true     # TODO (Janrau): review
+draft: false
 ---
 
 ## The problem

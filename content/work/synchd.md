@@ -9,7 +9,7 @@ role: Solo. I designed the system and directed the work; AI coding agents wrote 
 stack: [React 19, TypeScript, Vite, PWA, Hono, Bun, PostgreSQL, PowerSync, WebSockets, Playwright, Cloudflare Workers]
 url: https://synchd.nurho.net
 repo: private   # code available on request
-draft: true     # TODO (Janrau): review
+draft: false
 ---
 
 ## The problem

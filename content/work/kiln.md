@@ -9,7 +9,7 @@ role: Solo. I designed the tool and directed the work; AI coding agents wrote mu
 stack: [TypeScript, Node.js, Language Server Protocol, Chrome DevTools Protocol, Debug Adapter Protocol, tree-sitter, pyright, Vitest]
 repo: private   # going public
 featured: true
-draft: true     # TODO (Janrau): review. Screenshots or a terminal recording come after the content is final.
+draft: false
 ---
 
 ## The problem

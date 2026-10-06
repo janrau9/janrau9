@@ -8,7 +8,7 @@ period: 2026-06 – present
 role: Solo. Every design decision in Seiza is mine.
 stack: [Markdown, CSS, OKLCH, Bash]
 repo: https://github.com/janrau9/claude-skills
-draft: true     # TODO (Janrau): review
+draft: false
 ---
 
 ## The problem

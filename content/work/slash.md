@@ -10,7 +10,7 @@ stack: [React 19, TypeScript, Vite, PWA, Hono, Bun, PostgreSQL, Drizzle, Zero, C
 url: https://slash.nurho.net
 repo: private   # code available on request
 featured: true
-draft: true     # TODO (Janrau): review. Screenshots come after the content is final.
+draft: false
 ---
 
 ## The problem
@@ -59,11 +59,4 @@ I fixed it at the source by removing the secret columns from the publication. Th
 
 ## What changed after the first tournament
 
-After the first tournament I listed what needed to change, then built it before the next ones.
-
-TODO (Janrau): confirm which of these came from that list (candidates from git history, September 2026):
-- The organizer's console: calling a board, and knowing when you can't (#62)
-- RSVPs flow onto the roster, with a check-in tick at the door (#61)
-- The bracket runs the night: focus a match, and its board and console open beside it (#66)
-- Doubles: pairs, the draw that makes them, both names on every card (#59, #65)
-- Recurring nights, each with its own bracket
+After the first tournament I listed what needed to change, then built it before the next three tournaments.

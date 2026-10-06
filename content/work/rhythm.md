@@ -8,7 +8,7 @@ period: 2026-05 – 2026-07
 role: Solo. I designed the product and the memory model and directed the work; AI coding agents wrote much of the code under my review.
 stack: [Python, FastAPI, PostgreSQL, pgvector, Telegram bot, Expo, React Native Web, OpenRouter]
 repo: private   # code available on request
-draft: true     # TODO (Janrau): review
+draft: false
 ---
 
 ## The problem

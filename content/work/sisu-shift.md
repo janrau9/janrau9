@@ -10,7 +10,7 @@ stack: [React Native, Expo, TypeScript, Supabase, PostgreSQL, Python, FastAPI, O
 url: https://sisushift.net
 repo: private   # code available on request
 featured: true
-draft: true     # TODO (Janrau): review. Screenshots come after the content is final.
+draft: false
 ---
 
 ## The problem
