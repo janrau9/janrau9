@@ -131,13 +131,19 @@ const validVariant = () => Variant.parse(variant());
 
 describe("counts and form answers", () => {
   test("a count that doesn't match its list fails (the Wolt draft's bug)", () => {
-    expect(countMismatches("I built and own 6 ways for customers to connect: React SDKs, an edge proxy, a CLI, a WordPress plugin and a Shopify app.")).toEqual([
-      expect.stringMatching(/says 6 ways for customers to connect but lists 5/),
-    ]);
+    expect(
+      countMismatches(
+        "I built and own 6 ways for customers to connect: React SDKs, an edge proxy, a CLI, a WordPress plugin and a Shopify app.",
+      ),
+    ).toEqual([expect.stringMatching(/says 6 ways for customers to connect but lists 5/)]);
   });
 
   test("a matching count passes, and sentences without a list are left alone", () => {
-    expect(countMismatches("I built 6 ways to connect: SDKs, a proxy, a CLI, webhooks, a WordPress plugin and a Shopify app.")).toEqual([]);
+    expect(
+      countMismatches(
+        "I built 6 ways to connect: SDKs, a proxy, a CLI, webhooks, a WordPress plugin and a Shopify app.",
+      ),
+    ).toEqual([]);
     expect(countMismatches("Slash has run 4 real pub tournaments.")).toEqual([]);
     expect(countMismatches("three things: speed, care and taste.")).toEqual([]);
   });
@@ -149,17 +155,35 @@ describe("counts and form answers", () => {
   });
 
   test("a form answer over the form's limit fails", () => {
-    const v = { ...variant(), formAnswers: [{ question: "Current projects", limit: 50, answer: "x".repeat(51), evidenceIds: ["exp.current.h1"] }] };
+    const v = {
+      ...variant(),
+      formAnswers: [
+        { question: "Current projects", limit: 50, answer: "x".repeat(51), evidenceIds: ["exp.current.h1"] },
+      ],
+    };
     expect(messages(v).join()).toMatch(/51 characters; the form allows 50/);
   });
 
   test("a form answer's numbers must be grounded", () => {
-    const v = { ...variant(), formAnswers: [{ question: "Projects", answer: "Built 9 integrations.", evidenceIds: ["exp.current.h1"] }] };
+    const v = {
+      ...variant(),
+      formAnswers: [{ question: "Projects", answer: "Built 9 integrations.", evidenceIds: ["exp.current.h1"] }],
+    };
     expect(messages(v).join()).toMatch(/the number "9"/);
   });
 
   test("a grounded form answer within its limit passes", () => {
-    const v = { ...variant(), formAnswers: [{ question: "Projects", limit: 200, answer: "Sole integrations developer: built and own 6 ways for customers to connect.", evidenceIds: ["exp.current.h1"] }] };
+    const v = {
+      ...variant(),
+      formAnswers: [
+        {
+          question: "Projects",
+          limit: 200,
+          answer: "Sole integrations developer: built and own 6 ways for customers to connect.",
+          evidenceIds: ["exp.current.h1"],
+        },
+      ],
+    };
     expect(messages(v)).toEqual([]);
   });
 });
