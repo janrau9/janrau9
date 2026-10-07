@@ -176,12 +176,19 @@ if (document.visibilityState === "visible") timer = setTimeout(human, 3000);
 
     const fit = document.getElementById("fit");
     if (fit && "IntersectionObserver" in window) {
-new IntersectionObserver((entries, obs) => {
-  if (entries.some((e) => e.isIntersecting)) {
-    send("fit_viewed");
-    obs.disconnect();
-  }
-}, { threshold: 0.5 }).observe(fit);
+// Viewed = half the table, or half the screen filled by it: a table taller than two
+// screens can never be half visible at once.
+new IntersectionObserver(
+  (entries, obs) => {
+    const seen = (e: IntersectionObserverEntry) =>
+      e.intersectionRect.height >= 0.5 * Math.min(e.boundingClientRect.height, window.innerHeight);
+    if (entries.some(seen)) {
+      send("fit_viewed");
+      obs.disconnect();
+    }
+  },
+  { threshold: Array.from({ length: 21 }, (_, i) => i / 20) },
+).observe(fit);
     }
     document.addEventListener("click", (e) => {
 const a = (e.target as Element).closest("a");

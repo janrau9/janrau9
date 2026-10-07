@@ -37,7 +37,8 @@ test("a real phone visit counts as a person, with what they did", async ({ brows
   const page = await ctx.newPage();
   await page.goto(`/for/${SLUG}`);
   await page.waitForTimeout(3500);
-  await page.getByRole("heading", { name: /What you asked for/ }).scrollIntoViewIfNeeded();
+  // Scroll as a reader would, to the fit table's middle, wherever the layout puts it.
+  await page.locator("#fit").evaluate((el) => el.scrollIntoView({ block: "center" }));
   await page.waitForTimeout(500);
   await ctx.close();
   await expect
@@ -63,7 +64,8 @@ test("Janrau's own signed-in visits are not recorded", async ({ browser }) => {
   const page = await ctx.newPage();
   await page.goto(`/for/${SLUG}`);
   await page.waitForTimeout(3500);
-  await page.getByRole("heading", { name: /What you asked for/ }).scrollIntoViewIfNeeded();
+  // Scroll as a reader would, to the fit table's middle, wherever the layout puts it.
+  await page.locator("#fit").evaluate((el) => el.scrollIntoView({ block: "center" }));
   await ctx.close();
   expect(events()).toEqual([]);
 });
