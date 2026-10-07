@@ -6,7 +6,14 @@ export default defineConfig({
     // The production build, served by the real Worker against local D1 and KV.
     { name: "site", testIgnore: /\.dev\.spec\.ts$/, use: { baseURL: "http://localhost:4322" } },
     // The admin dashboard needs Cloudflare Access in production builds; dev mode opens it locally.
-    { name: "dev", testMatch: /\.dev\.spec\.ts$/, use: { baseURL: "http://localhost:4323" } },
+    // Runs after "site": both servers share one local SQLite file for D1, and concurrent writes
+    // from two processes fail with SQLITE_BUSY.
+    {
+      name: "dev",
+      testMatch: /\.dev\.spec\.ts$/,
+      use: { baseURL: "http://localhost:4323" },
+      dependencies: ["site"],
+    },
   ],
   webServer: [
     {
