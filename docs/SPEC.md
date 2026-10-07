@@ -455,7 +455,14 @@ events(...)                                                  -- §8
 
 **Done when:** a link opened by an email scanner does not count as a human open, a real phone visit does, and status changes show in the funnel.
 
-### Phase 5: Phone workflow (R5)
+### Phase 5: Phone workflow (R5): dropped 2026-10-07
+
+Covered another way, with no new code or API spend: the `apply` skill runs `/apply` in cloud
+Claude Code sessions from the Claude app on a phone (ADR-003), and review, attachments and
+publishing work from any browser at `/admin`. What this phase would still have added, a paste
+form calling the Claude API from `/admin` and Android's share target, isn't worth an API key
+and a monthly spending cap for one user. Kept below for the record.
+
 
 - Paste form in `/admin`, Claude API with a hard monthly cap, server-side PDF rendering.
 - Android share target (Web Share Target API). On iOS, paste only.
@@ -463,7 +470,12 @@ events(...)                                                  -- §8
 
 **Done when:** a job found on LinkedIn mobile becomes a live link without the laptop.
 
-### Phase 6: Showcase
+### Phase 6: Showcase (shipped 2026-10-07)
+
+`/work/this-site` is live, linked from every tailored page. It reports build facts now; visitor
+numbers are added once real recruiters, not Janrau's own checks, have opened links (his
+signed-in visits are no longer recorded).
+
 
 - `/work/this-site` written from real numbers.
 - Footer link on tailored pages goes live.

@@ -125,7 +125,7 @@ All targets are proposals. **DECIDE** whether they are right.
 | R2 | Tailored pages, variants written by hand | Yes: first tailored links |
 | R3 | Paste pipeline from the laptop | Yes: links in minutes |
 | R4 | Tracking and funnel | Yes: know who opened |
-| R5 | Phone workflow | Convenience |
+| R5 | Phone workflow | Dropped: covered by `/apply` in cloud sessions and `/admin` in any browser (SPEC §11) |
 | R6 | "How this works" case study from real data | Showcase |
 
 R1 ships first, because content is the bottleneck and a plain portfolio already helps.
