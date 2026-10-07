@@ -30,6 +30,7 @@ Integrations Developer, Localization SaaS startup.
 - [ShotClock](https://janrau.dev/work/shotclock): Basketball league app for grassroots leagues in the Philippines, with offline courtside scoring and live standings.
 - [rhythm](https://janrau.dev/work/rhythm): Personal goal system with a mentor voice, as a Telegram bot and an installable web app.
 - [Claude skills and Seiza](https://janrau.dev/work/claude-skills): Public repo of Claude Code skills, including Seiza, my design system, used in production by Slash and synchd.
+- [janrau.dev](https://janrau.dev/work/this-site): This portfolio as a system: one validated source renders the site, the CV and a private tailored page for every job application.
 
 </details>
 

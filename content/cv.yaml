@@ -293,6 +293,33 @@ projects:
         text: Seiza runs in production in two of my apps, Slash and synchd.
         tags: [design, frontend]
 
+  - id: proj.this-site
+    name: janrau.dev
+    status: live
+    summary: "This portfolio as a system: one validated source renders the site, the CV and a private tailored page for every job application."
+    url: https://janrau.dev
+    repo: https://github.com/janrau9/janrau9
+    stack: [typescript, astro, cloudflare-workers, d1, kv, zod, typst, playwright]
+    highlights:
+      - id: proj.this-site.h1
+        text: "Built a pipeline that turns a job post into a private tailored page, CV and cover letter, staged for review and published only on approval."
+        tags: [product, integrations, ai]
+      - id: proj.this-site.h2
+        text: Validation refuses invented claims; every statement about me cites an item in cv.yaml and every company fact is quoted from the post.
+        tags: [quality, correctness, ai]
+      - id: proj.this-site.h3
+        text: About 130 automated tests, including accessibility, a strict CSP and page weight in a real browser, gate every deploy.
+        tags: [testing, ci, accessibility]
+      - id: proj.this-site.h4
+        text: The same pipeline runs on the laptop and in cloud Claude Code sessions, because its state lives on the site and a scoped token reaches it.
+        tags: [tooling, architecture, edge]
+    decisions:
+      - id: proj.this-site.d.state
+        chose: Staging applications on the site behind Cloudflare Access, reached with a service token
+        over: Keeping drafts in local files or giving cloud sessions a Cloudflare API token
+        because: Any surface can continue a session, and the token can stage an application but touch nothing else in the account.
+        tags: [architecture, security]
+
   - id: proj.haiv
     name: HAIV (hackathon)
     status: archived
