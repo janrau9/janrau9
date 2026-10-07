@@ -57,6 +57,17 @@ test("an email scanner's open is flagged and never counts as a person", async ({
   await expect.poll(() => events()).toEqual([{ type: "open", scanner: 1, reason: "agent" }]);
 });
 
+test("Janrau's own signed-in visits are not recorded", async ({ browser }) => {
+  const ctx = await browser.newContext({ userAgent: PHONE_UA });
+  await ctx.addCookies([{ name: "CF_Authorization", value: "signed-in", url: ORIGIN }]);
+  const page = await ctx.newPage();
+  await page.goto(`/for/${SLUG}`);
+  await page.waitForTimeout(3500);
+  await page.getByRole("heading", { name: /What you asked for/ }).scrollIntoViewIfNeeded();
+  await ctx.close();
+  expect(events()).toEqual([]);
+});
+
 test("?preview opens are not recorded", async ({ browser }) => {
   const ctx = await browser.newContext({ userAgent: PHONE_UA });
   const page = await ctx.newPage();

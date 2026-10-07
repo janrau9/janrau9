@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
-import { CLIENT_EVENTS, type ClientEvent, recordEvent } from "../lib/events";
+import { CLIENT_EVENTS, type ClientEvent, isOwnerVisit, recordEvent } from "../lib/events";
 import { SLUG } from "../lib/tailored";
 
 export const prerender = false;
@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(null, { status: 204 });
   }
   const { slug, type } = (body ?? {}) as { slug?: unknown; type?: unknown };
-  if (typeof slug === "string" && SLUG.test(slug) && isClientEvent(type) && env.DB) {
+  if (typeof slug === "string" && SLUG.test(slug) && isClientEvent(type) && env.DB && !isOwnerVisit(request)) {
     const write = recordEvent(env.DB, slug, type).catch((err) => console.error(`event write failed: ${err}`));
     locals.cfContext?.waitUntil(write);
   }

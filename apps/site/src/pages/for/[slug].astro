@@ -2,7 +2,7 @@
 import { env } from "cloudflare:workers";
 import TailoredPage from "../../components/organisms/TailoredPage.astro";
 import Base from "../../components/templates/Base.astro";
-import { classifyOpen, recordEvent } from "../../lib/events";
+import { classifyOpen, isOwnerVisit, recordEvent } from "../../lib/events";
 import { lookup } from "../../lib/tailored";
 
 export const prerender = false;
@@ -17,9 +17,9 @@ if (result.kind === "unavailable") {
 }
 if (result.kind === "missing") Astro.response.status = 404;
 
-// ?preview: my own checks, never counted. Otherwise record the open without delaying the page,
+// ?preview, or signed in to /admin: Janrau's own checks, never counted. Otherwise record the open without delaying the page,
 // keeping only whether it looks like a scanner, not who it was.
-const preview = Astro.url.searchParams.has("preview");
+const preview = Astro.url.searchParams.has("preview") || isOwnerVisit(Astro.request);
 if (result.kind === "found" && !preview && env.DB) {
   const db = env.DB;
   const cf = (Astro.request as Request & { cf?: { asn?: number } }).cf;

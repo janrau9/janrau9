@@ -1,5 +1,14 @@
 import type { Db } from "./tailored";
 
+/**
+ * Janrau's own visits: signed in to /admin, his browser carries Cloudflare Access's
+ * CF_Authorization cookie. Those visits are never recorded. Only the cookie's presence is
+ * checked; nothing about it is stored.
+ */
+export function isOwnerVisit(request: Request): boolean {
+  return /(?:^|;\s*)CF_Authorization=/.test(request.headers.get("cookie") ?? "");
+}
+
 /** Events the browser may report. 'open' is recorded by the server only. */
 export const CLIENT_EVENTS = ["human", "fit_viewed", "cv_download", "case_click"] as const;
 export type ClientEvent = (typeof CLIENT_EVENTS)[number];
