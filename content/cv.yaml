@@ -9,7 +9,7 @@ person:
   name: Janrau Beray
   location: Vantaa, Finland
   workRights: Eligible to work in Finland
-  availability: 14 days' notice        # TODO: confirm against the employment contract
+  # availability (notice period): left out until confirmed; answered when an interview asks.
   workPreferences: { remote: true, hybrid: true, relocation: false }
   languages:
     - { name: English, level: professional }

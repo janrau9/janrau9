@@ -29,7 +29,7 @@ const month = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(
     <ul class="facts list-plain row micro">
       <li class="row avail">
         <span class="dot" aria-hidden="true" />
-        Available · {view.person.availability}
+        Available{view.person.availability ? ` · ${view.person.availability}` : ""}
       </li>
       <li>{view.person.location}</li>
       <li>{view.person.workRights}</li>

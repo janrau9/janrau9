@@ -104,7 +104,6 @@
         "name",
         "location",
         "workRights",
-        "availability",
         "workPreferences",
         "languages",
         "links",

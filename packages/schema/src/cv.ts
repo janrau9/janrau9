@@ -36,7 +36,8 @@ export const Person = z.strictObject({
   name: z.string().min(1),
   location: z.string().min(1),
   workRights: z.string().min(1),
-  availability: z.string().min(1),
+  /** Notice period; left out until it is confirmed, and then only stated where asked. */
+  availability: z.string().min(1).optional(),
   workPreferences: z.strictObject({
     remote: z.boolean(),
     hybrid: z.boolean(),

@@ -66,7 +66,9 @@ export function buildCvDocument({ cv }: Content, options: DocumentOptions): CvDo
       linkedin: person.links.linkedin.replace(/^https?:\/\/(www\.)?/, ""),
       site: options.site.replace(/^https?:\/\//, ""),
     },
-    facts: [person.workRights, person.availability, workPreference(person.workPreferences)],
+    facts: [person.workRights, person.availability, workPreference(person.workPreferences)].filter((f): f is string =>
+      Boolean(f),
+    ),
     about: person.about,
     experience: cv.experience.map((e) => ({
       role: e.role,

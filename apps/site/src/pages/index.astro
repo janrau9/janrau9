@@ -23,7 +23,7 @@ const workMode = `Open to ${[prefs.remote && "remote", prefs.hybrid && "hybrid"]
       <h1 class="display"><SealedText text={person.name.toLowerCase()} display /></h1>
       <p class="lede text-2">{headline}</p>
       <ul class="facts list-plain row micro">
-        <li class="row avail"><span class="dot" aria-hidden="true"></span>Available · {person.availability}</li>
+        <li class="row avail"><span class="dot" aria-hidden="true"></span>Available{person.availability ? ` · ${person.availability}` : ""}</li>
         <li>{person.location}</li>
         <li>{person.workRights}</li>
         <li>{workMode}</li>

@@ -16,7 +16,7 @@ export interface TailoredView {
     name: string;
     location: string;
     workRights: string;
-    availability: string;
+    availability?: string;
     workMode: string;
     email: string;
     github: string;
@@ -112,7 +112,7 @@ export function resolveVariant(cv: Cv, work: WorkRef[], v: Variant): TailoredVie
       name: person.name,
       location: person.location,
       workRights: person.workRights,
-      availability: person.availability,
+      ...(person.availability ? { availability: person.availability } : {}),
       workMode: `Open to ${modes || "on-site"} work`,
       email: person.links.email,
       github: person.links.github,

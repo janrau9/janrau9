@@ -63,6 +63,8 @@ Rules (Janrau's, learned from real applications):
   - Say "AI coding agents", never one vendor. No "passionate", "fast-paced" or similar.
 - **Form answers:** within the form's limit, grounded with evidenceIds; a link to the
   tailored page is a good use of spare characters (add it after staging, when the slug is known).
+- **Notice period / start date:** cv.yaml leaves it out on purpose. If a form asks, leave the
+  answer to Janrau and say so in the review; never fill one in.
 - **Gaps:** list honestly. They're for Janrau's interview prep, never shown.
 
 ## 3. Review before anything leaves the machine
