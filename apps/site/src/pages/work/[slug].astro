@@ -36,7 +36,7 @@ const STATUS: Record<string, string> = {
       <dl class="meta">
         <div>
           <dt class="micro">Status</dt>
-          <dd class="status"><span class="seal" aria-hidden="true"></span><span>{STATUS[fm.status]}. {fm.statusNote}</span></dd>
+          <dd class="status"><span class="dot" aria-hidden="true"></span><span>{STATUS[fm.status]}. {fm.statusNote}</span></dd>
         </div>
         <div>
           <dt class="micro">When</dt>
@@ -106,7 +106,13 @@ const STATUS: Record<string, string> = {
     align-items: baseline;
     gap: 8px;
   }
-  .status .seal {
+  /* A status is a fact, never the seal: a neutral dot. */
+  .status .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--text-2);
+    flex: none;
     transform: translateY(-1px);
   }
   .draft {

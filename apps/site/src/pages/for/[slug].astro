@@ -38,7 +38,7 @@ const pdf = `/for/${slug}/cv.pdf`;
 
 {
   view ? (
-    <Base title={`Janrau Beray · for ${view.company}`} description={view.headline} noindex cvHref={pdf}>
+    <Base title={`Janrau Beray · for ${view.company}`} description={view.headline} noindex cvHref={pdf} sealInHeading>
       <TailoredPage view={view} slug={slug} pdf={pdf} track={!preview} />
     </Base>
   ) : (

@@ -205,16 +205,6 @@ ol {
   border-color: var(--ink);
 }
 
-/* ———— the seal: one per view ———— */
-.seal {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--seal);
-  flex: none;
-}
-
 /* ———— pills ———— */
 .pill {
   display: inline-flex;

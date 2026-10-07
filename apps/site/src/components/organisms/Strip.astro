@@ -1,17 +1,20 @@
 ---
 import { CV_PDF } from "../../lib/content";
+import SealedText from "../atoms/SealedText.astro";
 import SkyToggle from "../atoms/SkyToggle.astro";
 
 interface Props {
   /** Tailored pages link their own PDF. */
   cvHref?: string | undefined;
+  /** False when the page's heading carries the seal: one seal per view. */
+  seal?: boolean;
 }
-const { cvHref = CV_PDF } = Astro.props;
+const { cvHref = CV_PDF, seal = true } = Astro.props;
 ---
 
 <header class="strip">
   <nav class="frame strip-inner" aria-label="Main">
-    <a href="/" class="mark">janrau</a>
+    <a href="/" class="mark">{seal ? <SealedText text="janrau" /> : "janrau"}</a>
     <div class="row links">
       <a href="/#work">Work</a>
       <a href={cvHref}>CV</a>

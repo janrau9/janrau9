@@ -1,5 +1,6 @@
 ---
 import type { TailoredView } from "@janrau/schema/tailor";
+import SealedText from "../atoms/SealedText.astro";
 
 /**
  * The tailored page's content: shared by the public link (/for/<slug>) and the private
@@ -23,11 +24,11 @@ const month = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(
     <p class="micro">
       Prepared for {view.company} · {view.role}
     </p>
-    <h1 class="display">{view.person.name}</h1>
+    <h1 class="display"><SealedText text={view.person.name.toLowerCase()} display /></h1>
     <p class="lede text-2">{view.headline}</p>
     <ul class="facts list-plain row micro">
       <li class="row avail">
-        <span class="seal" aria-hidden="true" />
+        <span class="dot" aria-hidden="true" />
         Available · {view.person.availability}
       </li>
       <li>{view.person.location}</li>
@@ -207,6 +208,14 @@ if (href.endsWith("/cv.pdf")) {
   .avail {
     gap: 8px;
     color: var(--text-2);
+  }
+  /* Availability is a fact, not a warning: a neutral dot. The seal lives in the name. */
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--text-2);
+    flex: none;
   }
   .requirement {
     color: var(--text-2);

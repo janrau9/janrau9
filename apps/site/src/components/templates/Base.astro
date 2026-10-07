@@ -10,9 +10,11 @@ interface Props {
   noindex?: boolean;
   /** Tailored pages link their own PDF. */
   cvHref?: string;
+  /** The page's own heading carries the seal (the name's j), so the wordmark doesn't. */
+  sealInHeading?: boolean;
 }
 
-const { title, description, noindex = false, cvHref } = Astro.props;
+const { title, description, noindex = false, cvHref, sealInHeading = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
@@ -35,7 +37,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   </head>
   <body>
     <a class="skip micro" href="#main">Skip to content</a>
-    <Strip cvHref={cvHref} />
+    <Strip cvHref={cvHref} seal={!sealInHeading} />
     <main id="main" class="frame">
       <slot />
     </main>

@@ -1,7 +1,9 @@
 ---
 // The kikkō lattice (seiza texture, locked construction): grid-true hexagons, edge 21,
 // drawn in the --line token; every exposed edge a ragged frontier rolled per visit;
-// the still pond answers the pointer; one lattice cell is the view's seal.
+// the still pond answers the pointer.
+// Shuhari, named: seiza puts the view's seal in one lattice cell. Here the seal lives in
+// the name (the dot of the j), so the lattice stays monochrome and the view keeps one seal.
 // Decorative: aria-hidden, pointer-events none, hidden until its frontier mask exists.
 ---
 
@@ -18,9 +20,10 @@
   const cellsEl = field?.querySelector<HTMLElement>(".cells");
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  type Cell = { x: number; y: number; el: HTMLElement; t?: number; r?: number };
+  type Cell = { x: number; y: number; el: HTMLElement; t?: number };
   let cells: Cell[] = [];
-  let seal: Cell | undefined;
+  /** Where the arrival wave starts: a cell away from the frontier. */
+  let origin: Cell | undefined;
 
   const hexPath = (cx: number, cy: number) =>
     `M${cx} ${cy - 22}L${cx + 19.05} ${cy - 11}L${cx + 19.05} ${cy + 11}L${cx} ${cy + 22}L${cx - 19.05} ${cy + 11}L${cx - 19.05} ${cy - 11}Z`;
@@ -31,10 +34,10 @@
   function build() {
     if (!field || !cellsEl) return;
     const { width: w, height: h } = field.getBoundingClientRect();
-    // Hidden on narrow screens (see the page's layout): no field, no seal cell.
+    // Hidden on narrow screens (see the page's layout): no field.
     if (w === 0 || h === 0) {
       cells = [];
-      seal = undefined;
+      origin = undefined;
       cellsEl.replaceChildren();
       return;
     }
@@ -75,24 +78,19 @@
     field.style.maskImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
     field.style.setProperty("-webkit-mask-image", field.style.maskImage);
 
-    // The seal: one kept cell, chosen away from the frontier so it never sits on an edge.
     const inner = cells.filter((c) => cells.filter((o) => Math.hypot(o.x - c.x, o.y - c.y) < HW * 1.1).length >= 7);
-    seal = (inner.length ? inner : cells)[Math.floor(Math.random() * (inner.length || cells.length))];
-    seal?.el.classList.add("seal-cell");
+    origin = (inner.length ? inner : cells)[Math.floor(Math.random() * (inner.length || cells.length))];
     field.classList.add("ready");
   }
 
-  function surge(cell: Cell, amp: number, dwell: number, red = false) {
+  function surge(cell: Cell, amp: number, dwell: number) {
     const el = cell.el;
     clearTimeout(cell.t);
-    clearTimeout(cell.r);
-    el.classList.toggle("red", red);
     el.style.transition = "opacity 144ms cubic-bezier(0.16, 1, 0.3, 1)";
     el.style.opacity = String(amp);
     cell.t = window.setTimeout(() => {
       el.style.transition = "opacity 610ms ease";
       el.style.opacity = "";
-      if (red) cell.r = window.setTimeout(() => el.classList.remove("red"), 640);
     }, dwell);
   }
 
@@ -103,13 +101,13 @@
   }
 
   /** A strike: a constant-speed circular front, amplitude = spreading × absorption. */
-  function wave(ox: number, oy: number, red = false) {
+  function wave(ox: number, oy: number) {
     for (const cell of cells) {
       const dist = Math.hypot(cell.x - ox, cell.y - oy);
       const ring = dist / HW;
       const amp = (0.55 * Math.exp(-ring / 13)) / Math.sqrt(1 + ring);
       if (amp < 0.05) continue;
-      window.setTimeout(() => surge(cell, amp, 89, red), dist * (55 / HW));
+      window.setTimeout(() => surge(cell, amp, 89), dist * (55 / HW));
     }
   }
 
@@ -149,7 +147,7 @@
           // Rest: the cell under the pointer rises and stays; ring-1 neighbours leave a dying wake.
           clearTimeout(cell.t);
           cell.el.style.transition = "opacity 144ms cubic-bezier(0.16, 1, 0.3, 1)";
-          cell.el.style.opacity = cell === seal ? "0.68" : "0.55";
+          cell.el.style.opacity = "0.55";
           for (const n of cells)
             if (n !== cell && Math.hypot(n.x - cell.x, n.y - cell.y) < HW * 1.1) surge(n, 0.25, 144);
         });
@@ -159,11 +157,10 @@
     document.addEventListener("click", (e) => {
       const { x, y } = local(e);
       if (!nearest(x, y)) return;
-      const onSeal = seal && Math.hypot(seal.x - x, seal.y - y) < HW * 0.75;
-      wave(x, y, Boolean(onSeal));
+      wave(x, y);
     });
-    // Arrival: once, the seal strikes the water, then stillness.
-    window.setTimeout(() => seal && wave(seal.x, seal.y), 987);
+    // Arrival: once, one wave crosses the water, then stillness.
+    window.setTimeout(() => origin && wave(origin.x, origin.y), 987);
     let resize = 0;
     window.addEventListener("resize", () => {
       clearTimeout(resize);
@@ -204,12 +201,5 @@
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     background: var(--line-strong);
     opacity: 0;
-  }
-  .cells :global(.hex-cell.seal-cell) {
-    background: var(--seal);
-    opacity: 0.34;
-  }
-  .cells :global(.hex-cell.red) {
-    background: var(--seal);
   }
 </style>

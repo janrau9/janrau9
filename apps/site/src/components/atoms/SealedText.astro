@@ -1,0 +1,46 @@
+---
+/**
+ * The seal (seiza's one vermilion mark per view) as the dot of the first "j": part of the
+ * name, carrying no meaning, so it can never read as a status light. The dotless ȷ is
+ * Geist's own glyph; the dot is placed where Geist draws it, measured at weight 600
+ * (left 0.105em, 0.135em × 0.105em, top 0.71em above the baseline; advance 0.31em).
+ * Screen readers get the plain text.
+ */
+interface Props {
+  text: string;
+  /** Inside a display heading (letter-spacing -0.02em), so the dot stays on the stem. */
+  display?: boolean;
+}
+const { text, display = false } = Astro.props;
+const at = text.indexOf("j");
+const before = text.slice(0, at);
+const after = text.slice(at + 1);
+---
+
+{at < 0 ? text : <><span class="visually-hidden">{text}</span><span aria-hidden="true" class:list={["sealed", { tracked: display }]}>{before}ȷ<span class="tittle" />{after}</span></>}
+
+<style>
+  .sealed {
+    --tracking: 0em;
+  }
+  .sealed.tracked {
+    --tracking: -0.02em;
+  }
+  .tittle {
+    display: inline-block;
+    width: 0.135em;
+    height: 0.105em;
+    /* Back from the end of ȷ to where its dot belongs, then forward again to the next letter. */
+    margin-left: calc(-1 * (0.31em + var(--tracking) - 0.105em));
+    margin-right: calc(0.31em + var(--tracking) - 0.24em);
+    /* An empty inline-block sits on the baseline; lift its top to 0.71em above it. */
+    transform: translateY(-0.605em);
+    border-radius: 0.02em;
+    background: var(--seal);
+    vertical-align: baseline;
+  }
+  /* Test hook: paint the dot in ink to compare it with Geist's own j pixel by pixel. */
+  :global(html[data-tittle-test]) .tittle {
+    background: var(--ink);
+  }
+</style>

@@ -1,4 +1,5 @@
 ---
+import SealedText from "../components/atoms/SealedText.astro";
 import WorkCard from "../components/molecules/WorkCard.astro";
 import Lattice from "../components/organisms/Lattice.astro";
 import Base from "../components/templates/Base.astro";
@@ -15,11 +16,11 @@ const prefs = person.workPreferences;
 const workMode = `Open to ${[prefs.remote && "remote", prefs.hybrid && "hybrid"].filter(Boolean).join(" or ")} work`;
 ---
 
-<Base title={`${person.name} · Software Engineer`} description={headline}>
+<Base title={`${person.name} · Software Engineer`} description={headline} sealInHeading>
   <div class="page">
     <header class="hero stack-24">
       <div class="texture"><Lattice /></div>
-      <h1 class="display">{person.name}</h1>
+      <h1 class="display"><SealedText text={person.name.toLowerCase()} display /></h1>
       <p class="lede text-2">{headline}</p>
       <ul class="facts list-plain row micro">
         <li class="row avail"><span class="dot" aria-hidden="true"></span>Available · {person.availability}</li>
@@ -175,18 +176,13 @@ const workMode = `Open to ${[prefs.remote && "remote", prefs.hybrid && "hybrid"]
       right: calc(-1 * var(--pad));
     }
   }
-  /* One seal per view: below room the availability dot carries it; at room the lattice does. */
+  /* Availability is a fact, not a warning: a neutral dot. The seal lives in the name. */
   .dot {
     width: 8px;
     height: 8px;
     border-radius: 999px;
-    background: var(--seal);
+    background: var(--text-2);
     flex: none;
-  }
-  @media (min-width: 987px) {
-    .dot {
-      background: var(--text-2);
-    }
   }
   .avail {
     gap: 8px;
