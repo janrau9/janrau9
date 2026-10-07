@@ -20,7 +20,8 @@
   const cellsEl = field?.querySelector<HTMLElement>(".cells");
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  type Cell = { x: number; y: number; el: HTMLElement; t?: number; r?: number };
+  /** quiet: behind text, so it never rises (a risen cell lowers the text's contrast). */
+  type Cell = { x: number; y: number; el: HTMLElement; t?: number; r?: number; quiet?: boolean };
   let cells: Cell[] = [];
   let seal: Cell | undefined;
 
@@ -86,6 +87,7 @@
       .map((r) => ({ left: r.left - box.left - 8, right: r.right - box.left + 8, top: r.top - box.top - 8, bottom: r.bottom - box.top + 8 }));
     const clear = (c: Cell) =>
       !textRects.some((r) => c.x + HM > r.left && c.x - HM < r.right && c.y + 21 > r.top && c.y - 21 < r.bottom);
+    for (const c of cells) c.quiet = !clear(c);
     const inner = cells.filter((c) => cells.filter((o) => Math.hypot(o.x - c.x, o.y - c.y) < HW * 1.1).length >= 7);
     const pool = [inner.filter(clear), cells.filter(clear), inner, cells].find((list) => list.length > 0) ?? [];
     seal = pool[Math.floor(Math.random() * pool.length)];
@@ -94,6 +96,7 @@
   }
 
   function surge(cell: Cell, amp: number, dwell: number, red = false) {
+    if (cell.quiet) return;
     const el = cell.el;
     clearTimeout(cell.t);
     clearTimeout(cell.r);
@@ -156,7 +159,7 @@
           if (cell === resting) return;
           if (resting) release(resting);
           resting = cell;
-          if (!cell) return;
+          if (!cell || cell.quiet) return;
           // Rest: the cell under the pointer rises and stays; ring-1 neighbours leave a dying wake.
           clearTimeout(cell.t);
           cell.el.style.transition = "opacity 144ms cubic-bezier(0.16, 1, 0.3, 1)";
@@ -201,10 +204,19 @@
     position: absolute;
     inset: 0;
   }
+  /* The lines are drawn as an image in each sky's --line colour (day #e4e1da, night #24242d),
+     not as a masked fill: accessibility checkers ignore masks and would read a solid box behind
+     the hero text, while an image they rightly treat as a pattern. */
   .lattice {
-    background: var(--line);
-    mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='36.3731'%20height='63'%3E%3Cpath%20d='M0%2010.5%20L18.1865%200%20L36.3731%2010.5%20M0%2010.5%20V31.5%20M36.3731%2010.5%20V31.5%20M0%2031.5%20L18.1865%2042%20L36.3731%2031.5%20M18.1865%2042%20V63'%20fill='none'%20stroke='black'%20stroke-width='1'/%3E%3C/svg%3E");
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='36.3731'%20height='63'%3E%3Cpath%20d='M0%2010.5%20L18.1865%200%20L36.3731%2010.5%20M0%2010.5%20V31.5%20M36.3731%2010.5%20V31.5%20M0%2031.5%20L18.1865%2042%20L36.3731%2031.5%20M18.1865%2042%20V63'%20fill='none'%20stroke='black'%20stroke-width='1'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='36.3731'%20height='63'%3E%3Cpath%20d='M0%2010.5%20L18.1865%200%20L36.3731%2010.5%20M0%2010.5%20V31.5%20M36.3731%2010.5%20V31.5%20M0%2031.5%20L18.1865%2042%20L36.3731%2031.5%20M18.1865%2042%20V63'%20fill='none'%20stroke='%23e4e1da'%20stroke-width='1'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme="light"])) .lattice {
+      background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='36.3731'%20height='63'%3E%3Cpath%20d='M0%2010.5%20L18.1865%200%20L36.3731%2010.5%20M0%2010.5%20V31.5%20M36.3731%2010.5%20V31.5%20M0%2031.5%20L18.1865%2042%20L36.3731%2031.5%20M18.1865%2042%20V63'%20fill='none'%20stroke='%2324242d'%20stroke-width='1'/%3E%3C/svg%3E");
+    }
+  }
+  :global(:root[data-theme="dark"]) .lattice {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='36.3731'%20height='63'%3E%3Cpath%20d='M0%2010.5%20L18.1865%200%20L36.3731%2010.5%20M0%2010.5%20V31.5%20M36.3731%2010.5%20V31.5%20M0%2031.5%20L18.1865%2042%20L36.3731%2031.5%20M18.1865%2042%20V63'%20fill='none'%20stroke='%2324242d'%20stroke-width='1'/%3E%3C/svg%3E");
   }
   .cells :global(.hex-cell) {
     position: absolute;
