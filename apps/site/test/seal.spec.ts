@@ -23,21 +23,32 @@ async function seals(page: Page) {
 }
 
 // The home page breaks the law on purpose (shuhari, named in Lattice.astro): the j's dot is
-// the mark and one lattice cell is the sky's, at every width.
-for (const [label, width, expected] of [
-  ["phone", 375, ["seal-cell", "tittle"]],
-  ["table", 800, ["seal-cell", "tittle"]],
-  ["room", 1280, ["seal-cell", "tittle"]],
+// the mark and one lattice cell is the sky's. The cell is placed only where it clears the text,
+// so on a small phone field a visit may have none; the j's dot is always there.
+for (const [label, width] of [
+  ["phone", 375],
+  ["table", 800],
+  ["room", 1280],
 ] as const)
-  test(`home's seals on ${label}: ${expected.join(" and ")}`, async ({ page }) => {
+  test(`home's seals on ${label}: the j's dot, and at most one lattice cell`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto("/", { waitUntil: "networkidle" });
     const found = (await seals(page)).map((c) =>
       String(c).includes("seal-cell") ? "seal-cell" : String(c).includes("tittle") ? "tittle" : String(c),
     );
-    expect(found.sort()).toEqual([...expected].sort());
+    expect(found.filter((f) => f === "tittle")).toHaveLength(1);
+    expect(found.filter((f) => f !== "tittle" && f !== "seal-cell")).toEqual([]);
+    expect(found.filter((f) => f === "seal-cell").length).toBeLessThanOrEqual(1);
     await expect(page.locator("h1 .tittle")).toBeVisible();
   });
+
+test("on wide screens the lattice always has its red cell", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  for (let visit = 0; visit < 3; visit++) {
+    await page.goto("/", { waitUntil: "networkidle" });
+    await expect(page.locator(".seal-cell")).toHaveCount(1);
+  }
+});
 
 for (const [label, path] of [
   ["a tailored page", "/for/acme-events-t3st1?preview"],
@@ -87,12 +98,12 @@ test("the lattice keeps whole cells only, inside its field", async ({ page }) =>
 
 test("the lattice's seal never sits under text", async ({ page }) => {
   for (const width of [375, 414, 800, 1280]) {
-    for (let visit = 0; visit < 3; visit++) {
+    for (let visit = 0; visit < 6; visit++) {
       await page.setViewportSize({ width, height: 720 });
       await page.goto("/", { waitUntil: "networkidle" });
       const underText = await page.evaluate(() => {
         const seal = document.querySelector(".seal-cell")?.getBoundingClientRect();
-        if (!seal) return true;
+        if (!seal) return false; // no red cell this visit is allowed; a red cell under text is not
         return [...document.querySelectorAll(".hero h1, .hero p, .hero li, .hero a, .hero button")]
           .map((e) => e.getBoundingClientRect())
           .some((r) => seal.right > r.left && seal.left < r.right && seal.bottom > r.top && seal.top < r.bottom);

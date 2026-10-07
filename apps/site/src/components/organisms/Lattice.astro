@@ -89,7 +89,9 @@
       !textRects.some((r) => c.x + HM > r.left && c.x - HM < r.right && c.y + 21 > r.top && c.y - 21 < r.bottom);
     for (const c of cells) c.quiet = !clear(c);
     const inner = cells.filter((c) => cells.filter((o) => Math.hypot(o.x - c.x, o.y - c.y) < HW * 1.1).length >= 7);
-    const pool = [inner.filter(clear), cells.filter(clear), inner, cells].find((list) => list.length > 0) ?? [];
+    // Only clear cells qualify. If the ragged edge leaves none on this visit (small phone
+    // fields mostly overlap the name), there is no red cell: the j's dot is still the seal.
+    const pool = [inner.filter(clear), cells.filter(clear)].find((list) => list.length > 0) ?? [];
     seal = pool[Math.floor(Math.random() * pool.length)];
     seal?.el.classList.add("seal-cell");
     field.classList.add("ready");
