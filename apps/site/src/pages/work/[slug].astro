@@ -27,7 +27,11 @@ const STATUS: Record<string, string> = {
 };
 ---
 
-<Base title={`${fm.title} · Janrau Beray`} description={fm.subtitle}>
+<Base
+  title={`${fm.title} · Janrau Beray`}
+  description={fm.subtitle}
+  image={{ path: `/og/work-${study.slug}.png`, alt: `${fm.title}: ${fm.subtitle}` }}
+>
   <article class="page">
     <header class="stack-24 measure">
       <a class="micro back" href="/#work">← All work</a>

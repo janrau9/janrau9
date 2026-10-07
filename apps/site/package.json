@@ -10,7 +10,7 @@
     "typecheck": "pnpm --filter @janrau/cv-render render site-data && astro check",
     "test": "playwright test",
     "deploy": "pnpm build && wrangler deploy",
-    "prepare:data": "pnpm --filter @janrau/cv-render render pdf && pnpm --filter @janrau/cv-render render site-data"
+    "prepare:data": "pnpm --filter @janrau/cv-render render pdf && pnpm --filter @janrau/cv-render render og && pnpm --filter @janrau/cv-render render site-data"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.3",

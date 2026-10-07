@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { loadContent } from "@janrau/schema";
 import { buildCvDocument } from "./document.ts";
+import { renderCard } from "./og.ts";
 import { renderPdf } from "./pdf.ts";
 import { renderReadme } from "./readme.ts";
 
@@ -24,6 +25,31 @@ if (target === "pdf" || target === "all") {
   write("apps/site/public/janrau-beray-cv.pdf", renderPdf(doc));
 }
 if (target === "readme" || target === "all") write("README.md", renderReadme(content, SITE));
+if (target === "og" || target === "all") {
+  // Link-preview images: one for the site, one per case study.
+  const headline = content.cv.headlines.find((h) => h.id === "hl.default")?.text ?? "";
+  write(
+    "apps/site/public/og/home.png",
+    renderCard({
+      key: "home",
+      title: content.cv.person.name.toLowerCase(),
+      subtitle: headline,
+      footer: "janrau.dev",
+      sealJ: true,
+    }),
+  );
+  // Drafts get no image: a public file would leak their titles.
+  for (const w of content.work.filter((w) => !w.frontmatter.draft))
+    write(
+      `apps/site/public/og/work-${w.slug}.png`,
+      renderCard({
+        key: w.slug,
+        title: w.frontmatter.title,
+        subtitle: w.frontmatter.subtitle,
+        footer: `janrau.dev/work/${w.slug} · case study`,
+      }),
+    );
+}
 if (target === "site-data" || target === "all") {
   // Tailored pages render on the Worker, which can't read content/ from disk: bundle what they need.
   const work = content.work.map((w) => ({
