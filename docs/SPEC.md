@@ -323,9 +323,23 @@ IP and user agent are read at classification time and never stored.
 
 Behind Cloudflare Access. Lists applications with status, last human open and CV downloads. Funnel: published → human open → CV download → interview → offer. Status is editable: `draft | applied | interview | rejected | offer | no_reply`.
 
+**Next steps** (`lib/followup.ts`), for `applied` applications only, longest-waiting first:
+
+| When | Reminder |
+|---|---|
+| First human read ≥ 7 days ago, not followed up | Follow up with the recruiter |
+| Published ≥ 10 days, no human read | Try another channel |
+| ≥ 21 days since publishing or the last follow-up | Mark `no_reply`, or follow up once more |
+
+"I followed up" sets `followed_up_at`, which silences the first two and restarts the 21-day clock.
+
+### Notifications
+
+One email to Janrau per application on the first `human` event and on the first `cv_download` (`lib/notify.ts`). Setting `notified_human_at` / `notified_cv_at` claims the email before sending, so racing beacons send one; a failed send clears the claim. Sent through the Worker's `send_email` binding `NOTIFY`, from `notify@janrau.dev`; without a paid sending plan, Cloudflare delivers only to the account's verified Email Routing destinations. The destination is the `NOTIFY_TO` Worker secret, never in the repo. `pnpm job notify-test` checks the setup.
+
 ### General traffic
 
-Cloudflare Web Analytics on `/` and `/work/*` only, not on `/for/*`.
+Cloudflare Web Analytics on the public pages only (`/`, `/work/*`, 404): never on `/for/*` or `/admin`. The site token is public and set in the deploy job, so test builds make no third-party requests; the CSP allows `static.cloudflareinsights.com` (script) and `cloudflareinsights.com` (connect).
 
 ## 9. Data model
 
@@ -398,7 +412,9 @@ Rules:
 
 ```sql
 applications(slug PK, company, role, source_url, post_hash UNIQUE,
-             status, created_at, published_at)
+             status, created_at, published_at,
+             notified_human_at, notified_cv_at,                -- §8 Notifications (0003)
+             followed_up_at)                                   -- §8 Next steps (0004)
 variants(slug PK → applications, variant_json, cv_version)   -- cv.yaml git hash at publish
 events(...)                                                  -- §8
 ```
@@ -481,6 +497,14 @@ signed-in visits are no longer recorded).
 - Footer link on tailored pages goes live.
 
 **Done when:** the case study cites real numbers from D1 and links to the ADRs.
+
+### Phase 7: Operations (shipped 2026-10-07)
+
+- Link-preview images (1200×630 PNG) for the home page and each case study, rendered at build time with resvg (`render og`); tailored pages use the home card.
+- Notification emails and follow-up reminders (§8).
+- Uptime check every 3 hours (`.github/workflows/uptime.yml`): home, a case study, the CV, a preview image, and a 404 from the Worker for an unknown `/for/` link.
+- Dependabot: weekly, grouped, for npm and GitHub Actions; every update goes through CI like any branch.
+- Web Analytics on public pages (§8).
 
 ## 12. Engineering rules
 

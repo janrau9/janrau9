@@ -308,7 +308,7 @@ projects:
         text: Validation refuses invented claims; every statement about me cites an item in cv.yaml and every company fact is quoted from the post.
         tags: [quality, correctness, ai]
       - id: proj.this-site.h3
-        text: About 130 automated tests, including accessibility, a strict CSP and page weight in a real browser, gate every deploy.
+        text: About 150 automated tests, including accessibility, a strict CSP and page weight in a real browser, gate every deploy.
         tags: [testing, ci, accessibility]
       - id: proj.this-site.h4
         text: The same pipeline runs on the laptop and in cloud Claude Code sessions, because its state lives on the site and a scoped token reaches it.

@@ -34,7 +34,8 @@ So every application I send gets its own private page: the job's requirements qu
 4. The validator checks it. Every requirement and company fact must be quoted word for word from the post, every claim about me must cite an item in `cv.yaml`, every number must appear in a cited item, a count must match its list, and generic phrases fail.
 5. Staging sends the variant, the post and three PDFs (rendered with Typst) to a Cloudflare Worker, which validates again against the CV it was built with and stores everything unpublished in D1 and KV.
 6. I review the exact page at a private address behind Cloudflare Access, download the CV and cover letter, and press Publish.
-7. When someone opens the link, the Worker records whether it looks like a person or a link scanner, without storing IP addresses or cookies. My dashboard shows who read what.
+7. When someone opens the link, the Worker records whether it looks like a person or a link scanner, without storing IP addresses or cookies. The first real read and the first CV download each send me one email.
+8. My dashboard shows who read what, and tells me when to act: follow up a week after a person read it, try another channel if nobody has after ten days, close it after three quiet weeks.
 
 ## Decisions
 
@@ -61,12 +62,13 @@ Most of the value of this system is in what it refused to let through. Each of t
 - **A cloud proxy behind a bare 403.** Staging failed from cloud sessions while `curl` worked: Node's `fetch` ignored the sandbox's HTTPS proxy. The CLI now uses it, and failures name the layer that refused. (`9687519`)
 - **Red reading as a status.** My design system's one red mark sat beside "Available" and read as "not available". It moved into the dot of the j in my name. (`d30ad00`)
 - **Tests racing each other.** Two test servers shared one local database file and locked it. (`b5f6b8c`)
+- **A signal that could never fire.** "The fit table was viewed" required half the table on screen at once; on a phone, a long table is taller than two screens, so it could never count. A layout change made a test fail, which exposed it. (`e545787`)
 
 ## Outcome
 
 - **In use:** 5 applications prepared and published so far, each with its own page, CV and cover letter.
 - **Fetching:** the first four posts fetched automatically needed three different methods: an applicant tracking system's API, embedded job data, and a real browser for a JavaScript-only page.
-- **Quality gates:** about 130 automated tests, including WCAG 2.2 AA accessibility in both colour themes, a page-weight budget and the production security policy, run on every push; a deploy happens only when all pass.
+- **Quality gates:** about 150 automated tests, including WCAG 2.2 AA accessibility in both colour themes, a page-weight budget and the production security policy, run on every push; a deploy happens only when all pass.
 - **Cost:** hosting on Cloudflare's free tier; the only bill is the domain.
 
 ## What's next
