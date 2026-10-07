@@ -29,77 +29,86 @@ const { view } = result;
 
 <Base title={`Review · ${view.company}`} description="Private review" noindex cvHref={`/admin/files/${slug}/cv.pdf`}>
   <aside class="review frame" aria-labelledby="review-title">
-    <div class="panel stack-24">
-      <div class="row between">
-        <div class="stack-8">
-          <p class="micro"><a href="/admin">← Applications</a></p>
-          <h2 id="review-title">Review: {view.company} · {view.role}</h2>
-        </div>
-        <publish-button data-slug={slug} data-published={published ? "1" : undefined} data-url={publicUrl}>
-          <div class="row actions">
-            <button type="button" class="button button-ink publish" hidden={published}>Publish</button>
-            <button type="button" class="button button-outline unpublish" hidden={!published}>Unpublish</button>
-          </div>
-          <div class="confirm stack-8" hidden>
-            <p class="small">Unpublish? Anyone with the link will see “not found” until you publish again.</p>
-            <div class="row">
-              <button type="button" class="button button-outline confirm-yes">Take it offline</button>
-              <button type="button" class="link-button small confirm-no">Keep it live</button>
-            </div>
-          </div>
+    <div class="panel">
+      <p class="micro"><a href="/admin">← Applications</a></p>
+
+      <header class="stack-8">
+        <h2 id="review-title">{view.company}</h2>
+        <p class="small text-2">{view.role}</p>
+      </header>
+
+      <publish-button data-slug={slug} data-published={published ? "1" : undefined} data-url={publicUrl}>
+        <div class="actions">
+          <button type="button" class="button button-ink publish" hidden={published}>Publish</button>
+          <button type="button" class="button button-outline unpublish" hidden={!published}>Unpublish</button>
           <p class="micro state" role="status" aria-live="polite">
             {published ? `Live at ${publicUrl.replace("https://", "")}` : "Not published: only you can see this page."}
           </p>
-        </publish-button>
-      </div>
-
-      <div class="alcove">
-        <p class="micro">Attachments</p>
-        <p class="row small">
-          <a href={`/admin/files/${slug}/cv.pdf`}>CV (PDF)</a>
-          <a href={`/admin/files/${slug}/cover-letter.pdf`}>Cover letter (PDF)</a>
-          <a href={`/for/${slug}/cv.pdf`}>Page CV with note</a>
-        </p>
-      </div>
-
-      <div class="alcove">
-        <p class="micro">Gaps (never published)</p>
-        {
-          variant.gaps?.length ? (
-            <ul class="small text-2 bullets">
-              {variant.gaps.map((g) => (
-                <li>{g}</li>
-              ))}
-            </ul>
-          ) : (
-            <p class="small text-2">None listed.</p>
-          )
-        }
-      </div>
-
-      {
-        variant.formAnswers?.length ? (
-          <div class="alcove">
-            <p class="micro">Form answers</p>
-            <ul class="list-plain stack-24">
-              {variant.formAnswers.map((f) => (
-                <li class="stack-8">
-                  <p class="small text-2">
-                    {f.question}
-                    {f.limit ? ` · ${f.answer.length} / ${f.limit} characters` : ` · ${f.answer.length} characters`}
-                  </p>
-                  <p class="answer small">{f.answer}</p>
-                  <copy-text data-text={f.answer}>
-                    <button type="button" class="link-button micro">
-                      Copy answer
-                    </button>
-                  </copy-text>
-                </li>
-              ))}
-            </ul>
+        </div>
+        <div class="confirm stack-8" hidden>
+          <p class="small">Unpublish? Anyone with the link will see “not found” until you publish again.</p>
+          <div class="row">
+            <button type="button" class="button button-outline confirm-yes">Take it offline</button>
+            <button type="button" class="link-button small confirm-no">Keep it live</button>
           </div>
-        ) : null
-      }
+        </div>
+      </publish-button>
+
+      <div class="details rows">
+        <div class="alcove">
+          <p class="micro">Attachments</p>
+          <p class="row small">
+            <a href={`/admin/files/${slug}/cv.pdf`}>CV (PDF)</a>
+            <a href={`/admin/files/${slug}/cover-letter.pdf`}>Cover letter (PDF)</a>
+            <a href={`/for/${slug}/cv.pdf`}>Page CV with note</a>
+          </p>
+        </div>
+
+        {
+          variant.formAnswers?.length ? (
+            <div class="alcove">
+              <p class="micro">Form answers</p>
+              <ul class="list-plain stack-24">
+                {variant.formAnswers.map((f) => (
+                  <li class="stack-8">
+                    <p class="small text-2">
+                      {f.question}
+                      {f.limit ? ` · ${f.answer.length} / ${f.limit} characters` : ` · ${f.answer.length} characters`}
+                    </p>
+                    <p class="answer small">{f.answer}</p>
+                    <copy-text data-text={f.answer}>
+                      <button type="button" class="link-button micro">
+                        Copy answer
+                      </button>
+                    </copy-text>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null
+        }
+
+        <div class="alcove">
+          <p class="micro">Gaps</p>
+          {
+            variant.gaps?.length ? (
+              <details open={variant.gaps.length <= 3}>
+                <summary class="small text-2">
+                  {variant.gaps.length} {variant.gaps.length === 1 ? "requirement" : "requirements"} without
+                  evidence · never published
+                </summary>
+                <ul class="small text-2 bullets">
+                  {variant.gaps.map((g) => (
+                    <li>{g}</li>
+                  ))}
+                </ul>
+              </details>
+            ) : (
+              <p class="small text-2">None listed.</p>
+            )
+          }
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -208,21 +217,26 @@ const { view } = result;
   }
   /* The panel is a surface: a thing acted on as a unit, above the page it reviews. */
   .panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
     padding: 24px;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 13px;
     box-shadow: var(--shadow-1);
   }
-  .between {
-    justify-content: space-between;
-    align-items: flex-start;
+  @media (min-width: 610px) {
+    .panel {
+      padding: 40px;
+    }
   }
-  publish-button {
+  /* The action and its outcome sit together, under the title, at any title length. */
+  .actions {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
   }
   .publish:disabled,
   .unpublish:disabled,
@@ -230,16 +244,8 @@ const { view } = result;
     opacity: 0.6;
     cursor: default;
   }
-  .actions {
-    justify-content: flex-end;
-  }
   .confirm {
-    align-items: flex-end;
-    text-align: right;
-    max-width: 21rem;
-  }
-  [hidden] {
-    display: none !important;
+    padding-top: 16px;
   }
   publish-button[data-state="saved"] .state {
     color: var(--ink);
@@ -247,8 +253,23 @@ const { view } = result;
   publish-button[data-state="error"] .state {
     color: var(--seal);
   }
+  /* Hairline above the details: one boundary, one rung. */
+  .details {
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+  }
   .bullets {
     padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  details > summary {
+    cursor: pointer;
+    min-height: 24px;
+  }
+  details[open] > summary {
+    margin-bottom: 8px;
   }
   .answer {
     white-space: pre-wrap;
@@ -259,8 +280,12 @@ const { view } = result;
     padding: 0;
     border: 0;
     background: none;
+    color: inherit;
     cursor: pointer;
     text-decoration: underline;
     text-underline-offset: 2px;
+  }
+  [hidden] {
+    display: none !important;
   }
 </style>
