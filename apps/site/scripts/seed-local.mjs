@@ -43,4 +43,7 @@ wrangler(
   "--binding",
   "CV_FILES",
 );
+// Notifications need a destination. The preview Worker reads its vars from beside the built
+// config; there the send_email binding is simulated (logged, never sent), so a placeholder will do.
+writeFileSync(new URL("../dist/server/.dev.vars", import.meta.url), "NOTIFY_TO=notify-test@example.invalid\n");
 console.log(`seeded local D1 and KV with /for/${FIXTURE_SLUG}`);

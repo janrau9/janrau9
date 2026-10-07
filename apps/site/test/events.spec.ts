@@ -90,6 +90,30 @@ test("the beacon endpoint ignores junk and unknown links", async ({ request }) =
   expect(sql<{ n: number }>("SELECT COUNT(*) AS n FROM events WHERE slug = 'nobody-zzzzz'")[0]?.n).toBe(0);
 });
 
+test("the first person-like read and the first CV download each notify once", async ({ request }) => {
+  sql(`UPDATE applications SET notified_human_at = NULL, notified_cv_at = NULL WHERE slug = '${SLUG}'`);
+  const notified = () =>
+    sql<{ human: number | null; cv: number | null }>(
+      `SELECT notified_human_at AS human, notified_cv_at AS cv FROM applications WHERE slug = '${SLUG}'`,
+    )[0];
+  const beacon = (type: string) =>
+    request.post("/e", {
+      data: JSON.stringify({ slug: SLUG, type }),
+      headers: { "content-type": "text/plain", origin: ORIGIN },
+    });
+
+  await beacon("fit_viewed");
+  await beacon("human");
+  await expect.poll(() => notified()?.human).not.toBeNull();
+  expect(notified()?.cv).toBeNull();
+  const first = notified()?.human;
+  await beacon("human");
+  await beacon("cv_download");
+  await expect.poll(() => notified()?.cv).not.toBeNull();
+  // A second read changes nothing: the claim is the record that the email went out.
+  expect(notified()?.human).toBe(first);
+});
+
 test("admin refuses requests without a valid Access token", async ({ request }) => {
   expect((await request.get("/admin", { maxRedirects: 0 })).status()).toBe(403);
   // Same origin, like the dashboard's own form, so the 403 comes from the Access check.

@@ -8,6 +8,7 @@
  *   pnpm job stage <dir> [--local]                      send to the site, unpublished
  *   pnpm job publish <slug> [--local]                   make the link public
  *   pnpm job ping [--local]                             test credentials and network, change nothing
+ *   pnpm job notify-test                                send one test notification email to Janrau
  *
  * Remote calls authenticate with a Cloudflare Access service token
  * (CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET). --local talks to `pnpm dev` instead.
@@ -287,6 +288,11 @@ switch (command) {
     console.log(`\n✓ Reached ${base} as ${String(who.identity)}\n`);
     break;
   }
+  case "notify-test": {
+    const sent = await api("/admin/api/notify-test", {});
+    console.log(`\n✓ Sent (message ${String(sent.messageId)}). Check the inbox, and the spam folder the first time.\n`);
+    break;
+  }
   case "publish": {
     const slug = args[0];
     if (!slug) fail("Give the application's slug, e.g. acme-events-k7f3q");
@@ -295,5 +301,7 @@ switch (command) {
     break;
   }
   default:
-    fail("Commands: fetch, paste, check, stage, publish, ping. See the top of packages/cv-render/src/job.ts.");
+    fail(
+      "Commands: fetch, paste, check, stage, publish, ping, notify-test. See the top of packages/cv-render/src/job.ts.",
+    );
 }

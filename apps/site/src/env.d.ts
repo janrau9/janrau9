@@ -13,6 +13,10 @@ declare module "cloudflare:workers" {
     ACCESS_TEAM_DOMAIN?: string;
     /** The Access application's AUD tag. Admin is closed without it. */
     ACCESS_AUD?: string;
+    /** Cloudflare's send_email binding; can reach only the account's verified addresses. */
+    NOTIFY?: import("./lib/notify").Mailer;
+    /** Where notifications go. A Worker secret, so the address stays out of the repository. */
+    NOTIFY_TO?: string;
   };
 }
 

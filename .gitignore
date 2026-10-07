@@ -4,6 +4,7 @@ research/
 # Secrets
 .env
 .env.*
+.dev.vars
 !.env.example
 
 # Tooling

@@ -30,6 +30,9 @@
     "ACCESS_TEAM_DOMAIN": "janrau.cloudflareaccess.com",
     "ACCESS_AUD": "d1a828d528d6a7a3d3c7b3c32415fdf60b666bdfaa26b4e07c1d38d7a049a1f7" // gitleaks:allow (public, see above)
   },
+  // Notification emails to Janrau. Without a paid sending plan, Cloudflare delivers only to the
+  // account's verified Email Routing addresses; the address itself is the NOTIFY_TO secret.
+  "send_email": [{ "name": "NOTIFY" }],
   "routes": [{ "pattern": "janrau.dev", "custom_domain": true }],
   "observability": { "enabled": true }
 }
