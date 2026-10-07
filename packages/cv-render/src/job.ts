@@ -7,6 +7,7 @@
  *   pnpm job check <dir>                                validate <dir>/variant.json, render PDFs
  *   pnpm job stage <dir> [--local]                      send to the site, unpublished
  *   pnpm job publish <slug> [--local]                   make the link public
+ *   pnpm job ping [--local]                             test credentials and network, change nothing
  *
  * Remote calls authenticate with a Cloudflare Access service token
  * (CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET). --local talks to `pnpm dev` instead.
@@ -18,10 +19,17 @@ import { parseArgs } from "node:util";
 import { fetchPost, fromPaste, type JobPost, NeedsPaste } from "@janrau/ingest";
 import { loadContent } from "@janrau/schema";
 import { Variant, validateVariant } from "@janrau/schema/variant";
+import { EnvHttpProxyAgent, setGlobalDispatcher } from "undici";
 import { buildTailoredDocument } from "./document.ts";
 import { renderCoverLetter, renderPdf } from "./pdf.ts";
 
 const SITE = "https://janrau.dev";
+
+// Cloud sessions reach the internet through an HTTPS proxy given in HTTPS_PROXY. curl uses
+// it; Node's fetch ignores it and connects directly, which the sandbox refuses with a bare
+// 403. Route fetch (here and in @janrau/ingest) through the proxy whenever one is set.
+if (process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy)
+  setGlobalDispatcher(new EnvHttpProxyAgent());
 const root = resolve(import.meta.dirname, "../../..");
 const cwd = process.env.INIT_CWD ?? process.cwd();
 try {
@@ -98,26 +106,75 @@ function summary(variant: Variant, post: JobPost) {
   for (const c of post.conflicts) console.log(`  ⚠ ${c}`);
 }
 
-async function api(path: string, body: unknown) {
-  const headers: Record<string, string> = { "content-type": "application/json", accept: "application/json" };
-  if (!local) {
-    const id = process.env.CF_ACCESS_CLIENT_ID;
-    const secret = process.env.CF_ACCESS_CLIENT_SECRET;
-    if (!id || !secret)
-      fail("CF_ACCESS_CLIENT_ID and CF_ACCESS_CLIENT_SECRET are needed to reach janrau.dev (see docs).");
-    headers["CF-Access-Client-Id"] = id;
-    headers["CF-Access-Client-Secret"] = secret;
+/** Headers that authenticate the CLI to janrau.dev's /admin through Cloudflare Access. */
+function authHeaders(): Record<string, string> {
+  if (local) return {};
+  const id = process.env.CF_ACCESS_CLIENT_ID?.trim();
+  const secret = process.env.CF_ACCESS_CLIENT_SECRET?.trim();
+  if (!id || !secret)
+    fail(
+      "CF_ACCESS_CLIENT_ID and CF_ACCESS_CLIENT_SECRET are needed to reach janrau.dev (see docs/apply-anywhere.md).",
+    );
+  return { "CF-Access-Client-Id": id, "CF-Access-Client-Secret": secret };
+}
+
+/**
+ * Say which layer answered a failed call. A bare "HTTP 403" hides whether Cloudflare
+ * Access, Astro's request check, or the app itself refused, and those need different fixes.
+ */
+async function explain(res: Response): Promise<string[]> {
+  const type = res.headers.get("content-type") ?? "";
+  const text = await res.text().catch(() => "");
+  const ray = res.headers.get("cf-ray");
+  const lines = [`HTTP ${res.status}, ${type || "no content type"}${ray ? `, Cloudflare ray ${ray}` : ""}`];
+  if (!ray) {
+    lines.push(
+      `No cf-ray header: this answer never came from Cloudflare. Something between here and janrau.dev refused it, most likely a network proxy or firewall${process.env.HTTPS_PROXY ? " (HTTPS_PROXY is set; requests are routed through it)" : ""}.`,
+    );
+    return lines;
   }
-  const res = await fetch(`${base}${path}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-    redirect: "manual",
-  });
+  if (/cloudflareaccess|Cloudflare Access|cf-access/i.test(text) || res.headers.get("cf-access-domain"))
+    lines.push(
+      "Answered by Cloudflare Access: it refused the service token. Check that CF_ACCESS_CLIENT_ID/SECRET match the token, that the token hasn't expired, and that the Portfolio admin app has a Service Auth policy including it. Zero Trust → Logs → Access shows the reason.",
+    );
+  else if (/cross-site/i.test(text))
+    lines.push("Answered by Astro's cross-site request check, not by Access or the app.");
+  else if (type.includes("application/json")) lines.push(`Answered by the app: ${text.slice(0, 300)}`);
+  else lines.push(`Body starts: ${text.replace(/\s+/g, " ").slice(0, 200) || "(empty)"}`);
+  return lines;
+}
+
+async function api(path: string, body?: unknown) {
+  const headers: Record<string, string> = { accept: "application/json", ...authHeaders() };
+  if (body !== undefined) headers["content-type"] = "application/json";
+  let res: Response;
+  try {
+    res = await fetch(`${base}${path}`, {
+      method: body === undefined ? "GET" : "POST",
+      headers,
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      redirect: "manual",
+    });
+  } catch (err) {
+    const cause = (err as { cause?: { message?: string; code?: string } }).cause;
+    fail(`Couldn't connect to ${base}.`, [
+      cause?.message ?? (err as Error).message,
+      process.env.HTTPS_PROXY
+        ? "HTTPS_PROXY is set and requests go through it: the proxy refused or couldn't reach janrau.dev. Check the environment's network access."
+        : "No proxy is set. Check the network connection.",
+    ]);
+  }
   if (res.status >= 300 && res.status < 400)
-    fail("Cloudflare Access redirected to a login page: the service token isn't allowed on /admin.");
+    fail("Cloudflare Access redirected to a login page: the request carried no accepted service token.", [
+      `HTTP ${res.status} → ${res.headers.get("location")?.slice(0, 80) ?? "?"}`,
+    ]);
+  if (!res.ok) {
+    const lines = await explain(res.clone());
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    fail(String(data.message ?? "The request was refused."), [...((data.issues as string[]) ?? []), ...lines]);
+  }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  if (!res.ok || data.ok !== true) fail(String(data.message ?? `HTTP ${res.status}`), (data.issues as string[]) ?? []);
+  if (data.ok !== true) fail(String(data.message ?? "Unexpected answer."), (data.issues as string[]) ?? []);
   return data;
 }
 
@@ -224,6 +281,12 @@ switch (command) {
     console.log(`  Publish from that page, or: pnpm job publish ${slug}${local ? " --local" : ""}\n`);
     break;
   }
+  case "ping": {
+    // The same code path as stage and publish, with nothing to change: tests credentials and network.
+    const who = await api("/admin/api/whoami");
+    console.log(`\n✓ Reached ${base} as ${String(who.identity)}\n`);
+    break;
+  }
   case "publish": {
     const slug = args[0];
     if (!slug) fail("Give the application's slug, e.g. acme-events-k7f3q");
@@ -232,5 +295,5 @@ switch (command) {
     break;
   }
   default:
-    fail("Commands: fetch, paste, check, stage, publish. See the top of packages/cv-render/src/job.ts.");
+    fail("Commands: fetch, paste, check, stage, publish, ping. See the top of packages/cv-render/src/job.ts.");
 }
