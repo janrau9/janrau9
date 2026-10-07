@@ -161,29 +161,20 @@ const workMode = `Open to ${[prefs.remote && "remote", prefs.hybrid && "hybrid"]
     position: relative;
     max-width: var(--measure);
   }
-  /* The lattice as the hero's background: behind the text, bleeding off the window's edge,
-     reaching into the gap before the overview. Its lines are the faint --line token, so text
-     over it stays legible; a fade (a mask: absence, not light) lets it dissolve toward the
-     text instead of ending in a box. */
+  /* room only: a field beside the text, its ragged left edge reaching 64px into the measure
+     so it meets the content; from the approach down to the hero's foot. On hand and table
+     there is no room beside the text, so the view keeps its emptiness. */
   .texture {
-    position: absolute;
-    top: -104px;
-    bottom: -64px;
-    left: calc(50% - 50vw);
-    right: calc(50% - 50vw);
-    -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent);
-    mask-image: linear-gradient(to bottom, black 55%, transparent);
-  }
-  @media (min-width: 610px) {
-    .texture {
-      left: 30%;
-      -webkit-mask-image: linear-gradient(to right, transparent, black 34%);
-      mask-image: linear-gradient(to right, transparent, black 34%);
-    }
+    display: none;
   }
   @media (min-width: 987px) {
     .texture {
-      left: 38%;
+      display: block;
+      position: absolute;
+      top: -104px;
+      bottom: 0;
+      left: calc(var(--measure) - 64px);
+      right: calc(-1 * var(--pad));
     }
   }
   /* Availability is a fact, not a warning: a neutral dot. The seal lives in the name. */

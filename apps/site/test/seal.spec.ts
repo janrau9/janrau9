@@ -22,19 +22,21 @@ async function seals(page: Page) {
   });
 }
 
-// The home page breaks the law on purpose (shuhari, named in Lattice.astro): the j's dot is
-// the mark and one lattice cell is the sky's. Two seals, never more, neither on a status.
-for (const [label, width] of [
-  ["phone", 375],
-  ["table", 800],
-  ["room", 1280],
+// The home page breaks the law on purpose where the lattice shows (room width; shuhari, named
+// in Lattice.astro): the j's dot is the mark and one lattice cell is the sky's. Narrower
+// screens have no lattice, so the j's dot is the only seal.
+for (const [label, width, expected] of [
+  ["phone", 375, ["tittle"]],
+  ["table", 800, ["tittle"]],
+  ["room", 1280, ["seal-cell", "tittle"]],
 ] as const)
-  test(`home has exactly two seals, the name's j and one lattice cell, on ${label}`, async ({ page }) => {
+  test(`home's seals on ${label}: ${expected.join(" and ")}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto("/", { waitUntil: "networkidle" });
-    expect((await seals(page)).sort()).toEqual(
-      [expect.stringContaining("seal-cell"), expect.stringContaining("tittle")].sort(),
+    const found = (await seals(page)).map((c) =>
+      String(c).includes("seal-cell") ? "seal-cell" : String(c).includes("tittle") ? "tittle" : String(c),
     );
+    expect(found.sort()).toEqual([...expected].sort());
     await expect(page.locator("h1 .tittle")).toBeVisible();
   });
 
@@ -81,11 +83,11 @@ test("the lattice keeps whole cells only, inside its field", async ({ page }) =>
     }).length;
   });
   expect(outside).toBe(0);
-  expect(await page.locator(".hex-cell").count()).toBeGreaterThan(60);
+  expect(await page.locator(".hex-cell").count()).toBeGreaterThan(20);
 });
 
 test("the lattice's seal never sits under text", async ({ page }) => {
-  for (const width of [375, 800, 1280]) {
+  for (const width of [1000, 1280, 1600]) {
     for (let visit = 0; visit < 3; visit++) {
       await page.setViewportSize({ width, height: 720 });
       await page.goto("/", { waitUntil: "networkidle" });
