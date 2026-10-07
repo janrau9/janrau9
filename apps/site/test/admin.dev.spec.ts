@@ -112,3 +112,14 @@ test("unpublish asks first, takes the link offline, and publishing again restore
   await expect(page.getByRole("status").first()).toHaveText(`Live ✓ janrau.dev/for/${slug}`);
   expect((await request.get(`/for/${slug}`)).status()).toBe(200);
 });
+
+test("a follow-up is recorded by the server and answers the reminder in place", async ({ page }) => {
+  // Seeded "applied" and published at time 0, so its no-reply reminder is due.
+  await page.goto("/admin");
+  const reminder = page.locator(".next li", { hasText: "Acme Events" });
+  await expect(reminder).toContainText("No reply");
+  await reminder.getByRole("button", { name: "I followed up" }).click();
+  await expect(reminder.getByRole("status")).toContainText("Followed up ✓");
+  await page.reload();
+  await expect(page.locator(".next li", { hasText: "Acme Events" })).toHaveCount(0);
+});

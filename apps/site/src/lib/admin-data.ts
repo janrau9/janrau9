@@ -6,10 +6,11 @@ export async function loadApplications(db: Db | undefined): Promise<ApplicationR
   if (!db) return [];
   const { results } = await db
     .prepare(
-      `SELECT a.slug, a.company, a.role, a.status, a.published_at,
+      `SELECT a.slug, a.company, a.role, a.status, a.published_at, a.followed_up_at,
          COALESCE(SUM(e.type = 'human'), 0)                   AS human_opens,
          COALESCE(SUM(e.type = 'open' AND e.scanner = 1), 0)  AS scanner_opens,
          MAX(CASE WHEN e.type = 'human' THEN e.ts END)        AS last_human,
+         MIN(CASE WHEN e.type = 'human' THEN e.ts END)        AS first_human,
          COALESCE(SUM(e.type = 'fit_viewed'), 0)              AS fit_views,
          COALESCE(SUM(e.type = 'cv_download'), 0)             AS cv_downloads,
          COALESCE(SUM(e.type = 'case_click'), 0)              AS case_clicks

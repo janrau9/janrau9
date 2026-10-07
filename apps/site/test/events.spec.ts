@@ -156,6 +156,8 @@ test("a status change moves an application through the funnel", () => {
     human_opens,
     scanner_opens: 3,
     last_human: null,
+    first_human: null,
+    followed_up_at: null,
     fit_views: 0,
     cv_downloads,
     case_clicks: 0,

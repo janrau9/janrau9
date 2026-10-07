@@ -76,4 +76,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Production build: drafts excluded.
       - run: pnpm --filter @janrau/site build
+        env:
+          # Web Analytics site token: public by design, it is in every public page's HTML.
+          PUBLIC_CF_BEACON_TOKEN: 2d57ab02706e4ae6a38da7384cd41165 # gitleaks:allow
       - run: pnpm --filter @janrau/site exec wrangler deploy

@@ -5,6 +5,7 @@ import { verifyAccess } from "../../lib/access";
 import { loadApplications } from "../../lib/admin-data";
 import { adminEmail } from "../../lib/admin-env";
 import { funnel, STATUSES } from "../../lib/events";
+import { NO_REPLY_AFTER_DAYS, reminders } from "../../lib/followup";
 
 export const prerender = false;
 
@@ -13,6 +14,7 @@ if (!email) return new Response("Forbidden", { status: 403 });
 
 const rows = await loadApplications(env.DB);
 const stages = funnel(rows);
+const next = reminders(rows);
 const ago = (ts: number | null) => {
   if (!ts) return "never";
   const s = Math.floor(Date.now() / 1000) - ts;
@@ -29,6 +31,33 @@ const label = (s: string) => s.replace("_", " ");
       <p class="micro">Signed in as {email}</p>
       <h1 class="display">applications</h1>
     </header>
+
+    {
+      next.length > 0 && (
+        <section class="section" aria-labelledby="next-title">
+          <h2 id="next-title">Next steps</h2>
+          <ul class="list-plain next">
+            {next.map((n) => (
+              <li data-kind={n.kind}>
+                <follow-up data-no-reply-days={NO_REPLY_AFTER_DAYS}>
+                  <div class="stack-8">
+                    <a href={`#${n.slug}`}>{n.company}</a>
+                    <p class="small text-2 says">{n.text}</p>
+                  </div>
+                  <form method="post" action="/admin/followed-up">
+                    <input type="hidden" name="slug" value={n.slug} />
+                    <button type="submit" class="button button-outline">
+                      I followed up
+                    </button>
+                  </form>
+                  <p class="micro state" role="status" aria-live="polite" />
+                </follow-up>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
 
     <section class="section" aria-labelledby="funnel-title">
       <h2 id="funnel-title">Funnel</h2>
@@ -209,11 +238,66 @@ const label = (s: string) => s.replace("_", " ");
     }
   }
 
+  /**
+   * Follow-up island: records the follow-up and says so in place. The reminder stays
+   * visible, answered, until the next visit, so the row doesn't jump away under the cursor.
+   */
+  class FollowUp extends HTMLElement {
+    connectedCallback() {
+      const form = this.querySelector("form");
+      const button = this.querySelector("button");
+      const state = this.querySelector<HTMLElement>(".state");
+      if (!form || !button || !state) return;
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        button.disabled = true;
+        button.textContent = "Saving…";
+        try {
+          const res = await fetch(form.action, { method: "POST", body: new FormData(form), headers: { accept: "application/json" } });
+          const data = (await res.json()) as { ok: boolean; message?: string };
+          if (!res.ok || !data.ok) throw new Error(data.message ?? `HTTP ${res.status}`);
+          this.dataset.state = "done";
+          form.remove();
+          state.textContent = `Followed up ✓ The next reminder comes in ${this.dataset.noReplyDays} days if there is no reply.`;
+        } catch (err) {
+          button.disabled = false;
+          button.textContent = "I followed up";
+          const why = err instanceof Error && err.message !== "Failed to fetch" ? err.message : "No connection.";
+          state.textContent = `Not saved: ${why}`;
+        }
+      });
+    }
+  }
+
+  customElements.define("follow-up", FollowUp);
   customElements.define("status-control", StatusControl);
   customElements.define("copy-link", CopyLink);
 </script>
 
 <style>
+  .next {
+    border-top: 1px solid var(--line);
+  }
+  .next li {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  follow-up {
+    display: grid;
+    gap: 8px 24px;
+    align-items: center;
+  }
+  @media (min-width: 610px) {
+    follow-up {
+      grid-template-columns: 1fr auto;
+    }
+    follow-up .state {
+      grid-column: 1 / -1;
+    }
+  }
+  follow-up[data-state="done"] .says {
+    text-decoration: line-through;
+  }
   .stats {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

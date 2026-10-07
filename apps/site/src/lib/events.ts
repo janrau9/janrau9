@@ -87,6 +87,8 @@ export interface ApplicationRow {
   human_opens: number;
   scanner_opens: number;
   last_human: number | null;
+  first_human: number | null;
+  followed_up_at: number | null;
   fit_views: number;
   cv_downloads: number;
   case_clicks: number;
