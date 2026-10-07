@@ -1,7 +1,7 @@
 import type { Db } from "./tailored";
 
 /**
- * Janrau's own visits: signed in to /admin, his browser carries Cloudflare Access's
+ * Janrau's own visits: signed in to /admin, the browser carries Cloudflare Access's
  * CF_Authorization cookie. Those visits are never recorded. Only the cookie's presence is
  * checked; nothing about it is stored.
  */

@@ -473,7 +473,7 @@ and a monthly spending cap for one user. Kept below for the record.
 ### Phase 6: Showcase (shipped 2026-10-07)
 
 `/work/this-site` is live, linked from every tailored page. It reports build facts now; visitor
-numbers are added once real recruiters, not Janrau's own checks, have opened links (his
+numbers are added once real recruiters, not Janrau's own checks, have opened links (their
 signed-in visits are no longer recorded).
 
 
