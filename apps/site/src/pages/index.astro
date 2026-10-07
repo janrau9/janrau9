@@ -161,20 +161,27 @@ const workMode = `Open to ${[prefs.remote && "remote", prefs.hybrid && "hybrid"]
     position: relative;
     max-width: var(--measure);
   }
-  /* room only: a field beside the text, its ragged left edge reaching 64px into the measure
-     so it meets the content; from the approach down to the hero's foot. On hand and table
-     there is no room beside the text, so the view keeps its emptiness. */
+  /* hand and table: a compact field in the hero's top-right, from the approach down past the
+     name, so the lattice is part of every screen. room: the field beside the text, its ragged
+     left edge reaching 64px into the measure so it meets the content. */
   .texture {
-    display: none;
+    position: absolute;
+    top: -104px;
+    height: 272px;
+    left: 45%;
+    right: calc(-1 * var(--pad));
+  }
+  @media (min-width: 610px) {
+    .texture {
+      left: 50%;
+      height: 296px;
+    }
   }
   @media (min-width: 987px) {
     .texture {
-      display: block;
-      position: absolute;
-      top: -104px;
+      height: auto;
       bottom: 0;
       left: calc(var(--measure) - 64px);
-      right: calc(-1 * var(--pad));
     }
   }
   /* Availability is a fact, not a warning: a neutral dot. The seal lives in the name. */

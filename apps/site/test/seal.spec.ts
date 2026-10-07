@@ -22,12 +22,11 @@ async function seals(page: Page) {
   });
 }
 
-// The home page breaks the law on purpose where the lattice shows (room width; shuhari, named
-// in Lattice.astro): the j's dot is the mark and one lattice cell is the sky's. Narrower
-// screens have no lattice, so the j's dot is the only seal.
+// The home page breaks the law on purpose (shuhari, named in Lattice.astro): the j's dot is
+// the mark and one lattice cell is the sky's, at every width.
 for (const [label, width, expected] of [
-  ["phone", 375, ["tittle"]],
-  ["table", 800, ["tittle"]],
+  ["phone", 375, ["seal-cell", "tittle"]],
+  ["table", 800, ["seal-cell", "tittle"]],
   ["room", 1280, ["seal-cell", "tittle"]],
 ] as const)
   test(`home's seals on ${label}: ${expected.join(" and ")}`, async ({ page }) => {
@@ -87,7 +86,7 @@ test("the lattice keeps whole cells only, inside its field", async ({ page }) =>
 });
 
 test("the lattice's seal never sits under text", async ({ page }) => {
-  for (const width of [1000, 1280, 1600]) {
+  for (const width of [375, 414, 800, 1280]) {
     for (let visit = 0; visit < 3; visit++) {
       await page.setViewportSize({ width, height: 720 });
       await page.goto("/", { waitUntil: "networkidle" });
