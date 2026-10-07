@@ -22,15 +22,19 @@ async function seals(page: Page) {
   });
 }
 
+// The home page breaks the law on purpose (shuhari, named in Lattice.astro): the j's dot is
+// the mark and one lattice cell is the sky's. Two seals, never more, neither on a status.
 for (const [label, width] of [
   ["phone", 375],
   ["table", 800],
   ["room", 1280],
 ] as const)
-  test(`home has exactly one seal, the dot of the name's j, on ${label}`, async ({ page }) => {
+  test(`home has exactly two seals, the name's j and one lattice cell, on ${label}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto("/", { waitUntil: "networkidle" });
-    expect(await seals(page)).toEqual([expect.stringContaining("tittle")]);
+    expect((await seals(page)).sort()).toEqual(
+      [expect.stringContaining("seal-cell"), expect.stringContaining("tittle")].sort(),
+    );
     await expect(page.locator("h1 .tittle")).toBeVisible();
   });
 
@@ -77,5 +81,22 @@ test("the lattice keeps whole cells only, inside its field", async ({ page }) =>
     }).length;
   });
   expect(outside).toBe(0);
-  expect(await page.locator(".hex-cell").count()).toBeGreaterThan(20);
+  expect(await page.locator(".hex-cell").count()).toBeGreaterThan(60);
+});
+
+test("the lattice's seal never sits under text", async ({ page }) => {
+  for (const width of [375, 800, 1280]) {
+    for (let visit = 0; visit < 3; visit++) {
+      await page.setViewportSize({ width, height: 720 });
+      await page.goto("/", { waitUntil: "networkidle" });
+      const underText = await page.evaluate(() => {
+        const seal = document.querySelector(".seal-cell")?.getBoundingClientRect();
+        if (!seal) return true;
+        return [...document.querySelectorAll(".hero h1, .hero p, .hero li, .hero a, .hero button")]
+          .map((e) => e.getBoundingClientRect())
+          .some((r) => seal.right > r.left && seal.left < r.right && seal.bottom > r.top && seal.top < r.bottom);
+      });
+      expect(underText, `width ${width}, visit ${visit + 1}`).toBe(false);
+    }
+  }
 });
