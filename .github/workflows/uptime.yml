@@ -1,0 +1,39 @@
+name: Uptime
+
+# A recruiter may open a link at any hour. Every 3 hours, check that the static site, the CV
+# and the Worker answer as they should; a failed run emails the repository owner (GitHub's
+# default notification for failed scheduled workflows).
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Pages, CV and Worker answer
+        run: |
+          set -u
+          fail=0
+          expect() { # expect <status> <path> [content-type prefix]
+            got=$(curl -sS -o /dev/null --max-time 20 --retry 2 --retry-all-errors \
+              -w '%{http_code} %{content_type}' "https://janrau.dev$2") || got="000 -"
+            code=${got%% *}; type=${got#* }
+            bad=0
+            [ "$code" = "$1" ] || bad=1
+            case "$type" in "${3:-}"*) ;; *) bad=1 ;; esac
+            if [ $bad = 1 ]; then echo "::error::$2 answered $got, expected $1 ${3:-}"; fail=1
+            else echo "ok  $2  $got"; fi
+          }
+          expect 200 / text/html
+          expect 200 /work/this-site text/html
+          expect 200 /janrau-beray-cv.pdf application/pdf
+          expect 200 /og/home.png image/png
+          # An unknown tailored link is answered by the Worker, which looks it up in D1: a 404
+          # here means the Worker and the database are both up.
+          expect 404 /for/uptime-check-zzzzz text/html
+          exit $fail
