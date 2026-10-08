@@ -13,7 +13,8 @@ export async function loadApplications(db: Db | undefined): Promise<ApplicationR
          MIN(CASE WHEN e.type = 'human' THEN e.ts END)        AS first_human,
          COALESCE(SUM(e.type = 'fit_viewed'), 0)              AS fit_views,
          COALESCE(SUM(e.type = 'cv_download'), 0)             AS cv_downloads,
-         COALESCE(SUM(e.type = 'case_click'), 0)              AS case_clicks
+         COALESCE(SUM(e.type = 'case_click'), 0)              AS case_clicks,
+         COALESCE(SUM(e.type = 'elevator'), 0)                AS elevator_uses
        FROM applications a LEFT JOIN events e ON e.slug = a.slug
        GROUP BY a.slug ORDER BY a.published_at DESC`,
     )

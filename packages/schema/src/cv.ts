@@ -48,6 +48,8 @@ export const Person = z.strictObject({
       z.strictObject({
         name: z.string(),
         level: z.enum(["native", "professional", "conversational", "basic"]),
+        /** CEFR level, when a certificate states one. */
+        cefr: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).optional(),
       }),
     )
     .min(1),

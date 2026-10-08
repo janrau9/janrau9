@@ -25,3 +25,7 @@ apps/site/src/generated/
 
 # Hand-written variants and job posts: private application data
 private/
+
+# Elevator mode: model, runtime and index are built from content/ (pnpm render elevator)
+apps/site/public/elevator/
+.cache/

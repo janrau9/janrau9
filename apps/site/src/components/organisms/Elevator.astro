@@ -1,0 +1,409 @@
+---
+// Elevator mode: the site is the lobby; stepping in strips it to one input. Answers are
+// quoted from my own content by a model that runs in the visitor's browser. This
+// component is the button and the empty room; the engine loads only on entry.
+const FLOORS = [
+  "real-time sync between devices",
+  "how do you work with AI coding agents?",
+  "testing and CI",
+  "have you built mobile apps?",
+  "go lang",
+  "devops",
+];
+---
+
+<button type="button" id="elevator-open" class="el-open" aria-haspopup="dialog" aria-keyshortcuts="/">
+  Elevator <kbd>/</kbd>
+</button>
+
+<dialog id="elevator" class="elevator" aria-labelledby="el-title">
+  <div class="el-top">
+    <p class="micro" id="el-title">Elevator mode · answers are my own words, quoted</p>
+    <button type="button" class="button button-outline el-close">Back to the page <kbd>Esc</kbd></button>
+  </div>
+  <div class="el-main">
+    <div class="el-col">
+      <div class="el-consent card" hidden>
+        <p>
+          This mode runs a small AI model on your phone, so your questions never leave it. It's a one-time download of
+          46 MB.
+        </p>
+        <div class="row el-choice">
+          <button type="button" class="button button-ink el-yes">Download and continue</button>
+          <button type="button" class="button button-outline el-no">Use keywords only</button>
+        </div>
+        <p class="micro">On Wi-Fi this takes a few seconds. Next time it loads from your phone.</p>
+      </div>
+      <form class="el-ask" autocomplete="off">
+        <label class="micro" for="el-q">Which floor? Ask about my work</label>
+        <div class="el-ask-row">
+          <input
+            id="el-q"
+            class="el-input"
+            name="q"
+            placeholder="e.g. real-time sync between devices"
+            enterkeyhint="search"
+            maxlength="200"
+          />
+          <button type="submit" class="button button-ink">Go</button>
+        </div>
+      </form>
+      <details class="el-trace">
+        <summary><span class="el-now" role="status">Getting ready</span><span class="micro">What's happening</span></summary>
+        <ol class="el-spans list-plain"></ol>
+      </details>
+      <div class="el-chips" aria-label="Example questions">
+        {FLOORS.map((q) => <button type="button" class="el-chip" data-ask={q}>{q}</button>)}
+      </div>
+      <div class="el-answer" aria-live="polite"></div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  // The only script every page carries for elevator mode: open on click or "/".
+  const dialog = document.getElementById("elevator") as HTMLDialogElement | null;
+  let app: Promise<typeof import("../../scripts/elevator/app")> | undefined;
+  const enter = () => {
+    app ??= import("../../scripts/elevator/app");
+    void app.then((m) => m.open());
+  };
+  document.getElementById("elevator-open")?.addEventListener("click", enter);
+  document.addEventListener("keydown", (e) => {
+    const t = e.target as HTMLElement | null;
+    const typing = t?.isContentEditable || /^(input|textarea|select)$/i.test(t?.tagName ?? "");
+    if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey && !dialog?.open) {
+      e.preventDefault();
+      enter();
+    }
+  });
+</script>
+
+<style is:global>
+  .el-open {
+    font: inherit;
+    font-size: 14px;
+    color: var(--text-2);
+    background: none;
+    border: 0;
+    padding: 0 8px;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .el-open:hover {
+    color: var(--ink);
+  }
+  .el-open kbd,
+  .elevator kbd {
+    font: 400 11px/16px var(--font-mono);
+    color: var(--text-3);
+    border: 1px solid var(--line-strong);
+    border-radius: 5px;
+    padding: 0 4px;
+  }
+  @media (pointer: coarse) {
+    .el-open kbd {
+      display: none;
+    }
+  }
+
+  /* The room: the whole viewport, the page beneath made inert by the modal dialog. */
+  .elevator {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--ground);
+    color: var(--ink);
+    z-index: var(--z-modal);
+  }
+  .elevator[open] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    animation: el-rise var(--t-reveal) var(--settle);
+  }
+  .elevator::backdrop {
+    background: var(--ground);
+  }
+  @keyframes el-rise {
+    from {
+      opacity: 0;
+      transform: translateY(13px);
+    }
+  }
+  html.in-elevator {
+    overflow: hidden;
+  }
+  .el-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 16px var(--pad);
+  }
+  .el-top > .micro {
+    min-width: 0;
+  }
+  .el-close {
+    white-space: nowrap;
+    flex: none;
+    gap: 8px;
+  }
+  .el-main {
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    align-content: start;
+    padding: 24px var(--pad) 64px;
+  }
+  /* Before the first question the input sits in the middle of the room. */
+  .elevator:not(.el-asked) .el-main {
+    align-content: center;
+  }
+  .el-col {
+    width: 100%;
+    max-width: var(--measure);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .el-consent {
+    display: grid;
+    gap: 16px;
+  }
+  .el-consent[hidden] {
+    display: none;
+  }
+  .el-choice {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .el-ask {
+    display: grid;
+    gap: 8px;
+  }
+  .el-ask-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .el-ask-row:focus-within {
+    border-bottom-color: var(--ink);
+  }
+  .el-input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    font: 400 20px/28px var(--font-sans);
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    padding: 16px 0;
+    outline: none;
+  }
+  .el-input::placeholder {
+    color: var(--text-3);
+  }
+
+  /* The trace: a one-line status, and every step's timing on request. */
+  .el-trace summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--text-2);
+    min-height: 40px;
+    align-content: center;
+  }
+  .el-trace summary::-webkit-details-marker {
+    display: none;
+  }
+  .el-trace summary .micro {
+    flex: none;
+  }
+  .el-trace[open] summary .micro {
+    color: var(--ink);
+  }
+  .el-spans {
+    border-top: 1px solid var(--line);
+  }
+  .el-span {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .el-ms {
+    font: 400 11px/20px var(--font-mono);
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .el-lane {
+    grid-column: 1 / -1;
+    position: relative;
+    height: 2px;
+  }
+  .el-lane i {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--x);
+    width: var(--w);
+    background: var(--ink);
+  }
+  .el-span[data-state="running"] .el-lane i,
+  .el-span[data-state="waiting"] .el-lane i {
+    background: var(--text-3);
+  }
+  .el-span[data-state="skipped"] .el-lane i {
+    display: none;
+  }
+  .el-note {
+    grid-column: 1 / -1;
+    font: 400 11px/16px var(--font-mono);
+    letter-spacing: 0.04em;
+    color: var(--text-3);
+    overflow-wrap: anywhere;
+  }
+
+  .el-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .el-chip {
+    font: 400 11px/16px var(--font-mono);
+    letter-spacing: 0.04em;
+    color: var(--text-2);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 4px 12px;
+    min-height: 32px;
+    cursor: pointer;
+    text-align: left;
+  }
+  .el-chip:hover {
+    color: var(--ink);
+    border-color: var(--line-strong);
+  }
+
+  /* Answers. Every sentence quoted; the layout is the only thing generated. */
+  .el-answer {
+    display: grid;
+    gap: 40px;
+  }
+  .el-answer:empty {
+    display: none;
+  }
+  .el-block,
+  .el-group,
+  .el-decision,
+  .el-more {
+    display: grid;
+    gap: 8px;
+  }
+  .el-block {
+    gap: 16px;
+  }
+  .el-quote {
+    display: grid;
+    gap: 4px;
+    border-left: 1px solid var(--line-strong);
+    padding-left: 16px;
+  }
+  .el-quote p {
+    overflow-wrap: anywhere;
+  }
+  .el-why {
+    color: var(--text-3);
+  }
+  .el-note-block {
+    border-left: 1px solid var(--ink);
+    padding-left: 16px;
+  }
+  .el-row {
+    display: grid;
+    gap: 8px;
+  }
+  @media (min-width: 610px) {
+    .el-row {
+      grid-template-columns: 9rem minmax(0, 1fr);
+      gap: 24px;
+    }
+  }
+  .el-card {
+    display: grid;
+    gap: 16px;
+  }
+  .el-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .el-decision dl {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px 16px;
+    margin: 0;
+  }
+  .el-decision dt {
+    font: 400 11px/24px var(--font-mono);
+    color: var(--text-3);
+  }
+  .el-decision dd {
+    margin: 0;
+  }
+  .el-more summary {
+    cursor: pointer;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    color: var(--text-2);
+  }
+  .el-more summary:hover {
+    color: var(--ink);
+  }
+  .el-more > .el-group + .el-group {
+    margin-top: 16px;
+  }
+  .el-link {
+    font: inherit;
+    color: var(--ink);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--ink) 25%, transparent);
+    text-underline-offset: 2px;
+  }
+  .el-link:hover {
+    text-decoration-color: var(--ink);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .elevator[open] {
+      animation: none;
+    }
+  }
+</style>

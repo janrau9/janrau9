@@ -92,6 +92,19 @@ test("the beacon endpoint ignores junk and unknown links", async ({ request }) =
   expect(sql<{ n: number }>("SELECT COUNT(*) AS n FROM events WHERE slug = 'nobody-zzzzz'")[0]?.n).toBe(0);
 });
 
+test("elevator mode records a use on the link, and counts term ids only", async ({ request }) => {
+  const post = (path: string, body: unknown) =>
+    request.post(path, { data: JSON.stringify(body), headers: { "content-type": "text/plain", origin: ORIGIN } });
+  sql("DELETE FROM elevator_terms");
+  expect((await post("/e", { slug: SLUG, type: "elevator" })).status()).toBe(204);
+  expect((await post("/q", { terms: ["kubernetes", "what I typed"] })).status()).toBe(204);
+  await post("/q", { terms: ["kubernetes"] });
+  await expect.poll(() => events().map((e) => e.type)).toEqual(["elevator"]);
+  await expect
+    .poll(() => sql<{ term: string; asks: number }>("SELECT term, asks FROM elevator_terms"))
+    .toEqual([{ term: "kubernetes", asks: 2 }]);
+});
+
 test("the first person-like read and the first CV download each notify once", async ({ request }) => {
   sql(`UPDATE applications SET notified_human_at = NULL, notified_cv_at = NULL WHERE slug = '${SLUG}'`);
   const notified = () =>
@@ -161,6 +174,7 @@ test("a status change moves an application through the funnel", () => {
     fit_views: 0,
     cv_downloads,
     case_clicks: 0,
+    elevator_uses: 0,
   });
   const counts = (rows: ApplicationRow[]) => funnel(rows).map((s) => s.count);
   expect(counts([row("applied")])).toEqual([1, 0, 0, 0, 0]);

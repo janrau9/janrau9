@@ -10,7 +10,7 @@ export function isOwnerVisit(request: Request): boolean {
 }
 
 /** Events the browser may report. 'open' is recorded by the server only. */
-export const CLIENT_EVENTS = ["human", "fit_viewed", "cv_download", "case_click"] as const;
+export const CLIENT_EVENTS = ["human", "fit_viewed", "cv_download", "case_click", "elevator"] as const;
 export type ClientEvent = (typeof CLIENT_EVENTS)[number];
 export type EventType = "open" | ClientEvent;
 
@@ -92,6 +92,7 @@ export interface ApplicationRow {
   fit_views: number;
   cv_downloads: number;
   case_clicks: number;
+  elevator_uses: number;
 }
 
 /** The funnel: each stage counts applications that reached it (or went further). */

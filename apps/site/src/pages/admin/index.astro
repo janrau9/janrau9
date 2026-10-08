@@ -4,6 +4,7 @@ import Base from "../../components/templates/Base.astro";
 import { verifyAccess } from "../../lib/access";
 import { loadApplications } from "../../lib/admin-data";
 import { adminEmail } from "../../lib/admin-env";
+import { askedTerms, today } from "../../lib/elevator-terms";
 import { funnel, STATUSES } from "../../lib/events";
 import { NO_REPLY_AFTER_DAYS, reminders } from "../../lib/followup";
 
@@ -15,6 +16,8 @@ if (!email) return new Response("Forbidden", { status: 403 });
 const rows = await loadApplications(env.DB);
 const stages = funnel(rows);
 const next = reminders(rows);
+const asked = await askedTerms(env.DB, today(Date.now() - 30 * 86400_000));
+const STATUS_LABEL = { have: "have", adjacent: "adjacent", "not-yet": "not yet" } as const;
 const ago = (ts: number | null) => {
   if (!ts) return "never";
   const s = Math.floor(Date.now() / 1000) - ts;
@@ -75,6 +78,40 @@ const label = (s: string) => s.replace("_", " ");
       </ol>
     </section>
 
+    <section class="section" aria-labelledby="asked-title">
+      <h2 id="asked-title">Asked in elevator mode</h2>
+      <p class="small text-2">
+        Glossary terms visitors' questions matched in the last 30 days. Only term ids are counted, never what anyone
+        typed. A "not yet" near the top is a skill worth learning or writing up.
+      </p>
+      {
+        asked.length ? (
+          <div class="table-scroll">
+            <table class="small" id="asked">
+              <thead>
+                <tr>
+                  <th scope="col">Term</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Asks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {asked.map((t) => (
+                  <tr>
+                    <td>{t.label}</td>
+                    <td class="micro">{t.id === "none" ? "" : STATUS_LABEL[t.status]}</td>
+                    <td class="num">{t.asks}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p class="text-2">No questions yet.</p>
+        )
+      }
+    </section>
+
     <section class="section" aria-labelledby="list-title">
       <h2 id="list-title">Every application</h2>
       <p class="small text-2">
@@ -92,6 +129,7 @@ const label = (s: string) => s.replace("_", " ");
               <th scope="col">Fit seen</th>
               <th scope="col">CV</th>
               <th scope="col">Case studies</th>
+              <th scope="col">Elevator</th>
               <th scope="col">Scanners</th>
             </tr>
           </thead>
@@ -141,6 +179,7 @@ const label = (s: string) => s.replace("_", " ");
                   <td class="num">{r.fit_views}</td>
                   <td class="num">{r.cv_downloads}</td>
                   <td class="num">{r.case_clicks}</td>
+                  <td class="num">{r.elevator_uses}</td>
                   <td class="num text-3">{r.scanner_opens}</td>
                 </tr>
               ))

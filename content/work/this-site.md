@@ -37,6 +37,16 @@ So every application I send gets its own private page: the job's requirements qu
 7. When someone opens the link, the Worker records whether it looks like a person or a link scanner, without storing IP addresses or cookies. The first real read and the first CV download each send me one email.
 8. My dashboard shows who read what, and tells me when to act: follow up a week after a person read it, try another channel if nobody has after ten days, close it after three quiet weeks.
 
+## Elevator mode
+
+Every page has an elevator: press `/` and the site fades to one input. A visitor asks "has he done real-time sync?" and gets the answer in my own words, quoted from my CV, case studies and decision records, laid out by rules: a project card, a timeline, decisions, or quotes by source.
+
+The AI runs in the visitor's browser. A small embedding model (bge-small, 34 MB) ranks about 330 passages that were embedded when the site was built; nothing they type leaves their device, and no question costs me a token. It finds passages but never writes, because I measured it: the right evidence came top-three 64% of the time, so it must not be trusted to claim a fit.
+
+A glossary of about 130 tech terms sits in front of the ranking. "go lang" and "k8s" match by alias, "kubernets" gets "Did you mean Kubernetes?", and every term has an honest status. A term I haven't used says so, then shows the closest work I have done.
+
+Loading is in plain view. The first visit downloads about 46 MB from janrau.dev; a status line says what is happening, and a trace shows each step's timing, from the model download to which layout rule fired. Phones ask before downloading.
+
 ## Decisions
 
 | I chose | Over | Because |
@@ -45,9 +55,10 @@ So every application I send gets its own private page: the job's requirements qu
 | Tailored pages rendered on a Worker from D1 | Rebuilding the site per application | A new link is live in seconds, and applications never enter the public build. |
 | PDFs in KV | R2 object storage | R2 needs a payment method on the account; KV is free and holds them easily. |
 | Staging through the site with a Cloudflare Access service token | Local files, or a Cloudflare API token in cloud sessions | Any surface can continue an application, and the token can reach the admin area but nothing else. |
-| AI only where I trigger it, reviewed before publishing | A chatbot or AI features for visitors | No per-visitor cost, and nothing reaches a recruiter that I haven't read. |
+| AI writing only where I trigger it, reviewed before publishing | AI that writes for visitors | Nothing reaches a recruiter that I haven't read. |
+| A model in the visitor's browser that finds and quotes my words | A hosted chatbot answering in its own words | No per-question cost, questions never leave the device, and it can't claim a fit I don't have. |
 
-The full reasoning lives in three architecture decision records in the repository.
+The full reasoning lives in four architecture decision records in the repository.
 
 ## What the guardrails caught
 
@@ -62,13 +73,16 @@ Most of the value of this system is in what it refused to let through. Each of t
 - **A cloud proxy behind a bare 403.** Staging failed from cloud sessions while `curl` worked: Node's `fetch` ignored the sandbox's HTTPS proxy. The CLI now uses it, and failures name the layer that refused. (`9687519`)
 - **Red reading as a status.** My design system's one red mark sat beside "Available" and read as "not available". It moved into the dot of the j in my name. (`d30ad00`)
 - **Tests racing each other.** Two test servers shared one local database file and locked it. (`b5f6b8c`)
+- **A model too big to host.** Cloudflare serves static files up to 25 MiB; the model is 34 MB. It ships in two parts that the browser joins and caches, so it still comes from my own domain.
+- **"Food" in "dogfooding".** Keyword matching found "favourite food" in a passage about dogfooding. Keywords now match from the start of a word.
+- **A new event the database refused.** The events table only accepts listed types, so recording "elevator" failed. An end-to-end test caught it before release; a migration rebuilt the table.
 - **A signal that could never fire.** "The fit table was viewed" required half the table on screen at once; on a phone, a long table is taller than two screens, so it could never count. A layout change made a test fail, which exposed it. (`e545787`)
 
 ## Outcome
 
 - **In use:** 5 applications prepared and published so far, each with its own page, CV and cover letter.
 - **Fetching:** the first four posts fetched automatically needed three different methods: an applicant tracking system's API, embedded job data, and a real browser for a JavaScript-only page.
-- **Quality gates:** about 150 automated tests, including WCAG 2.2 AA accessibility in both colour themes, a page-weight budget and the production security policy, run on every push; a deploy happens only when all pass.
+- **Quality gates:** about 180 automated tests, including WCAG 2.2 AA accessibility in both colour themes, a page-weight budget and the production security policy, run on every push; a deploy happens only when all pass.
 - **Cost:** hosting on Cloudflare's free tier; the only bill is the domain.
 
 ## What's next

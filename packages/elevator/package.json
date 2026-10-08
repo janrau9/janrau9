@@ -1,0 +1,26 @@
+{
+  "name": "@janrau/elevator",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./build": "./src/build.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run",
+    "build-index": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "3.8.1",
+    "@janrau/schema": "workspace:*",
+    "github-slugger": "^2.0.0",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

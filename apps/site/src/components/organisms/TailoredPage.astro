@@ -65,7 +65,7 @@ const month = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(
           <p class="requirement">“{row.requirement}”</p>
           <ul class="stack-8 small evidence">
             {row.evidence.map((e) => (
-              <li>{e.href ? <a href={e.href}>{e.text}</a> : e.text}</li>
+              <li data-evidence={e.id}>{e.href ? <a href={e.href}>{e.text}</a> : e.text}</li>
             ))}
           </ul>
         </li>

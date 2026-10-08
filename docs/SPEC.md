@@ -296,6 +296,20 @@ Order of writing: the default featured three first, then the rest.
 
 The pipeline itself as a case study, written in phase 6 from real data: ingestion success rates by ladder step, scanner vs human opens, funnel numbers, kiln bugs found while building.
 
+### Elevator mode (every page)
+
+A focus mode: the site is the lobby, and stepping in strips it to one input. Decision record: ADR 004.
+
+- **Entry:** "Elevator" in the top strip, or the `/` key. Pages carry a 2 KB entry script; the rest loads on entry.
+- **Engine:** bge-small-en-v1.5 (int8) in a Web Worker via Transformers.js and the WebAssembly ONNX runtime, all served from `/elevator/`. The model ships in 20 MiB parts (Workers' 25 MiB file limit) and is kept in Cache Storage.
+- **Index:** about 320 passages (CV items and "About me" facts, published case studies split by section with their decision tables, and the ADRs) plus about 130 glossary terms, embedded at build time into `index.json` and int8 `vectors.bin`. Drafts are never included.
+- **Glossary** (`content/glossary.yaml`): aliases, status `have` / `adjacent` / `not-yet`, evidence ids or the closest terms. Matching: alias, then typo, then meaning (sure at 0.70, "Did you mean" from 0.60).
+- **Answers:** rules turn the ranked passages into a layout. The best 3 lead, with up to 6 more behind "See more". Each quote says why it matched (by skill, by meaning, by keyword, in this application). A term I don't have says so and shows the closest work. On a tailored link, fit-table evidence ranks higher.
+- **Trace:** one status line, and on request every step as a timed span: Index, Runtime, Model, Warm-up, Embed, Rank, Compose. A question asked while loading waits, and the trace shows it waiting.
+- **Phones:** ask before the 46 MB download; "Use keywords only" downloads nothing.
+- **Counting:** `/q` counts matched glossary term ids per day (`elevator_terms`), never question text. Tailored links also record an `elevator` event.
+- **Tests:** `packages/elevator` (fixed questions with real embeddings) and `apps/site/test/elevator.spec.ts` (the real model under the production CSP).
+
 ## 8. Events and analytics
 
 ### Table
@@ -416,7 +430,8 @@ applications(slug PK, company, role, source_url, post_hash UNIQUE,
              notified_human_at, notified_cv_at,                -- §8 Notifications (0003)
              followed_up_at)                                   -- §8 Next steps (0004)
 variants(slug PK → applications, variant_json, cv_version)   -- cv.yaml git hash at publish
-events(...)                                                  -- §8
+events(...)                                                  -- §8; type 'elevator' added (0005)
+elevator_terms(day, term, asks)                              -- §7 Elevator mode (0005)
 ```
 
 `cv_version` records which `cv.yaml` a variant was built from. If a referenced ID is later removed, the page drops that item rather than failing.
@@ -506,6 +521,11 @@ signed-in visits are no longer recorded).
 - Dependabot: weekly, grouped, for npm and GitHub Actions; every update goes through CI like any branch.
 - Web Analytics on public pages (§8).
 
+### Phase 8: Elevator mode (shipped 2026-10-08)
+
+- Local retrieval over all public content, with the glossary and visible loading (§7 Elevator mode, ADR 004).
+- Dashboard: "Asked in elevator mode" (top terms, 30 days) and an Elevator column per application.
+
 ## 12. Engineering rules
 
 - ADR for every non-trivial choice in `content/adr/`: context, decision, alternatives, consequences.
@@ -527,7 +547,6 @@ signed-in visits are no longer recorded).
 
 ## 14. Later, out of scope
 
-- Visitor-facing semantic search with build-time embeddings and an in-browser query model.
 - Kubernetes platform lab with game days, only if targeting platform roles.
 - Own pipeline for general traffic analytics.
 - PDF, screenshot and `.eml` inputs.

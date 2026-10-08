@@ -20,6 +20,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Elevator mode's model download and embedding cache: re-embedding only what changed.
+      - uses: actions/cache@v4
+        with:
+          path: .cache
+          key: elevator-${{ hashFiles('packages/elevator/src/build.ts', 'content/**') }}
+          restore-keys: elevator-
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -41,6 +47,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Elevator mode's model download and embedding cache: re-embedding only what changed.
+      - uses: actions/cache@v4
+        with:
+          path: .cache
+          key: elevator-${{ hashFiles('packages/elevator/src/build.ts', 'content/**') }}
+          restore-keys: elevator-
       - run: pnpm --filter @janrau/site exec playwright install --with-deps chromium
       # Drafts included, so every case study is checked before it can be published.
       - run: pnpm --filter @janrau/site build:drafts
@@ -74,6 +86,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Elevator mode's model download and embedding cache: re-embedding only what changed.
+      - uses: actions/cache@v4
+        with:
+          path: .cache
+          key: elevator-${{ hashFiles('packages/elevator/src/build.ts', 'content/**') }}
+          restore-keys: elevator-
       # Production build: drafts excluded.
       - run: pnpm --filter @janrau/site build
         env:

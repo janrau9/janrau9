@@ -1,4 +1,5 @@
 export * from "./cv.ts";
+export * from "./glossary.ts";
 export * from "./load.ts";
 export * from "./tags.ts";
 export * from "./tailor.ts";

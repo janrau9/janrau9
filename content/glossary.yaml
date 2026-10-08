@@ -1,0 +1,174 @@
+# Tech terms visitors ask about, for elevator mode. Every claim cites cv.yaml:
+#   have      used in shipped or tested work; `evidence` lists cv.yaml ids (or lang:<Name>)
+#   adjacent  not used, but close work exists; `near` lists terms I have
+#   not-yet   no close work; `near` lists the nearest terms I have
+# Aliases are the spellings people type; matching is case-insensitive.
+# Validated by packages/schema (every id resolves) on every build.
+
+terms:
+
+  # About me: not tech terms, but what people ask first
+  - { id: about-me, label: About me, group: About, aliases: [yourself, about you, who are you, background, introduce yourself], status: have, evidence: [person.about, person.ai] }
+  - { id: location, label: Location and work rights, group: About, aliases: [based, location, where do you live, relocate, relocation, remote, hybrid, work permit, visa, eligible], status: have, evidence: [person.where] }
+  - { id: spoken-languages, label: Languages I speak, group: About, aliases: [speak, spoken languages, english], status: have, evidence: [person.languages, lang:English, lang:Finnish] }
+
+  # Languages
+  - { id: programming-languages, label: Programming languages, group: Languages, aliases: [programming languages, coding languages, tech stack], status: have, evidence: [skill.typescript, skill.python, skill.c-cpp], related: [typescript, python, c, cpp, sql] }
+  - { id: typescript, label: TypeScript, group: Languages, aliases: [ts], status: have, evidence: [skill.typescript, proj.this-site, exp.current.h4] }
+  - { id: javascript, label: JavaScript, group: Languages, aliases: [js, es6, ecmascript], status: have, evidence: [skill.typescript, proj.synchd.h3] }
+  - { id: python, label: Python, group: Languages, aliases: [py], status: have, evidence: [skill.python, exp.current.h5, proj.sisu-shift.h2] }
+  - { id: c, label: C, group: Languages, aliases: [c language, ansi c], status: have, evidence: [proj.minishell, proj.cub3d, proj.philosophers] }
+  - { id: cpp, label: C++, group: Languages, aliases: [c++, cplusplus], status: have, evidence: [proj.webserv] }
+  - { id: sql, label: SQL, group: Languages, aliases: [structured query language], status: have, evidence: [skill.postgres, proj.slash.h3] }
+  - { id: shell, label: Shell scripting, group: Languages, aliases: [bash, zsh, shell scripts], status: have, evidence: [proj.minishell, proj.inception] }
+  - { id: html-css, label: HTML and CSS, group: Languages, aliases: [html, css, css3, html5], status: have, evidence: [proj.claude-skills.h1] }
+  - { id: go, label: Go, group: Languages, aliases: [golang, go lang], status: not-yet, near: [typescript, c] }
+  - { id: rust, label: Rust, group: Languages, aliases: [rustlang], status: not-yet, near: [c, cpp] }
+  - { id: java, label: Java, group: Languages, aliases: [jvm, spring, spring boot], status: not-yet, near: [typescript, python] }
+  - { id: kotlin, label: Kotlin, group: Languages, aliases: [], status: not-yet, near: [react-native] }
+  - { id: swift, label: Swift, group: Languages, aliases: [swiftui], status: adjacent, near: [react-native, ios] }
+  - { id: csharp, label: C#, group: Languages, aliases: [c#, c sharp, ".net", dotnet], status: not-yet, near: [typescript] }
+  - { id: php, label: PHP, group: Languages, aliases: [laravel], status: have, evidence: [exp.current.h1] }
+  - { id: ruby, label: Ruby, group: Languages, aliases: [rails, ruby on rails], status: not-yet, near: [python] }
+
+  # Frontend
+  - { id: react, label: React, group: Frontend, aliases: [reactjs, react.js], status: have, evidence: [skill.react, proj.slash, proj.synchd] }
+  - { id: react-native, label: React Native, group: Frontend, aliases: [rn, react-native], status: have, evidence: [skill.react-native, proj.sisu-shift] }
+  - { id: expo, label: Expo, group: Frontend, aliases: [eas], status: have, evidence: [skill.react-native, proj.sisu-shift.h5] }
+  - { id: astro, label: Astro, group: Frontend, aliases: [], status: have, evidence: [proj.this-site] }
+  - { id: vite, label: Vite, group: Frontend, aliases: [], status: have, evidence: [proj.slash, proj.synchd] }
+  - { id: nextjs, label: Next.js, group: Frontend, aliases: [next, nextjs, next.js], status: have, evidence: [proj.shorts-studio.h4] }
+  - { id: vue, label: Vue, group: Frontend, aliases: [vuejs, vue.js, nuxt], status: not-yet, near: [react] }
+  - { id: angular, label: Angular, group: Frontend, aliases: [angularjs], status: not-yet, near: [react, typescript] }
+  - { id: svelte, label: Svelte, group: Frontend, aliases: [sveltekit], status: not-yet, near: [react, astro] }
+  - { id: tailwind, label: Tailwind CSS, group: Frontend, aliases: [tailwindcss], status: have, evidence: [exp.current.h1, proj.shorts-studio.h4] }
+  - { id: pwa, label: Progressive web apps, group: Frontend, aliases: [pwa, service worker, installable web app], status: have, evidence: [proj.slash, proj.synchd, proj.shotclock] }
+  - { id: accessibility, label: Accessibility, group: Frontend, aliases: [a11y, wcag, aria], status: have, evidence: [proj.this-site.h3, proj.claude-skills.h1] }
+  - { id: design-system, label: Design systems, group: Frontend, aliases: [ui library, design tokens, component library], status: have, evidence: [proj.claude-skills.h1, proj.claude-skills.h2] }
+  - { id: tanstack-query, label: TanStack Query, group: Frontend, aliases: [react query], status: have, evidence: [proj.sisu-shift.d.offline] }
+  - { id: redux, label: Redux, group: Frontend, aliases: [zustand, state management], status: adjacent, near: [tanstack-query, react] }
+  - { id: frontend, label: Frontend, group: Frontend, aliases: [front end, front-end, ui, web ui], status: have, evidence: [skill.react, proj.synchd.h3, proj.claude-skills.h1] }
+  - { id: performance, label: Web performance, group: Frontend, aliases: [core web vitals, page speed, rendering performance], status: have, evidence: [proj.synchd.h3, proj.this-site.h3] }
+
+  # Backend
+  - { id: node, label: Node.js, group: Backend, aliases: [nodejs, node.js], status: have, evidence: [skill.node-bun, proj.kiln] }
+  - { id: bun, label: Bun, group: Backend, aliases: [], status: have, evidence: [skill.node-bun, proj.slash] }
+  - { id: hono, label: Hono, group: Backend, aliases: [], status: have, evidence: [skill.hono, proj.slash.d.zero] }
+  - { id: fastapi, label: FastAPI, group: Backend, aliases: [], status: have, evidence: [exp.current.h5, proj.sisu-shift.d.solver] }
+  - { id: express, label: Express, group: Backend, aliases: [expressjs, express.js, nestjs], status: adjacent, near: [hono, node] }
+  - { id: django, label: Django, group: Backend, aliases: [flask], status: adjacent, near: [fastapi, python] }
+  - { id: rest, label: REST APIs, group: Backend, aliases: [rest, api, apis, restful, http api], status: have, evidence: [exp.current.h5, proj.slash.d.zero] }
+  - { id: graphql, label: GraphQL, group: Backend, aliases: [apollo], status: not-yet, near: [rest] }
+  - { id: webhooks, label: Webhooks, group: Backend, aliases: [webhook], status: have, evidence: [exp.current.h5] }
+  - { id: microservices, label: Microservices, group: Backend, aliases: [service oriented, soa], status: adjacent, near: [fastapi], nearEvidence: [proj.sisu-shift.d.solver] }
+  - { id: auth, label: Authentication, group: Backend, aliases: [auth, oauth, jwt, sso, login, better auth, better-auth], status: have, evidence: [proj.transcendence.h1, proj.slash, proj.synchd, proj.shotclock, proj.this-site.d.state] }
+  - { id: multi-tenant, label: Multi-tenancy, group: Backend, aliases: [multitenant, saas architecture], status: have, evidence: [exp.current.h2, proj.synchd.h5] }
+  - { id: queues, label: Message queues, group: Backend, aliases: [kafka, rabbitmq, sqs, pubsub, bullmq, job queues, background jobs], status: have, evidence: [proj.shorts-studio.h2] }
+  - { id: redis, label: Redis, group: Backend, aliases: [valkey], status: have, evidence: [proj.shorts-studio.h2] }
+  - { id: http, label: HTTP, group: Backend, aliases: [http server, cgi], status: have, evidence: [proj.webserv] }
+  - { id: websockets, label: WebSockets, group: Backend, aliases: [websocket, socket.io], status: have, evidence: [proj.transcendence] }
+  - { id: webrtc, label: WebRTC, group: Backend, aliases: [], status: have, evidence: [proj.shotclock.h3] }
+  - { id: backend, label: Backend, group: Backend, aliases: [back end, back-end, server side], status: have, evidence: [exp.current.h5, exp.current.h2, proj.sisu-shift.d.solver] }
+
+  # Data
+  - { id: postgres, label: PostgreSQL, group: Data, aliases: [postgres, psql, postgresql], status: have, evidence: [skill.postgres, proj.slash.h3, proj.synchd.h4] }
+  - { id: mysql, label: MySQL, group: Data, aliases: [mariadb], status: adjacent, near: [postgres, sql] }
+  - { id: sqlite, label: SQLite, group: Data, aliases: [d1], status: have, evidence: [proj.transcendence, proj.this-site] }
+  - { id: mongodb, label: MongoDB, group: Data, aliases: [mongo, nosql, document database], status: not-yet, near: [postgres] }
+  - { id: orm, label: ORMs, group: Data, aliases: [drizzle, prisma, orm], status: have, evidence: [proj.slash] }
+  - { id: supabase, label: Supabase, group: Data, aliases: [], status: have, evidence: [proj.sisu-shift] }
+  - { id: vector-db, label: Vector search, group: Data, aliases: [pgvector, embeddings, vector database, semantic search], status: have, evidence: [proj.rhythm.h1] }
+  - { id: data-modelling, label: Data modelling, group: Data, aliases: [data modeling, schema design, database design], status: have, evidence: [proj.slash.h2, proj.sisu-shift.h4, proj.rhythm.h1] }
+  - { id: sync, label: Sync engines, group: Data, aliases: [local-first, offline-first, offline, zero, powersync, replication], status: have, evidence: [skill.sync, proj.slash.h2, proj.shotclock.h2] }
+  - { id: real-time, label: Real-time systems, group: Data, aliases: [realtime, real time, live updates], status: have, evidence: [proj.slash.h1, proj.synchd.h2] }
+  - { id: crdt, label: CRDTs, group: Data, aliases: [crdt, yjs, automerge], status: adjacent, near: [sync] }
+  - { id: etl, label: Data pipelines, group: Data, aliases: [etl, data import, data pipeline], status: adjacent, near: [data-modelling], nearEvidence: [proj.synchd.h6] }
+  - { id: elasticsearch, label: Elasticsearch, group: Data, aliases: [opensearch, full text search], status: not-yet, near: [vector-db, postgres] }
+
+  # Cloud and operations
+  - { id: devops, label: DevOps, group: Cloud and operations, aliases: [dev ops, platform engineering, sre], status: have, evidence: [skill.ci, skill.docker, proj.shotclock.h4], related: [ci, docker, monitoring, linux] }
+  - { id: ci, label: CI/CD, group: Cloud and operations, aliases: [ci, cd, cicd, ci/cd, continuous integration, continuous delivery], status: have, evidence: [skill.ci, proj.sisu-shift.h5, proj.this-site.h3] }
+  - { id: github-actions, label: GitHub Actions, group: Cloud and operations, aliases: [gha], status: have, evidence: [skill.ci, exp.current.h4] }
+  - { id: docker, label: Docker, group: Cloud and operations, aliases: [containers, containerization, dockerfile], status: have, evidence: [skill.docker, proj.inception, proj.transcendence] }
+  - { id: docker-compose, label: Docker Compose, group: Cloud and operations, aliases: [compose], status: have, evidence: [proj.inception] }
+  - { id: kubernetes, label: Kubernetes, group: Cloud and operations, aliases: [k8s, kube, helm, container orchestration], status: not-yet, near: [docker, docker-compose, cloudflare] }
+  - { id: aws, label: AWS, group: Cloud and operations, aliases: [amazon web services, lambda, ec2], status: not-yet, near: [cloudflare, serverless] }
+  - { id: gcp, label: Google Cloud, group: Cloud and operations, aliases: [gcp, google cloud platform, firebase], status: not-yet, near: [cloudflare] }
+  - { id: azure, label: Azure, group: Cloud and operations, aliases: [microsoft azure], status: not-yet, near: [cloudflare] }
+  - { id: cloudflare, label: Cloudflare, group: Cloud and operations, aliases: [cloudflare workers, workers, kv, pages], status: have, evidence: [skill.cloudflare, exp.current.h2, proj.this-site] }
+  - { id: serverless, label: Serverless, group: Cloud and operations, aliases: [edge functions, edge computing, edge], status: have, evidence: [exp.current.h2, proj.this-site.h4] }
+  - { id: terraform, label: Infrastructure as code, group: Cloud and operations, aliases: [terraform, iac, pulumi], status: not-yet, near: [ci, cloudflare] }
+  - { id: linux, label: Linux, group: Cloud and operations, aliases: [unix, posix], status: have, evidence: [proj.minishell, proj.webserv, skill.cloudflare] }
+  - { id: nginx, label: Nginx, group: Cloud and operations, aliases: [reverse proxy], status: have, evidence: [proj.inception] }
+  - { id: monitoring, label: Monitoring, group: Cloud and operations, aliases: [observability, sentry, error tracking, logging, uptime], status: have, evidence: [proj.shotclock.h4] }
+  - { id: security, label: Security, group: Cloud and operations, aliases: [appsec, secure coding, vulnerabilities], status: have, evidence: [proj.slash.h3, proj.synchd.h5, proj.this-site.d.state] }
+  - { id: cloud, label: Cloud, group: Cloud and operations, aliases: [cloud computing, cloud native], status: have, evidence: [skill.cloudflare, exp.current.h2] }
+
+  # Testing
+  - { id: testing, label: Automated testing, group: Testing, aliases: [tests, unit tests, test automation, qa], status: have, evidence: [proj.slash.h4, proj.synchd.h4, proj.this-site.h3] }
+  - { id: playwright, label: Playwright, group: Testing, aliases: [e2e, end to end, end-to-end], status: have, evidence: [proj.synchd.h4, proj.this-site.h3] }
+  - { id: vitest, label: Vitest and Jest, group: Testing, aliases: [vitest, jest], status: have, evidence: [skill.testing] }
+  - { id: pytest, label: pytest, group: Testing, aliases: [], status: have, evidence: [skill.testing] }
+  - { id: cypress, label: Cypress, group: Testing, aliases: [selenium], status: adjacent, near: [playwright] }
+  - { id: tdd, label: Test-driven development, group: Testing, aliases: [tdd, test driven], status: adjacent, near: [testing, ddd] }
+  - { id: ddd, label: Domain-driven design, group: Testing, aliases: [ddd, domain driven, domain modelling], status: have, evidence: [proj.slash.h2, proj.sisu-shift.h4] }
+
+  # AI
+  - { id: llm, label: LLM integration, group: AI, aliases: [llm, llms, genai, generative ai, ai, gpt], status: have, evidence: [skill.llm, proj.sisu-shift.h3, proj.rhythm.h1] }
+  - { id: openai, label: OpenAI, group: AI, aliases: [chatgpt, gpt-4], status: have, evidence: [proj.haiv] }
+  - { id: claude, label: Claude, group: AI, aliases: [anthropic], status: have, evidence: [skill.llm, proj.this-site.h4] }
+  - { id: gemini, label: Gemini, group: AI, aliases: [google ai], status: have, evidence: [proj.sisu-shift.h3] }
+  - { id: ai-agents, label: AI agents, group: AI, aliases: [agents, agentic, ai coding agents, coding assistants], status: have, evidence: [proj.kiln.h1, proj.rhythm.h1, proj.this-site.h1] }
+  - { id: rag, label: RAG, group: AI, aliases: [retrieval augmented generation, retrieval], status: have, evidence: [proj.rhythm.h1] }
+  - { id: ml, label: Machine learning, group: AI, aliases: [ml, deep learning, model training], status: adjacent, near: [llm], nearEvidence: [exp.studio.h3] }
+  - { id: pytorch, label: PyTorch, group: AI, aliases: [tensorflow, keras], status: not-yet, near: [python, llm] }
+  - { id: computer-vision, label: Computer vision, group: AI, aliases: [ocr, image recognition, vision], status: adjacent, near: [llm], nearEvidence: [proj.sisu-shift.h3] }
+
+  # Mobile
+  - { id: mobile, label: Mobile apps, group: Mobile, aliases: [mobile, apps, app development], status: have, evidence: [skill.react-native, proj.sisu-shift, proj.sisu-shift.h5] }
+  - { id: ios, label: iOS, group: Mobile, aliases: [iphone, testflight, app store], status: have, evidence: [proj.sisu-shift.h1, proj.sisu-shift.h5] }
+  - { id: android, label: Android, group: Mobile, aliases: [google play], status: have, evidence: [proj.sisu-shift.h5] }
+  - { id: flutter, label: Flutter, group: Mobile, aliases: [dart], status: not-yet, near: [react-native] }
+
+  # Tooling
+  - { id: cli, label: CLI tools, group: Tooling, aliases: [command line, cli], status: have, evidence: [exp.current.h3, proj.kiln.h1] }
+  - { id: sdk, label: SDKs and packages, group: Tooling, aliases: [sdk, npm, npm packages, libraries], status: have, evidence: [exp.current.h1, exp.current.h4] }
+  - { id: monorepo, label: Monorepos, group: Tooling, aliases: [pnpm, turborepo, workspaces], status: have, evidence: [exp.current.h4, proj.this-site] }
+  - { id: lsp, label: Language servers, group: Tooling, aliases: [lsp, language server protocol, dap, debugger], status: have, evidence: [proj.kiln.h1, proj.kiln.h4] }
+  - { id: dx, label: Developer experience, group: Tooling, aliases: [dx, developer tooling, devtools], status: have, evidence: [proj.kiln.h1, exp.current.h3] }
+  - { id: git, label: Git, group: Tooling, aliases: [github, version control], status: have, evidence: [exp.current.h4, skill.ci] }
+  - { id: open-source, label: Open source, group: Tooling, aliases: [oss, open-source], status: adjacent, near: [sdk], nearEvidence: [proj.claude-skills, exp.current.h4] }
+
+  # Integrations
+  - { id: integrations, label: Integrations, group: Integrations, aliases: [integration, plugins, connectors, third-party apis, youtube api], status: have, evidence: [exp.current.h1, exp.current.h3] }
+  - { id: wordpress, label: WordPress, group: Integrations, aliases: [wp], status: have, evidence: [exp.current.h1] }
+  - { id: shopify, label: Shopify, group: Integrations, aliases: [ecommerce, e-commerce], status: have, evidence: [exp.current.h1] }
+  - { id: i18n, label: Localization, group: Integrations, aliases: [i18n, l10n, internationalization, translation, localisation], status: have, evidence: [exp.current.h3, exp.current] }
+  - { id: telegram, label: Chat bots, group: Integrations, aliases: [telegram, bot, chatbot], status: have, evidence: [proj.rhythm] }
+  - { id: payments, label: Payments, group: Integrations, aliases: [stripe, billing], status: not-yet, near: [integrations] }
+
+  # Engineering
+  - { id: algorithms, label: Algorithms, group: Engineering, aliases: [data structures, dsa], status: have, evidence: [proj.slash.h5, proj.sisu-shift.h2] }
+  - { id: optimisation, label: Optimisation, group: Engineering, aliases: [optimization, or-tools, constraint solving, scheduling], status: have, evidence: [skill.or-tools, proj.sisu-shift.h2] }
+  - { id: concurrency, label: Concurrency, group: Engineering, aliases: [threads, multithreading, mutex], status: have, evidence: [proj.philosophers] }
+  - { id: architecture, label: System design, group: Engineering, aliases: [architecture, system design, software architecture, adr], status: have, evidence: [proj.kiln.h5, proj.this-site.d.state, proj.synchd.h2] }
+  - { id: embedded, label: Embedded and hardware, group: Engineering, aliases: [embedded, hardware, arduino, iot, electronics], status: have, evidence: [skill.electronics, exp.studio.h2, exp.studio.h3] }
+  - { id: game-dev, label: Game development, group: Engineering, aliases: [games, gamedev, graphics, raycasting], status: have, evidence: [proj.cub3d, proj.transcendence, proj.haiv] }
+  - { id: unity, label: Unity, group: Engineering, aliases: [unreal, godot], status: not-yet, near: [game-dev] }
+  - { id: fullstack, label: Full stack, group: Engineering, aliases: [full stack, full-stack, fullstack], status: have, evidence: [proj.slash, proj.sisu-shift, exp.current.h1] }
+
+  # People
+  - { id: leadership, label: Leadership, group: People, aliases: [team lead, lead, managing people, leading people], status: have, evidence: [exp.ti.h2, exp.ti.h1] }
+  - { id: mentoring, label: Mentoring, group: People, aliases: [mentor, coaching], status: not-yet, near: [leadership] }
+  - { id: agile, label: Agile, group: People, aliases: [scrum, kanban, sprints], status: have, evidence: [exp.current] }
+  - { id: teamwork, label: Teamwork, group: People, aliases: [collaboration, team player], status: have, evidence: [proj.transcendence.h1, award.junction] }
+  - { id: ownership, label: Ownership, group: People, aliases: [autonomy, self-starter, independent], status: have, evidence: [exp.studio.h1, exp.current.h1] }
+  - { id: product, label: Product thinking, group: People, aliases: [product, user research, shipping], status: have, evidence: [proj.slash.h1, proj.rhythm.h2, proj.synchd.h1] }
+  - { id: hackathon, label: Hackathons, group: People, aliases: [hackathon], status: have, evidence: [award.junction] }
+  - { id: finnish, label: Finnish language, group: People, aliases: [suomi, finnish], status: have, evidence: ["lang:Finnish"] }
+
+  # Backend
+  - { id: object-storage, label: Object storage, group: Backend, aliases: [s3, minio, blob storage, r2], status: have, evidence: [proj.shorts-studio, skill.cloudflare] }
+
+  # Engineering
+  - { id: video, label: Video processing, group: Engineering, aliases: [ffmpeg, video, media pipeline, text to speech, tts], status: have, evidence: [proj.shorts-studio.h3] }

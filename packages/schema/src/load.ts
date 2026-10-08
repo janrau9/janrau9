@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { parse } from "yaml";
 import type { Cv } from "./cv.ts";
+import { checkGlossary, Glossary } from "./glossary.ts";
 import { type Issue, validateCv, validateWork } from "./validate.ts";
 import { type WorkFile, WorkFrontmatter } from "./work.ts";
 
@@ -15,6 +16,7 @@ export interface CaseStudy {
 export interface Content {
   cv: Cv;
   work: CaseStudy[];
+  glossary: Glossary;
 }
 
 const FRONTMATTER = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
@@ -26,18 +28,18 @@ export function validateContentDir(dir: string): Issue[] {
 
 /** Load validated content for rendering. Throws with every issue listed if anything is invalid. */
 export function loadContent(dir: string): Content {
-  const { cv, files, issues } = readContentDir(dir);
-  if (issues.length > 0 || !cv)
+  const { cv, files, glossary, issues } = readContentDir(dir);
+  if (issues.length > 0 || !cv || !glossary)
     throw new Error(`invalid content:\n${issues.map((i) => `  ${i.file} ${i.path}: ${i.message}`).join("\n")}`);
   const work = files.map((f) => ({
     slug: f.file.replace(/^.*\//, "").replace(/\.md$/, ""),
     frontmatter: WorkFrontmatter.parse(f.frontmatter),
     body: f.body,
   }));
-  return { cv, work };
+  return { cv, work, glossary };
 }
 
-function readContentDir(dir: string): { cv?: Cv; files: WorkFile[]; issues: Issue[] } {
+function readContentDir(dir: string): { cv?: Cv; files: WorkFile[]; glossary?: Glossary; issues: Issue[] } {
   // pnpm runs scripts inside the package; report paths from where the command was typed.
   const base = process.env.INIT_CWD ?? process.cwd();
   const rel = (p: string) => relative(base, p) || p;
@@ -72,5 +74,25 @@ function readContentDir(dir: string): { cv?: Cv; files: WorkFile[]; issues: Issu
       issues.push({ file: rel(path), path: "frontmatter", message: `cannot read YAML: ${(err as Error).message}` });
     }
   }
-  return { cv, files, issues: [...issues, ...validateWork(files, cv)] };
+  const { glossary, issues: glossaryIssues } = readGlossary(join(dir, "glossary.yaml"), cv, rel);
+  return {
+    cv,
+    files,
+    ...(glossary ? { glossary } : {}),
+    issues: [...issues, ...validateWork(files, cv), ...glossaryIssues],
+  };
+}
+
+function readGlossary(path: string, cv: Cv, rel: (p: string) => string): { glossary?: Glossary; issues: Issue[] } {
+  const file = rel(path);
+  let raw: unknown;
+  try {
+    raw = parse(readFileSync(path, "utf8"));
+  } catch (err) {
+    return { issues: [{ file, path: "", message: `cannot read YAML: ${(err as Error).message}` }] };
+  }
+  const parsed = Glossary.safeParse(raw);
+  if (!parsed.success)
+    return { issues: parsed.error.issues.map((i) => ({ file, path: i.path.join("."), message: i.message })) };
+  return { glossary: parsed.data, issues: checkGlossary(parsed.data, cv, file) };
 }

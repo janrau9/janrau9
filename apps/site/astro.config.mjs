@@ -22,6 +22,12 @@ export default defineConfig({
     inlineStylesheets: "never",
   },
   vite: {
+    resolve: {
+      // Elevator mode needs only the plain WebAssembly build of ONNX Runtime (11 MB), not the
+      // default WebGPU build (22 MB).
+      alias: { "onnxruntime-web": "onnxruntime-web/wasm" },
+    },
+    worker: { format: "es" },
     build: {
       // Never inline scripts or fonts as data: URLs; the CSP allows only same-origin files.
       assetsInlineLimit: 0,

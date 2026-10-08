@@ -1,5 +1,6 @@
 ---
 import "../../styles/global.css";
+import Elevator from "../organisms/Elevator.astro";
 import Footer from "../organisms/Footer.astro";
 import Strip from "../organisms/Strip.astro";
 
@@ -60,7 +61,7 @@ const beacon = noindex ? undefined : import.meta.env.PUBLIC_CF_BEACON_TOKEN;
   </head>
   <body>
     <a class="skip micro" href="#main">Skip to content</a>
-    <Strip cvHref={cvHref} seal={!sealInHeading} />
+    <Strip cvHref={cvHref} seal={!sealInHeading}><Elevator /></Strip>
     <main id="main" class="frame">
       <slot />
     </main>

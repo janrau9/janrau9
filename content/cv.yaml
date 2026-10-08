@@ -13,6 +13,7 @@ person:
   workPreferences: { remote: true, hybrid: true, relocation: false }
   languages:
     - { name: English, level: professional }
+    - { name: Finnish, level: basic, cefr: A2 }   # certified
   links:
     email: janrau@janrau.dev
     github: https://github.com/janrau9
@@ -132,7 +133,7 @@ projects:
     summary: Darts tournament app for pub nights. Players join by PIN or QR code, and every match syncs live across three phones.
     url: https://slash.nurho.net
     repo: private                         # code on request
-    stack: [react, typescript, vite, pwa, hono, bun, postgres, drizzle, zero]
+    stack: [react, typescript, vite, pwa, hono, bun, postgres, drizzle, zero, better-auth]
     featured: true
     highlights:
       - id: proj.slash.h1
@@ -223,7 +224,7 @@ projects:
     summary: Local-first chord charts on a beat grid; a live session keeps every band member's screen on the same bar.
     url: https://synchd.nurho.net
     repo: private
-    stack: [react, typescript, vite, pwa, hono, bun, postgres, powersync, playwright]
+    stack: [react, typescript, vite, pwa, hono, bun, postgres, powersync, playwright, better-auth]
     highlights:
       - id: proj.synchd.h1
         text: Built it for my own band and used it in a live performance with 4 members, replacing printed sheets.
@@ -250,7 +251,7 @@ projects:
     summary: Basketball league app for grassroots leagues in the Philippines, with offline courtside scoring and live standings.
     url: https://shotclock.nurho.net
     repo: private
-    stack: [react, typescript, pwa, hono, bun, postgres, powersync, zero, webrtc]
+    stack: [react, typescript, pwa, hono, bun, postgres, powersync, zero, webrtc, better-auth]
     highlights:
       - id: proj.shotclock.h1
         text: Designed offline-first scoring; taps save on the phone and upload idempotently on reconnect, so no event is counted twice.
@@ -308,7 +309,7 @@ projects:
         text: Validation refuses invented claims; every statement about me cites an item in cv.yaml and every company fact is quoted from the post.
         tags: [quality, correctness, ai]
       - id: proj.this-site.h3
-        text: About 150 automated tests, including accessibility, a strict CSP and page weight in a real browser, gate every deploy.
+        text: About 180 automated tests, including accessibility, a strict CSP and page weight in a real browser, gate every deploy.
         tags: [testing, ci, accessibility]
       - id: proj.this-site.h4
         text: The same pipeline runs on the laptop and in cloud Claude Code sessions, because its state lives on the site and a scoped token reaches it.
@@ -319,6 +320,26 @@ projects:
         over: Keeping drafts in local files or giving cloud sessions a Cloudflare API token
         because: Any surface can continue a session, and the token can stage an application but touch nothing else in the account.
         tags: [architecture, security]
+
+  - id: proj.shorts-studio
+    name: YouTube Shorts studio
+    status: in-use                        # runs autonomously
+    summary: Self-hosted pipeline that finds trends, writes scripts, renders YouTube Shorts and uploads them. It runs autonomously.
+    repo: private                         # code on request
+    stack: [nextjs, react, typescript, tailwind, drizzle, postgres, bullmq, redis, minio, python, ffmpeg, docker, youtube-api, llm]
+    highlights:
+      - id: proj.shorts-studio.h1
+        text: Built it alone in 10 weeks, about 500 commits and 68 pull requests, from an empty repo to a pipeline that now runs autonomously.
+        tags: [delivery, ownership, product]
+      - id: proj.shorts-studio.h2
+        text: Split trend scouting, script writing, rendering and uploading into workers connected by BullMQ queues on Redis.
+        tags: [architecture, backend]
+      - id: proj.shorts-studio.h3
+        text: Wrote a Python render worker that turns a production script into a finished video with FFmpeg, text-to-speech, captions and music.
+        tags: [python, backend]
+      - id: proj.shorts-studio.h4
+        text: Built the review dashboard in Next.js and Tailwind; trends arrive in an inbox, and scripts are edited and approved before they render.
+        tags: [frontend, product]
 
   - id: proj.haiv
     name: HAIV (hackathon)

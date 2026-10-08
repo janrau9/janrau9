@@ -22,7 +22,8 @@ export interface TailoredView {
     github: string;
     linkedin: string;
   };
-  fit: { requirement: string; evidence: { text: string; href?: string }[] }[];
+  /** Evidence keeps its cv.yaml id, so elevator mode can rank the same items higher. */
+  fit: { requirement: string; evidence: { id: string; text: string; href?: string }[] }[];
   projects: { name: string; summary: string; stack: string[]; href?: string }[];
   coverNote: { whyRole: string; whyMe: string; howIWork: string };
   experience: { role: string; org: string; start: string; end: string | null; highlights: string[] }[];
@@ -67,7 +68,7 @@ export function resolveVariant(cv: Cv, work: WorkRef[], v: Variant): TailoredVie
         const t = text.get(id);
         if (!t) return [];
         const link = href(id);
-        return [link ? { text: t, href: link } : { text: t }];
+        return [link ? { id, text: t, href: link } : { id, text: t }];
       }),
     }))
     .filter((row) => row.evidence.length > 0);
