@@ -7,15 +7,25 @@ export interface GlossaryTerm {
   status: "have" | "adjacent" | "not-yet";
 }
 
+const data = siteData as unknown as { glossary: GlossaryTerm[]; questions: { id: string; question: string }[] };
 /** The glossary this Worker was built with: the only ids /q accepts. */
-export const GLOSSARY = (siteData as unknown as { glossary: GlossaryTerm[] }).glossary;
+export const GLOSSARY = data.glossary;
+/** The curated questions, counted as `q:<id>` next to the terms. */
+export const QUESTIONS = data.questions;
 const KNOWN = new Set(["none", ...GLOSSARY.map((t) => t.id)]);
+const QUESTION_IDS = new Set(QUESTIONS.map((q) => q.id));
 
 /** Known term ids from an untrusted body, at most 3, no repeats. */
 export function termIds(body: unknown): string[] {
   const terms = (body as { terms?: unknown } | null)?.terms;
   if (!Array.isArray(terms)) return [];
   return [...new Set(terms.filter((t): t is string => typeof t === "string" && KNOWN.has(t)))].slice(0, 3);
+}
+
+/** A known curated question id from an untrusted body, as the `q:<id>` it is counted under. */
+export function questionId(body: unknown): string | undefined {
+  const q = (body as { question?: unknown } | null)?.question;
+  return typeof q === "string" && QUESTION_IDS.has(q) ? `q:${q}` : undefined;
 }
 
 export const today = (now = Date.now()) => new Date(now).toISOString().slice(0, 10);
@@ -43,7 +53,12 @@ export async function askedTerms(db: Db | undefined, since: string): Promise<Ask
     )
     .bind(since)
     .all<{ term: string; asks: number }>();
-  const byId = new Map(GLOSSARY.map((t) => [t.id, t]));
+  const byId = new Map<string, GlossaryTerm>([
+    ...GLOSSARY.map((t) => [t.id, t] as const),
+    ...QUESTIONS.map(
+      (q) => [`q:${q.id}`, { id: `q:${q.id}`, label: `Curated: ${q.question}`, status: "have" as const }] as const,
+    ),
+  ]);
   return results.map((r) => ({
     ...(byId.get(r.term) ?? {
       id: r.term,

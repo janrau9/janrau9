@@ -1,6 +1,6 @@
 import { type Hit, Ranker, termEvidence } from "./rank.ts";
 import { type TermHit, TermMatcher } from "./terms.ts";
-import type { ElevatorIndex, IndexTerm, Passage } from "./types.ts";
+import type { ElevatorIndex, IndexQuestion, IndexTerm, Passage } from "./types.ts";
 
 /**
  * Generative UI without generated words: the model only ranks, and these rules turn what
@@ -8,6 +8,15 @@ import type { ElevatorIndex, IndexTerm, Passage } from "./types.ts";
  * except the fixed phrases below.
  */
 export type Block =
+  | {
+      kind: "curated";
+      question: string;
+      answer: IndexQuestion["answer"];
+      words?: string;
+      passages: Passage[];
+      /** The email "let's talk" points to. */
+      contact: string;
+    }
   | { kind: "missing"; term: string; near: string[] }
   | { kind: "adjacent"; term: string; near: string[] }
   | { kind: "covers"; term: string; parts: string[] }
@@ -29,31 +38,55 @@ export interface Plan {
   termsNote: string;
   /** Matched term ids, the only thing about a question that is ever counted. */
   termIds: string[];
+  /** The curated question it matched, also counted (as an id). */
+  questionId?: string;
 }
 
 /** The best 3 lead; the rest wait behind "See more". */
 export const LEAD = 3;
 /** A passage this close means the question is answered even if a term was only "maybe". */
 const STRONG = 0.62;
+/** A curated answer is pinned this close to one of its phrasings... */
+export const CURATED = 0.7;
+/** ...or this close when the question names no glossary term: "what are you good at?" */
+export const CURATED_NO_TERM = 0.6;
 
 export class Planner {
   readonly matcher: TermMatcher;
   readonly ranker: Ranker;
   private readonly terms: Map<string, IndexTerm>;
   private readonly byId: Map<string, Passage>;
+  private readonly questions: Map<string, IndexQuestion>;
+  private readonly contact: string;
 
-  constructor(index: Pick<ElevatorIndex, "passages" | "terms">) {
+  constructor(
+    index: Pick<ElevatorIndex, "passages" | "terms"> & Partial<Pick<ElevatorIndex, "questions" | "contact">>,
+  ) {
     this.matcher = new TermMatcher(index.terms);
     this.ranker = new Ranker(index.passages);
     this.terms = new Map(index.terms.map((t) => [t.id, t]));
     this.byId = new Map(index.passages.map((p) => [p.id, p]));
+    this.questions = new Map((index.questions ?? []).map((q) => [q.id, q]));
+    this.contact = index.contact ?? "";
+  }
+
+  /** The curated question this one is closest to, if close enough to pin. */
+  curated(scores: ReadonlyMap<string, number> | undefined, termNamed: boolean) {
+    const [id, score] = [...(scores ?? [])].sort((a, b) => b[1] - a[1])[0] ?? [];
+    const q = id ? this.questions.get(id) : undefined;
+    if (!q || score === undefined || score < (termNamed ? CURATED : CURATED_NO_TERM)) return undefined;
+    return { q, score };
   }
 
   private label = (id: string) => this.terms.get(id)?.label ?? id;
 
   plan(
     question: string,
-    scores?: { passages: ReadonlyMap<string, number>; terms: ReadonlyMap<string, number> },
+    scores?: {
+      passages: ReadonlyMap<string, number>;
+      terms: ReadonlyMap<string, number>;
+      questions?: ReadonlyMap<string, number>;
+    },
     fit: ReadonlySet<string> = new Set(),
   ): Plan {
     const { found, maybe } = this.matcher.match(question, scores?.terms);
@@ -62,7 +95,35 @@ export class Planner {
     const blocks: Block[] = [];
     const rules: string[] = [];
     const termsNote = describe(found, maybe, this.terms);
-    const done = (): Plan => ({ blocks, rule: rules.join(" + "), termsNote, termIds: found.map((f) => f.id) });
+    const done = (questionId?: string): Plan => ({
+      blocks,
+      rule: rules.join(" + "),
+      termsNote,
+      termIds: found.map((f) => f.id),
+      ...(questionId ? { questionId } : {}),
+    });
+
+    // A curated answer leads; everything ranking found waits behind "See more".
+    const pinned = this.curated(scores?.questions, found.length > 0);
+    if (pinned) {
+      const { q, score } = pinned;
+      const cited = q.passages.map((id) => this.byId.get(id)).filter((p): p is Passage => p !== undefined);
+      rules.push(`curated (${q.id}, ${score.toFixed(2)})`);
+      blocks.push({
+        kind: "curated",
+        question: q.question,
+        answer: q.answer,
+        ...(q.words ? { words: q.words } : {}),
+        passages: cited,
+        contact: this.contact,
+      });
+      const more = hits.filter((h) => !q.passages.includes(h.passage.id)).slice(0, 6);
+      if (more.length) {
+        rules.push(`see more (${more.length})`);
+        blocks.push({ kind: "more", hits: more });
+      }
+      return done(q.id);
+    }
 
     for (const hit of found) {
       const t = this.terms.get(hit.id);

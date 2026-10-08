@@ -2,10 +2,10 @@ import { resolve } from "node:path";
 import { loadContent } from "@janrau/schema";
 import { beforeAll, describe, expect, test } from "vitest";
 import { collect, embedder, QUERY_PREFIX } from "../src/build.ts";
-import { prosePassages } from "../src/passages.ts";
+import { curatedQuestions, prosePassages } from "../src/passages.ts";
 import { type Block, type Plan, Planner } from "../src/plan.ts";
 import { Ranker } from "../src/rank.ts";
-import type { IndexTerm, Passage } from "../src/types.ts";
+import type { IndexQuestion, IndexTerm, Passage } from "../src/types.ts";
 import { quantize, scoreMaps, Vectors } from "../src/vectors.ts";
 
 const root = resolve(import.meta.dirname, "../../..");
@@ -14,6 +14,7 @@ const dot = (a: number[], b: number[]) => a.reduce((s, x, i) => s + x * (b[i] ??
 
 let passages: Passage[];
 let terms: IndexTerm[];
+let questions: IndexQuestion[];
 let floats: number[][];
 let vectors: Vectors;
 let planner: Planner;
@@ -21,19 +22,25 @@ let embed: (t: string) => Promise<number[]>;
 
 beforeAll(async () => {
   const cacheDir = resolve(root, ".cache/elevator");
-  ({ passages, terms, vectors: floats } = await collect({ content, adrDir: resolve(root, "content/adr"), cacheDir }));
+  ({
+    passages,
+    terms,
+    questions,
+    vectors: floats,
+  } = await collect({ content, adrDir: resolve(root, "content/adr"), cacheDir }));
   const bin = quantize(floats, 384);
   vectors = new Vectors(bin.buffer as ArrayBuffer, floats.length, 384);
-  planner = new Planner({ passages, terms });
+  planner = new Planner({ passages, terms, questions, contact: content.cv.person.links.email });
   embed = await embedder(cacheDir);
 }, 300_000);
 
 /** Ask the way the browser does: embed with the query prefix, score against int8 vectors. */
-async function ask(q: string): Promise<Plan> {
+async function ask(q: string, curated = true): Promise<Plan> {
   const scores = scoreMaps(
     vectors.scores(await embed(QUERY_PREFIX + q)),
     passages.map((p) => p.id),
     terms.map((t) => t.id),
+    curated ? questions : [],
   );
   return planner.plan(q, scores);
 }
@@ -108,9 +115,10 @@ describe("the glossary step", () => {
     expect(shown(await ask("have you shipped next.js?"))).toContain("proj.shorts-studio.h4");
   });
 
-  test('"customer facing" leads with the integrations I built for customers, not a fragment', async () => {
-    const plan = await ask("customer facing");
-    expect(shown(plan).slice(0, 3)).toEqual(expect.arrayContaining(["exp.current.h1", "exp.current.h2"]));
+  test('"customer facing" pins the curated answer, and ranking alone also leads with the integrations', async () => {
+    expect(find(await ask("customer facing"), "curated")?.passages[0]?.id).toBe("exp.current.h1");
+    const ranked = await ask("customer facing", false);
+    expect(shown(ranked).slice(0, 3)).toEqual(expect.arrayContaining(["exp.current.h1", "exp.current.h2"]));
   });
 
   test('a near-exact spelling counts: "stakeholder" is the "stakeholders" alias', async () => {
@@ -133,7 +141,10 @@ describe("the glossary step", () => {
   });
 
   test("a language with a certificate is listed", async () => {
-    expect(find(await ask("do you speak finnish?"), "listed")?.names).toContain("Finnish (A2)");
+    expect(find(await ask("do you speak finnish?", false), "listed")?.names).toContain("Finnish (A2)");
+    expect(find(await ask("do you speak finnish?"), "curated")?.passages.map((p) => p.text)).toEqual([
+      "Languages: English (professional), Finnish (A2).",
+    ]);
   });
 
   test('"blockchain" is named as missing, with examples to try', async () => {
@@ -185,5 +196,79 @@ describe("ranking and layout", () => {
     const plan = planner.plan(q, scores, new Set(["proj.sisu-shift.h5"]));
     const lead = plan.blocks.flatMap((b) => (b.kind === "quotes" ? b.groups.flatMap((g) => g.hits) : []));
     expect(lead.find((h) => h.passage.id === "proj.sisu-shift.h5")?.reasons).toContain("in this application");
+  });
+});
+
+describe("curated answers", () => {
+  // Wordings that appear nowhere in content/questions.yaml.
+  const heldOut: [string, string][] = [
+    ["describe a failure and what you learned", "failure"],
+    ["tell me about a mistake", "failure"],
+    ["have you ever broken production", "failure"],
+    ["how do you deal with conflict", "conflict"],
+    ["what if you disagree with a decision", "conflict"],
+    ["most difficult bug you fixed", "hard-problem"],
+    ["what project are you proudest of", "proud"],
+    ["give an example of leading people", "initiative"],
+    ["how do you react to criticism", "feedback"],
+    ["how do you ensure code quality", "quality"],
+    ["introduce yourself", "yourself"],
+    ["what sets you apart", "why-hire"],
+    ["what are you good at", "strengths"],
+    ["what are your weaknesses", "weakness"],
+    ["why do you want to leave", "leaving"],
+    ["why did you become a developer", "career-change"],
+    ["what job do you want", "next-role"],
+    ["any hobbies", "outside"],
+    ["link to your github", "code"],
+    ["when could you join", "notice"],
+    ["pay expectations", "salary"],
+    ["are you open to relocation", "location"],
+    ["do you speak finnish", "languages"],
+  ];
+  test.each(heldOut)('"%s" pins %s', async (q, id) => {
+    const plan = await ask(q);
+    expect(plan.questionId).toBe(id);
+    expect(plan.blocks[0]?.kind).toBe("curated");
+  });
+
+  test("every question finds its own answer", async () => {
+    for (const q of content.questions.questions)
+      for (const text of [q.question, ...q.phrasings])
+        expect([text, (await ask(text)).questionId]).toEqual([text, q.id]);
+  });
+
+  test.each([
+    "devops",
+    "react",
+    "go lang",
+    "kubernetes in production",
+    "real-time sync between devices",
+    "python backend work",
+    "how do you deploy",
+    "testing and CI",
+  ])('"%s" is left to ranking', async (q) => {
+    expect((await ask(q)).questionId).toBeUndefined();
+  });
+
+  test("a conversation answer points at my email, and ranking waits behind See more", async () => {
+    const plan = await ask("pay expectations");
+    expect(find(plan, "curated")).toMatchObject({ answer: "conversation", contact: content.cv.person.links.email });
+    expect(plan.blocks.slice(1).every((b) => b.kind === "more")).toBe(true);
+  });
+
+  test("a citation that no longer matches a passage fails the build", () => {
+    const broken = {
+      questions: [
+        {
+          id: "x",
+          question: "x",
+          phrasings: ["y"],
+          answer: "quotes" as const,
+          cite: ["work:slash#outcome › Words nobody wrote"],
+        },
+      ],
+    };
+    expect(() => curatedQuestions(broken, passages)).toThrow(/matches 0 passages/);
   });
 });

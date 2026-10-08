@@ -87,7 +87,7 @@ terms:
 
   # Cloud and operations
   - { id: devops, label: DevOps, group: Cloud and operations, aliases: [dev ops, platform engineering, sre], status: have, evidence: [proj.shotclock.h4, proj.sisu-shift.h5, proj.this-site.h3, exp.current.h4, proj.shorts-studio.h2], related: [ci, docker, monitoring] }
-  - { id: ci, label: CI/CD, group: Cloud and operations, aliases: [ci, cd, cicd, ci/cd, continuous integration, continuous delivery], status: have, evidence: [skill.ci, proj.sisu-shift.h5, proj.this-site.h3] }
+  - { id: ci, label: CI/CD, group: Cloud and operations, aliases: [ci, cd, cicd, ci/cd, continuous integration, continuous delivery, deploy, deployment, deploying], status: have, evidence: [skill.ci, proj.sisu-shift.h5, proj.this-site.h3] }
   - { id: github-actions, label: GitHub Actions, group: Cloud and operations, aliases: [gha], status: have, evidence: [skill.ci, exp.current.h4] }
   - { id: docker, label: Docker, group: Cloud and operations, aliases: [containers, containerization, dockerfile], status: have, evidence: [skill.docker, proj.inception, proj.transcendence] }
   - { id: docker-compose, label: Docker Compose, group: Cloud and operations, aliases: [compose], status: have, evidence: [proj.inception] }

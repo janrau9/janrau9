@@ -60,5 +60,6 @@ if (target === "site-data" || target === "all") {
   }));
   // Elevator mode's counter accepts only these term ids, and the dashboard shows their labels.
   const glossary = content.glossary.terms.map(({ id, label, status }) => ({ id, label, status }));
-  write("apps/site/src/generated/site-data.json", `${JSON.stringify({ cv: content.cv, work, glossary })}\n`);
+  const questions = content.questions.questions.map(({ id, question }) => ({ id, question }));
+  write("apps/site/src/generated/site-data.json", `${JSON.stringify({ cv: content.cv, work, glossary, questions })}\n`);
 }

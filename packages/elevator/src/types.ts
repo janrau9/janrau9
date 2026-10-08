@@ -45,6 +45,17 @@ export interface IndexTerm {
   listed: string[];
 }
 
+/** A curated answer from content/questions.yaml, with its citations resolved to passage ids. */
+export interface IndexQuestion {
+  id: string;
+  question: string;
+  answer: "quotes" | "words" | "conversation";
+  words?: string;
+  passages: string[];
+  /** How many rows it has in vectors.bin: the question, then each phrasing. */
+  rows: number;
+}
+
 export interface ModelFile {
   /** Path under the model folder, as Transformers.js requests it. */
   path: string;
@@ -59,6 +70,9 @@ export interface ElevatorIndex {
   runtime: { files: { path: string; bytes: number }[] };
   passages: Passage[];
   terms: IndexTerm[];
-  /** vectors.bin layout: passages then terms, each `dims` int8 values, then one float32 scale per row. */
+  questions: IndexQuestion[];
+  /** Where "let's talk" points: the email in cv.yaml. */
+  contact: string;
+  /** vectors.bin layout: passages, terms, then question rows, each `dims` int8 values, then one float32 scale per row. */
   vectors: { rows: number; bytes: number };
 }

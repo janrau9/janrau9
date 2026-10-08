@@ -43,11 +43,20 @@ export class Vectors {
   }
 }
 
-/** Split row scores into passage and term maps, in index order. */
-export function scoreMaps(scores: Float32Array, passageIds: string[], termIds: string[]) {
+/** Split row scores into passage, term and question maps, in index order. A question scores its closest row. */
+export function scoreMaps(
+  scores: Float32Array,
+  passageIds: string[],
+  termIds: string[],
+  questions: { id: string; rows: number }[] = [],
+) {
   const passages = new Map<string, number>();
   const terms = new Map<string, number>();
+  const asked = new Map<string, number>();
   for (const [i, id] of passageIds.entries()) passages.set(id, scores[i] ?? 0);
   for (const [i, id] of termIds.entries()) terms.set(id, scores[passageIds.length + i] ?? 0);
-  return { passages, terms };
+  let row = passageIds.length + termIds.length;
+  for (const q of questions)
+    for (let r = 0; r < q.rows; r++, row++) asked.set(q.id, Math.max(asked.get(q.id) ?? -1, scores[row] ?? 0));
+  return { passages, terms, questions: asked };
 }

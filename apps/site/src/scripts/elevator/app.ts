@@ -109,6 +109,24 @@ function choices(options: string[]) {
 
 function render(block: Block): HTMLElement {
   switch (block.kind) {
+    case "curated":
+      return h(
+        "div",
+        { class: "el-block el-curated" },
+        h("p", { class: "micro" }, `Answering: ${block.question}`),
+        block.answer === "conversation"
+          ? h(
+              "p",
+              {},
+              "I'd rather answer this in a conversation: ",
+              h("a", { href: `mailto:${block.contact}` }, block.contact),
+            )
+          : null,
+        block.words ? h("p", { class: "el-words" }, block.words) : null,
+        ...block.passages.map((p) =>
+          h("div", { class: "el-group" }, sourceLine(p), h("div", { class: "el-quote" }, h("p", {}, p.text))),
+        ),
+      );
     case "missing":
       return h(
         "div",
@@ -222,8 +240,14 @@ function show(q: string, plan: Plan) {
   answerEl.replaceChildren(...plan.blocks.map(render));
   localSpan("Compose", `rule: ${plan.rule || "none"}`);
   status(`Answered · rule: ${plan.rule || "none"}`);
-  // Counted: the matched glossary term ids only, never the question.
-  navigator.sendBeacon?.("/q", JSON.stringify({ terms: plan.termIds.length ? plan.termIds.slice(0, 3) : ["none"] }));
+  // Counted: the matched glossary term ids and curated question id only, never the question.
+  navigator.sendBeacon?.(
+    "/q",
+    JSON.stringify({
+      terms: plan.termIds.length ? plan.termIds.slice(0, 3) : ["none"],
+      ...(plan.questionId ? { question: plan.questionId } : {}),
+    }),
+  );
   if (slug && !reported) {
     reported = true;
     navigator.sendBeacon?.("/e", JSON.stringify({ slug, type: "elevator" }));

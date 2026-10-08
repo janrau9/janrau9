@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { Content, Glossary } from "@janrau/schema";
+import type { Content, Glossary, Questions } from "@janrau/schema";
 import GithubSlugger from "github-slugger";
 import { parse } from "yaml";
-import type { IndexTerm, Passage } from "./types.ts";
+import type { IndexQuestion, IndexTerm, Passage } from "./types.ts";
 
 const ADR_BASE = "https://github.com/janrau9/janrau9/blob/main/content/adr/";
 /** Shorter than this, a paragraph is a fragment, not an answer. */
@@ -259,3 +259,38 @@ export function indexTerms(glossary: Glossary, content: Content, passages: Passa
 
 /** What a term's embedding is made from: its name and the ways people spell it. */
 export const termText = (t: Pick<IndexTerm, "label" | "aliases">) => `${t.label}: ${t.aliases.join(", ")}`;
+
+/**
+ * Curated answers with each citation resolved to one passage. A prose citation names a
+ * heading and the passage's opening words; a citation that matches nothing, or more than
+ * one passage, fails the build, so an edited case study can't silently drop an answer.
+ */
+export function curatedQuestions(q: Questions, passages: Passage[]): IndexQuestion[] {
+  const ids = new Set(passages.map((p) => p.id));
+  const problems: string[] = [];
+  const resolve = (qid: string, cite: string): string[] => {
+    const [section, words] = cite.split(" › ");
+    if (words === undefined) {
+      if (ids.has(cite)) return [cite];
+      problems.push(`${qid}: "${cite}" is not a passage`);
+      return [];
+    }
+    const found = passages.filter((p) => p.id.startsWith(`${section}:`) && p.text.startsWith(words));
+    if (found.length !== 1)
+      problems.push(`${qid}: "${cite}" matches ${found.length} passages; it must match exactly one`);
+    return found.slice(0, 1).map((p) => p.id);
+  };
+  const out = q.questions.map((x) => ({
+    id: x.id,
+    question: x.question,
+    answer: x.answer,
+    ...(x.words ? { words: x.words } : {}),
+    passages: (x.cite ?? []).flatMap((c) => resolve(x.id, c)),
+    rows: 1 + x.phrasings.length,
+  }));
+  if (problems.length) throw new Error(`content/questions.yaml:\n  ${problems.join("\n  ")}`);
+  return out;
+}
+
+/** The texts a question is embedded as, in vectors.bin order: the question, then each phrasing. */
+export const questionTexts = (q: Questions) => q.questions.flatMap((x) => [x.question, ...x.phrasings]);

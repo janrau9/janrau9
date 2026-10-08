@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
-import { termIds } from "../src/lib/elevator-terms";
+import { questionId, termIds } from "../src/lib/elevator-terms";
 
 // Elevator mode end to end: the real model, runtime and index, served by the preview Worker
 // under the production Content-Security-Policy (which `astro preview` doesn't apply itself).
@@ -91,6 +91,34 @@ test("by meaning, the best 3 lead and the rest wait behind See more", async ({ p
   await expect(page.locator(".el-more .el-quote").first()).toBeVisible();
 });
 
+test.describe("curated answers", () => {
+  // Narrow, but with a mouse pointer: the model loads without the phone's download question.
+  test.use({ viewport: { width: 360, height: 640 } });
+
+  test("a curated question pins its answer, ranking waits behind See more, and only ids are counted", async ({
+    page,
+  }) => {
+    const errors = errorsOf(page);
+    const counted: string[] = [];
+    page.on("request", (r) => r.url().endsWith("/q") && counted.push(r.postData() ?? ""));
+    await page.goto("/");
+    await page.click("#elevator-open");
+    await ask(page, "pay expectations");
+    const curated = page.locator(".el-curated");
+    await expect(curated).toContainText("I'd rather answer this in a conversation", { timeout: MODEL_LOAD });
+    await expect(curated.locator('a[href^="mailto:"]')).toBeVisible();
+    await expect.poll(() => counted).toEqual(['{"terms":["none"],"question":"salary"}']);
+
+    await ask(page, "what are your weaknesses");
+    await expect(page.locator(".el-words")).toHaveText(/^When the goal is unclear/);
+    await expect(page.locator(".el-curated .el-quote").first()).toBeVisible();
+    await expect(page.locator(".el-answer > :not(.el-curated):not(.el-more)")).toHaveCount(0);
+    await page.screenshot({ path: "test-results/curated-360.png" });
+    expect(await page.evaluate(() => document.querySelector("#elevator")?.scrollWidth ?? 0)).toBeLessThanOrEqual(360);
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe("on a phone", () => {
   test.use({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
 
@@ -162,4 +190,10 @@ test("the counter accepts known term ids only", () => {
   ]);
   expect(termIds({ terms: "go" })).toEqual([]);
   expect(termIds(null)).toEqual([]);
+});
+
+test("the counter accepts known curated question ids only, as q:<id>", () => {
+  expect(questionId({ question: "salary" })).toBe("q:salary");
+  expect(questionId({ question: "made-up" })).toBeUndefined();
+  expect(questionId({ question: 3 })).toBeUndefined();
 });

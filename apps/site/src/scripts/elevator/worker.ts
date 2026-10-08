@@ -192,6 +192,7 @@ async function answer(m: Extract<ToWorker, { type: "ask" }>) {
       vectors.scores(out.data as Float32Array),
       index.passages.map((p) => p.id),
       index.terms.map((t) => t.id),
+      index.questions,
     );
     s.done();
   }

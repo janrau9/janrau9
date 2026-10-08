@@ -4,7 +4,15 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { env, pipeline } from "@huggingface/transformers";
 import type { Content } from "@janrau/schema";
-import { adrPassages, cvPassages, indexTerms, termText, workPassages } from "./passages.ts";
+import {
+  adrPassages,
+  curatedQuestions,
+  cvPassages,
+  indexTerms,
+  questionTexts,
+  termText,
+  workPassages,
+} from "./passages.ts";
 import type { ElevatorIndex, ModelFile } from "./types.ts";
 import { quantize } from "./vectors.ts";
 
@@ -86,21 +94,22 @@ function copyRuntime(outDir: string): { path: string; bytes: number }[] {
   });
 }
 
-/** Passages and terms with their embeddings, in vectors.bin order. */
+/** Passages, terms and curated questions with their embeddings, in vectors.bin order. */
 export async function collect(o: Pick<BuildOptions, "content" | "adrDir" | "cacheDir" | "log">) {
   const passages = [...cvPassages(o.content), ...workPassages(o.content), ...adrPassages(o.adrDir)];
   const terms = indexTerms(o.content.glossary, o.content, passages);
+  const questions = curatedQuestions(o.content.questions, passages);
   const vectors = await embedAll(
-    [...passages.map((p) => p.text), ...terms.map(termText)],
+    [...passages.map((p) => p.text), ...terms.map(termText), ...questionTexts(o.content.questions)],
     o.cacheDir,
     o.log ?? (() => {}),
   );
-  return { passages, terms, vectors };
+  return { passages, terms, questions, vectors };
 }
 
 export async function buildIndex(o: BuildOptions): Promise<ElevatorIndex> {
   const log = o.log ?? (() => {});
-  const { passages, terms, vectors } = await collect(o);
+  const { passages, terms, questions, vectors } = await collect(o);
 
   rmSync(o.outDir, { recursive: true, force: true });
   mkdirSync(o.outDir, { recursive: true });
@@ -114,9 +123,13 @@ export async function buildIndex(o: BuildOptions): Promise<ElevatorIndex> {
     runtime: { files: copyRuntime(o.outDir) },
     passages,
     terms,
+    questions,
+    contact: o.content.cv.person.links.email,
     vectors: { rows: vectors.length, bytes: bin.length },
   };
   writeFileSync(join(o.outDir, "index.json"), JSON.stringify(index));
-  log(`elevator: ${passages.length} passages, ${terms.length} terms, vectors ${Math.round(bin.length / 1024)} KB`);
+  log(
+    `elevator: ${passages.length} passages, ${terms.length} terms, ${questions.length} questions, vectors ${Math.round(bin.length / 1024)} KB`,
+  );
   return index;
 }

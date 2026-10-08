@@ -1,0 +1,292 @@
+# Questions recruiters ask that ranking answers badly, each with a curated answer for
+# elevator mode. A visitor's question that comes close to one of these (or its phrasings)
+# gets this answer pinned first, with the ranked passages under "See more".
+#   quotes        the cited passages, in this order
+#   words         my own words, with the cited passages underneath as proof
+#   conversation  "I'd rather answer this in a conversation" and my email
+# A citation is a cv.yaml id, or a heading plus the passage's opening words
+# ("work:slash#outcome › Delivery: about"), since prose passages are numbered by position.
+# Validated on every build: ids resolve, and every cited passage exists in the index.
+
+questions:
+
+  # Behavioural
+  - id: failure
+    question: "Tell me about a time you failed"
+    phrasings:
+      - "What's a mistake you made at work?"
+      - "Tell me about something that went wrong"
+      - "Have you ever shipped a bug to production?"
+    answer: quotes
+    cite:
+      - "work:slash#incident-tournament-pins-reached-every-phone › A test I added for the"
+      - "work:slash#incident-tournament-pins-reached-every-phone › I fixed it at the source"
+      - "work:synchd#security-fix-authorizing-from-the-stored-row › A security review on 2026-08-03 found"
+      - "work:this-site#what-the-guardrails-caught › A signal that could never fire."
+  - id: conflict
+    question: "How do you handle disagreement with a teammate?"
+    phrasings:
+      - "Tell me about a conflict at work"
+      - "What do you do when you disagree with your manager?"
+      - "How do you resolve disagreements in a team?"
+    answer: words
+    words: "I discuss the conflict until we agree on a solution, and then I wholeheartedly support that decision."
+  - id: hard-problem
+    question: "What's the hardest technical problem you've solved?"
+    phrasings:
+      - "Tell me about a challenging project"
+      - "What was technically difficult in your work?"
+      - "Describe a complex problem you worked on"
+    answer: quotes
+    cite:
+      - "proj.synchd.h2"
+      - "proj.sisu-shift.h2"
+      - "work:sisu-shift#how-auto-scheduling-works › Hard constraints: 11-hour rest, weekly hour"
+  - id: proud
+    question: "What are you most proud of?"
+    phrasings:
+      - "What's your best project?"
+      - "Which achievement are you proudest of?"
+      - "What work are you happiest with?"
+    answer: quotes
+    cite:
+      - "work:sisu-shift#the-problem › My wife is a nurse, and"
+      - "work:synchd#outcome › Real use: a live performance with"
+      - "work:slash#outcome › Real use: 4 pub tournaments so"
+  - id: pressure
+    question: "How do you handle tight deadlines?"
+    phrasings:
+      - "How do you work under pressure?"
+      - "Tell me about delivering fast"
+      - "How quickly can you ship?"
+    answer: quotes
+    cite:
+      - "exp.studio.h1"
+      - "work:slash#outcome › Delivery: about 9 weeks from first"
+      - "proj.shorts-studio.h1"
+  - id: initiative
+    question: "Tell me about a time you took initiative"
+    phrasings:
+      - "Have you led a team or a project?"
+      - "Tell me about a time you took ownership"
+      - "Give an example of leadership"
+    answer: quotes
+    cite:
+      - "exp.ti.h2"
+      - "exp.ti.h1"
+      - "exp.current.h1"
+      - "work:slash#what-changed-after-the-first-tournament › After the first tournament I listed"
+  - id: feedback
+    question: "How do you handle feedback and code review?"
+    phrasings:
+      - "How do you review code?"
+      - "How do you take criticism?"
+      - "What does your review process look like?"
+    answer: quotes
+    cite:
+      - "person.ai"
+      - "work:kiln#the-dogfooding-loop › kiln checks code that AI writes,"
+      - "work:this-site#what-the-guardrails-caught › An overclaim the validator couldn't see."
+  - id: prioritise
+    question: "How do you prioritise when everything is urgent?"
+    phrasings:
+      - "How do you manage competing priorities?"
+      - "How do you decide what to work on first?"
+      - "How do you handle multiple projects at once?"
+    answer: words
+    words: "I start with the work that will have the greatest impact."
+  - id: learn
+    question: "How do you learn new technologies?"
+    phrasings:
+      - "How quickly do you pick up a new stack?"
+      - "Tell me about learning something new"
+      - "How do you keep your skills up to date?"
+    answer: words
+    words: "I learn by doing."
+    cite:
+      - "work:rhythm#the-problem › It is also how I learn"
+      - "work:shotclock#what-it-taught-me › ShotClock was the first build of"
+  - id: tradeoffs
+    question: "How do you make technical decisions?"
+    phrasings:
+      - "How do you evaluate trade-offs?"
+      - "How do you choose between two approaches?"
+      - "How do you document architecture decisions?"
+    answer: quotes
+    cite:
+      - "work:this-site#constraints › One maintainer. Boring tools, every decision"
+      - "proj.kiln.h5"
+      - "proj.sisu-shift.d.solver"
+      - "proj.slash.d.zero"
+  - id: quality
+    question: "How do you make sure your work is high quality?"
+    phrasings:
+      - "How do you test your code?"
+      - "How do you prevent bugs?"
+      - "What's your approach to code quality?"
+    answer: quotes
+    cite:
+      - "person.ai"
+      - "proj.this-site.h2"
+      - "work:kiln#the-dogfooding-loop › kiln checks code that AI writes,"
+      - "work:sisu-shift#outcome › Honesty audit: I checked the project's"
+  - id: customers
+    question: "How do you work with customers and non-technical people?"
+    phrasings:
+      - "Have you worked directly with clients?"
+      - "How do you explain technical things to non-engineers?"
+      - "Do you have customer-facing experience?"
+    answer: quotes
+    cite:
+      - "exp.current.h1"
+      - "exp.studio.h1"
+      - "work:sisu-shift#the-problem › My wife is a nurse, and"
+
+  # About you
+  - id: yourself
+    question: "Tell me about yourself"
+    phrasings:
+      - "Who are you?"
+      - "Give me a quick introduction"
+      - "What's your background?"
+    answer: quotes
+    cite:
+      - "person.about"
+      - "person.ai"
+      - "person.where"
+  - id: why-hire
+    question: "Why should we hire you?"
+    phrasings:
+      - "What makes you different from other candidates?"
+      - "Why are you a good fit?"
+      - "What would you bring to the team?"
+    answer: words
+    words: "I'm focused, easy to work with, and I have the skills and discipline the job needs. Point me in a direction and I'll get it done: as the sole integrations developer at a localization startup, I built and own 6 ways for customers to connect, and I took Slash from first commit to production in about 9 weeks."
+    cite:
+      - "exp.current.h1"
+      - "work:slash#outcome › Delivery: about 9 weeks from first"
+      - "work:slash#outcome › Real use: 4 pub tournaments so"
+  - id: strengths
+    question: "What are your strengths?"
+    phrasings:
+      - "What are you best at?"
+      - "What's your superpower?"
+      - "What do colleagues rely on you for?"
+    answer: words
+    words: "My systems thinking. I've worked in different industries (electronics, my own studio, software), and along the way I've come to enjoy solving problems and relating solutions from one field to another. And I'm accountable."
+    cite:
+      - "exp.current.h1"
+      - "person.ai"
+      - "proj.kiln.h3"
+  - id: weakness
+    question: "What is your biggest weakness?"
+    phrasings:
+      - "What are you working on improving?"
+      - "What's an area you want to grow in?"
+      - "What don't you do well?"
+    answer: words
+    words: "When the goal is unclear, I don't guess: I ask until it's clear, then write down what we agreed. That habit is why every decision in my projects is written down with its reasons."
+    cite:
+      - "work:this-site#constraints › One maintainer. Boring tools, every decision"
+      - "proj.kiln.h5"
+  - id: leaving
+    question: "Why are you looking for a new job?"
+    phrasings:
+      - "Why do you want to leave your current role?"
+      - "Why are you changing jobs?"
+      - "What are you looking for that you don't have now?"
+    answer: conversation
+  - id: career-change
+    question: "Why did you switch from electronics to software?"
+    phrasings:
+      - "How did you get into software?"
+      - "Tell me about your career change"
+      - "Why did you go to Hive Helsinki?"
+    answer: quotes
+    cite:
+      - "person.about"
+      - "edu.hive"
+  - id: next-role
+    question: "What kind of role are you looking for?"
+    phrasings:
+      - "What do you want to do next?"
+      - "What's your ideal job?"
+      - "Where do you see yourself in five years?"
+    answer: words
+    words: "I want a job where my work makes an impact."
+  - id: ai
+    question: "How do you use AI in your work?"
+    phrasings:
+      - "Do you use AI coding tools?"
+      - "How do you work with AI agents?"
+      - "Is your code written by AI?"
+    answer: quotes
+    cite:
+      - "person.ai"
+      - "work:claude-skills#the-problem › I build most of my software"
+      - "work:kiln#the-problem › I write most of my code"
+      - "work:this-site#decisions › Chose AI writing only where I"
+  - id: outside
+    question: "What do you do outside work?"
+    phrasings:
+      - "What are your hobbies?"
+      - "What do you do for fun?"
+      - "Tell me something personal about you"
+    answer: quotes
+    cite:
+      - "work:slash#the-problem › I play darts, and so do"
+      - "work:synchd#the-problem › I play in a band. On"
+      - "work:rhythm#the-problem › Big goals (faith, family, health, work)"
+  - id: code
+    question: "Can I see your code?"
+    phrasings:
+      - "Do you have a GitHub?"
+      - "Is your code public?"
+      - "Can I look at your repositories?"
+    answer: quotes
+    cite:
+      - "adr:001#decision › Private values stay out of the"
+      - "work:claude-skills#outcome › Public: the repo is open, with"
+
+  # Logistics
+  - id: notice
+    question: "What is your notice period?"
+    phrasings:
+      - "When can you start?"
+      - "How soon are you available?"
+      - "What's your availability?"
+    answer: conversation
+  - id: salary
+    question: "What are your salary expectations?"
+    phrasings:
+      - "How much do you want to earn?"
+      - "What's your expected salary?"
+      - "What compensation are you looking for?"
+    answer: conversation
+  - id: location
+    question: "Where are you based, and do you work remotely?"
+    phrasings:
+      - "Can you relocate?"
+      - "Are you open to hybrid work?"
+      - "Where do you live?"
+    answer: quotes
+    cite:
+      - "person.where"
+  - id: permit
+    question: "Do you need a work permit or visa?"
+    phrasings:
+      - "Are you eligible to work in Finland?"
+      - "Do you need sponsorship?"
+      - "Can you work in the EU?"
+    answer: quotes
+    cite:
+      - "person.where"
+  - id: languages
+    question: "Which languages do you speak?"
+    phrasings:
+      - "Do you speak Finnish?"
+      - "How good is your English?"
+      - "What's your Finnish level?"
+    answer: quotes
+    cite:
+      - "person.languages"
