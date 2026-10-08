@@ -253,10 +253,15 @@ a.card:hover {
 }
 
 /* ———— long-form prose: rhythm is the container's decree ———— */
+/* Body text sinks to text-2 so headings and bold lead-ins stand nearer the light (the lightness law). */
 .prose {
   font-size: 18px;
   line-height: 32px;
   max-width: var(--measure);
+  color: var(--text-2);
+}
+.prose :is(h2, h3, h4, strong) {
+  color: var(--ink);
 }
 :root[data-theme="dark"] .prose {
   letter-spacing: 0.01em;
