@@ -113,6 +113,25 @@ test.describe("on a phone", () => {
   });
 });
 
+test.describe("on a small phone with large text", () => {
+  test.use({ hasTouch: true, isMobile: true, viewport: { width: 360, height: 568 } });
+
+  test("the download question is never cut off at the top", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = "21px";
+    });
+    await page.click("#elevator-open");
+    await page.locator(".el-main").evaluate((el) => el.scrollTo(0, 0));
+    const [bar, card] = await Promise.all([
+      page.locator(".el-top").boundingBox(),
+      page.locator(".el-consent").boundingBox(),
+    ]);
+    expect(card?.y).toBeGreaterThanOrEqual((bar?.y ?? 0) + (bar?.height ?? 0));
+    await expect(page.locator(".el-close")).toHaveText("Back", { useInnerText: true });
+  });
+});
+
 test("on a tailored link, fit-table evidence says so", async ({ page }) => {
   await page.goto("/for/acme-events-t3st1");
   const evidence = await page.locator("[data-evidence]").first().getAttribute("data-evidence");

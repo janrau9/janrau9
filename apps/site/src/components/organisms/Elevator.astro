@@ -18,8 +18,8 @@ const FLOORS = [
 
 <dialog id="elevator" class="elevator" aria-labelledby="el-title">
   <div class="el-top">
-    <p class="micro" id="el-title">Elevator mode · answers are my own words, quoted</p>
-    <button type="button" class="button button-outline el-close">Back to the page <kbd>Esc</kbd></button>
+    <p class="micro" id="el-title">Elevator mode<span class="el-wide"> · answers are my own words, quoted</span></p>
+    <button type="button" class="button button-outline el-close">Back<span class="el-wide"> to the page</span> <kbd>Esc</kbd></button>
   </div>
   <div class="el-main">
     <div class="el-col">
@@ -41,7 +41,7 @@ const FLOORS = [
             id="el-q"
             class="el-input"
             name="q"
-            placeholder="e.g. real-time sync between devices"
+            placeholder="e.g. real-time sync"
             enterkeyhint="search"
             maxlength="200"
           />
@@ -104,8 +104,15 @@ const FLOORS = [
     border-radius: 5px;
     padding: 0 4px;
   }
+  /* Touch screens have no keyboard shortcuts to show. */
   @media (pointer: coarse) {
-    .el-open kbd {
+    .el-open kbd,
+    .elevator kbd {
+      display: none;
+    }
+  }
+  @media (max-width: 609px) {
+    .el-wide {
       display: none;
     }
   }
@@ -161,17 +168,19 @@ const FLOORS = [
   .el-main {
     overflow-y: auto;
     overflow-x: hidden;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-    align-content: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     padding: 24px var(--pad) 64px;
   }
-  /* Before the first question the input sits in the middle of the room. */
-  .elevator:not(.el-asked) .el-main {
-    align-content: center;
+  /* Before the first question the input sits in the middle of the room. Auto margins, not
+     align-content: center, so content taller than the screen scrolls instead of being cut off. */
+  .elevator:not(.el-asked) .el-col {
+    margin-block: auto;
   }
   .el-col {
+    flex: none;
+    min-width: 0;
     width: 100%;
     max-width: var(--measure);
     display: grid;
