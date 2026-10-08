@@ -12,7 +12,7 @@ export interface Hit {
 
 /** Below this, a passage is not shown for meaning alone. Raised when a named term brings evidence. */
 export const MEANING_FLOOR = 0.55;
-export const MEANING_FLOOR_WITH_TERMS = 0.6;
+export const MEANING_FLOOR_WITH_TERMS = 0.65;
 const TERM_BONUS = 0.3;
 const FIT_BONUS = 0.15;
 const KEYWORD_BONUS = 0.1;

@@ -19,6 +19,8 @@ export interface TermMatch {
 /** A term embedding this close is the term; between MAYBE and SURE it is a suggestion. */
 export const SURE = 0.7;
 export const MAYBE = 0.6;
+/** Letter-triple overlap this high is the same word, not a typo to ask about. */
+export const SURE_SPELLING = 0.75;
 
 // Words that are never a tech term on their own, even when an alias spells them ("go", "lead").
 const NOT_TERMS = new Set(
@@ -93,6 +95,9 @@ export class TermMatcher {
       }
       if (best && !spelled.some((h) => h.id === best.id)) spelled.push(best);
     }
+    // Nearly the same word ("stakeholder" for "stakeholders") is the term; a looser typo is a suggestion.
+    const sure = spelled.filter((h) => (h.score ?? 0) >= SURE_SPELLING);
+    if (sure.length) return { found: sure, maybe: [] };
     // A misspelling beats a guess by meaning: "kubernets" offers Kubernetes alone.
     if (spelled.length) return { found: [], maybe: spelled.slice(0, 2) };
     if (!meaning) return { found: [], maybe: [] };

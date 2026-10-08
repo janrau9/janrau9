@@ -71,7 +71,7 @@ terms:
   - { id: backend, label: Backend, group: Backend, aliases: [back end, back-end, server side], status: have, evidence: [exp.current.h5, exp.current.h2, proj.sisu-shift.d.solver] }
 
   # Data
-  - { id: postgres, label: PostgreSQL, group: Data, aliases: [postgres, psql, postgresql], status: have, evidence: [skill.postgres, proj.slash.h3, proj.synchd.h4] }
+  - { id: postgres, label: PostgreSQL, group: Data, aliases: [postgres, psql, postgresql, database, databases, relational database], status: have, evidence: [skill.postgres, proj.rhythm.h1, proj.slash.h2, proj.slash.h3] }
   - { id: mysql, label: MySQL, group: Data, aliases: [mariadb], status: adjacent, near: [postgres, sql] }
   - { id: sqlite, label: SQLite, group: Data, aliases: [d1], status: have, evidence: [proj.transcendence, proj.this-site] }
   - { id: mongodb, label: MongoDB, group: Data, aliases: [mongo, nosql, document database], status: not-yet, near: [postgres] }
@@ -86,7 +86,7 @@ terms:
   - { id: elasticsearch, label: Elasticsearch, group: Data, aliases: [opensearch, full text search], status: not-yet, near: [vector-db, postgres] }
 
   # Cloud and operations
-  - { id: devops, label: DevOps, group: Cloud and operations, aliases: [dev ops, platform engineering, sre], status: have, evidence: [skill.ci, skill.docker, proj.shotclock.h4], related: [ci, docker, monitoring, linux] }
+  - { id: devops, label: DevOps, group: Cloud and operations, aliases: [dev ops, platform engineering, sre], status: have, evidence: [proj.shotclock.h4, proj.sisu-shift.h5, proj.this-site.h3, exp.current.h4, proj.shorts-studio.h2], related: [ci, docker, monitoring] }
   - { id: ci, label: CI/CD, group: Cloud and operations, aliases: [ci, cd, cicd, ci/cd, continuous integration, continuous delivery], status: have, evidence: [skill.ci, proj.sisu-shift.h5, proj.this-site.h3] }
   - { id: github-actions, label: GitHub Actions, group: Cloud and operations, aliases: [gha], status: have, evidence: [skill.ci, exp.current.h4] }
   - { id: docker, label: Docker, group: Cloud and operations, aliases: [containers, containerization, dockerfile], status: have, evidence: [skill.docker, proj.inception, proj.transcendence] }
@@ -134,12 +134,13 @@ terms:
   - { id: cli, label: CLI tools, group: Tooling, aliases: [command line, cli], status: have, evidence: [exp.current.h3, proj.kiln.h1] }
   - { id: sdk, label: SDKs and packages, group: Tooling, aliases: [sdk, npm, npm packages, libraries], status: have, evidence: [exp.current.h1, exp.current.h4] }
   - { id: monorepo, label: Monorepos, group: Tooling, aliases: [pnpm, turborepo, workspaces], status: have, evidence: [exp.current.h4, proj.this-site] }
-  - { id: lsp, label: Language servers, group: Tooling, aliases: [lsp, language server protocol, dap, debugger], status: have, evidence: [proj.kiln.h1, proj.kiln.h4] }
+  - { id: lsp, label: Language servers, group: Tooling, aliases: [lsp, language server protocol, dap, debugger, debugging], status: have, evidence: [proj.kiln.h1, proj.kiln.h4] }
   - { id: dx, label: Developer experience, group: Tooling, aliases: [dx, developer tooling, devtools], status: have, evidence: [proj.kiln.h1, exp.current.h3] }
   - { id: git, label: Git, group: Tooling, aliases: [github, version control], status: have, evidence: [exp.current.h4, skill.ci] }
   - { id: open-source, label: Open source, group: Tooling, aliases: [oss, open-source], status: adjacent, near: [sdk], nearEvidence: [proj.claude-skills, exp.current.h4] }
 
   # Integrations
+  - { id: customer-facing, label: Customer-facing work, group: Integrations, aliases: [customer facing, client facing, customer-facing, client-facing, customers, clients, client work, stakeholder, stakeholders, customer success], status: have, evidence: [exp.current.h1, exp.current.h2, exp.current.h3, exp.studio.h1] }
   - { id: integrations, label: Integrations, group: Integrations, aliases: [integration, plugins, connectors, third-party apis, youtube api], status: have, evidence: [exp.current.h1, exp.current.h3] }
   - { id: wordpress, label: WordPress, group: Integrations, aliases: [wp], status: have, evidence: [exp.current.h1] }
   - { id: shopify, label: Shopify, group: Integrations, aliases: [ecommerce, e-commerce], status: have, evidence: [exp.current.h1] }
@@ -158,6 +159,10 @@ terms:
   - { id: fullstack, label: Full stack, group: Engineering, aliases: [full stack, full-stack, fullstack], status: have, evidence: [proj.slash, proj.sisu-shift, exp.current.h1] }
 
   # People
+  - { id: startup, label: Startup experience, group: People, aliases: [startup, startups, early stage, early-stage, small team], status: have, evidence: [exp.current.h1, exp.current.h4, exp.current.h2] }
+  - { id: communication, label: Communication, group: People, aliases: [communication skills, written communication, writing, explaining], status: have, evidence: [exp.ti.h2, exp.studio.h1, proj.kiln.h3, proj.kiln.h5] }
+  - { id: documentation, label: Documentation, group: Engineering, aliases: [docs, documenting, decision records, technical writing], status: have, evidence: [proj.kiln.h5, proj.this-site.h2] }
+  - { id: scalability, label: Scalability, group: Engineering, aliases: [scaling, scalable, scale, high load], status: have, evidence: [exp.current.h2, proj.sisu-shift.d.solver, proj.shotclock.h3] }
   - { id: leadership, label: Leadership, group: People, aliases: [team lead, lead, managing people, leading people], status: have, evidence: [exp.ti.h2, exp.ti.h1] }
   - { id: mentoring, label: Mentoring, group: People, aliases: [mentor, coaching], status: not-yet, near: [leadership] }
   - { id: agile, label: Agile, group: People, aliases: [scrum, kanban, sprints], status: have, evidence: [exp.current] }

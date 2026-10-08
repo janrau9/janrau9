@@ -8,6 +8,8 @@ import type { IndexTerm, Passage } from "./types.ts";
 const ADR_BASE = "https://github.com/janrau9/janrau9/blob/main/content/adr/";
 /** Shorter than this, a paragraph is a fragment, not an answer. */
 const MIN_CHARS = 40;
+/** A paragraph this short before a list is the list's lead-in: it travels with the first item. */
+const LEAD_IN_CHARS = 100;
 
 const year = (ym: string | null) => (ym ? ym.slice(0, 4) : "now");
 
@@ -113,6 +115,9 @@ export function prosePassages(
   let inCode = false;
   let table: string[][] = [];
   let para: string[] = [];
+  // A short paragraph waits here: if a list follows, it joins the first item, so
+  // "One concrete call: …" never stands alone as a passage that matches anything vaguely.
+  let held = "";
   const base = () => ({
     source: meta.source,
     link: meta.link(anchor),
@@ -122,9 +127,17 @@ export function prosePassages(
   const push = (text: string) => {
     if (text.length >= MIN_CHARS) out.push({ id: `${meta.prefix}#${anchor}:${n++}`, kind: "section", text, ...base() });
   };
+  const release = () => {
+    if (held) push(held);
+    held = "";
+  };
   const flushPara = () => {
-    if (para.length) push(plain(para.join(" ")));
+    if (!para.length) return;
+    const text = plain(para.join(" "));
     para = [];
+    release();
+    if (text.length < LEAD_IN_CHARS) held = text;
+    else push(text);
   };
   const flushTable = () => {
     const [head, , ...rows] = table;
@@ -149,12 +162,14 @@ export function prosePassages(
   for (const line of body.split("\n")) {
     if (line.startsWith("```")) {
       flushPara();
+      release();
       inCode = !inCode;
       continue;
     }
     if (inCode) continue;
     if (line.trim().startsWith("|")) {
       flushPara();
+      release();
       table.push(cells(line));
       continue;
     }
@@ -162,6 +177,7 @@ export function prosePassages(
     const h = /^(#{2,3}) (.+)$/.exec(line);
     if (h?.[2]) {
       flushPara();
+      release();
       heading = plain(h[2]);
       anchor = slugger.slug(heading);
       continue;
@@ -169,13 +185,15 @@ export function prosePassages(
     const item = /^\s*(?:[-*]|\d+\.) (.+)$/.exec(line);
     if (item?.[1]) {
       flushPara();
-      push(plain(item[1]));
+      push(held ? `${held} ${plain(item[1])}` : plain(item[1]));
+      held = "";
       continue;
     }
     if (!line.trim()) flushPara();
     else para.push(line.trim());
   }
   flushPara();
+  release();
   if (table.length) flushTable();
   return out;
 }

@@ -99,12 +99,37 @@ describe("the glossary step", () => {
 
   test('"devops" says what it covers and leads with that evidence', async () => {
     const plan = await ask("devops");
-    expect(find(plan, "covers")?.parts).toEqual(["CI/CD", "Docker", "Monitoring", "Linux"]);
+    expect(find(plan, "covers")?.parts).toEqual(["CI/CD", "Docker", "Monitoring"]);
+    expect(shown(plan).slice(0, 3)).toContain("proj.shotclock.h4");
     expect(plan.rule).not.toContain("did you mean");
   });
 
   test('"next.js" finds the Shorts studio dashboard', async () => {
     expect(shown(await ask("have you shipped next.js?"))).toContain("proj.shorts-studio.h4");
+  });
+
+  test('"customer facing" leads with the integrations I built for customers, not a fragment', async () => {
+    const plan = await ask("customer facing");
+    expect(shown(plan).slice(0, 3)).toEqual(expect.arrayContaining(["exp.current.h1", "exp.current.h2"]));
+  });
+
+  test('a near-exact spelling counts: "stakeholder" is the "stakeholders" alias', async () => {
+    expect((await ask("stakeholder communication")).termIds).toContain("customer-facing");
+  });
+
+  test("a term backed only by a CV line still answers, never with the empty state", async () => {
+    const plan = await ask("agile");
+    expect(find(plan, "listed")).toBeDefined();
+    expect(find(plan, "examples")).toBeUndefined();
+  });
+
+  test("a lead-in sentence travels with its list instead of standing alone", () => {
+    const md =
+      "## How\n\nOne concrete call: an agent asks who uses formatPrice.\n\n1. The CLI asks the language server for references.\n";
+    const [p] = prosePassages(md, { prefix: "work:x", source: "X", link: (a) => `/work/x#${a}` });
+    expect(p?.text).toBe(
+      "One concrete call: an agent asks who uses formatPrice. The CLI asks the language server for references.",
+    );
   });
 
   test("a language with a certificate is listed", async () => {

@@ -214,7 +214,7 @@ function render(block: Block): HTMLElement {
         ...block.hits.map((hit) => h("div", { class: "el-group" }, sourceLine(hit.passage), quote(hit))),
       );
     case "listed":
-      return h("p", { class: "small text-2" }, `Also in my skills list: ${list(block.names)}.`);
+      return h("p", { class: "small text-2" }, `Also on my CV: ${list(block.names)}.`);
   }
 }
 

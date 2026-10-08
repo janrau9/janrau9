@@ -87,6 +87,12 @@ export class Planner {
       return done();
     }
     if (!hits.length) {
+      // A term whose evidence is only a CV line (a role, a language) still has an answer.
+      if (listed.length) {
+        rules.push("listed only");
+        blocks.push({ kind: "listed", names: listed });
+        return done();
+      }
       const words = found.length ? [] : this.ranker.unknownWords(question);
       if (words.length) blocks.push({ kind: "nothing", words });
       rules.push("empty state");
