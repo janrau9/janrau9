@@ -40,7 +40,9 @@ const wordsOf = (p: Passage) =>
   [p.text, p.source, p.heading ?? "", ...(p.keywords ?? []), ...(p.stack ?? [])]
     .join(" ")
     .toLowerCase()
-    .split(/[^a-z0-9+#.]+/);
+    .split(/[^a-z0-9+#.]+/)
+    // A sentence's full stop is not part of its last word ("tests." is "tests"); "next.js" keeps its dot.
+    .map((w) => w.replace(/^\.+|\.+$/g, ""));
 
 /** The evidence named terms bring, with the reason each passage is shown. */
 export function termEvidence(found: TermHit[], terms: ReadonlyMap<string, IndexTerm>) {

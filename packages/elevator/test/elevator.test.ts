@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import { collect, embedder, QUERY_PREFIX } from "../src/build.ts";
 import { prosePassages } from "../src/passages.ts";
 import { type Block, type Plan, Planner } from "../src/plan.ts";
+import { Ranker } from "../src/rank.ts";
 import type { IndexTerm, Passage } from "../src/types.ts";
 import { quantize, scoreMaps, Vectors } from "../src/vectors.ts";
 
@@ -84,9 +85,11 @@ describe("the glossary step", () => {
     for (const q of ["k8s", "container orchestration"]) expect((await ask(q)).termIds).toEqual(["kubernetes"]);
   });
 
-  test('"kubernets" asks "did you mean Kubernetes?" and nothing else', async () => {
-    const plan = await ask("kubernets");
-    expect(plan.blocks).toEqual([{ kind: "did-you-mean", options: ["Kubernetes"], footnote: false }]);
+  // A typo the content never quotes (the case study quotes "kubernets" as an example).
+  test('"kubernetse" asks "did you mean Kubernetes?" and claims no term', async () => {
+    const plan = await ask("kubernetse");
+    expect(find(plan, "did-you-mean")?.options).toEqual(["Kubernetes"]);
+    expect(plan.termIds).toEqual([]);
   });
 
   test('"do you know swift?" is adjacent, with the close work', async () => {
@@ -114,8 +117,12 @@ describe("the glossary step", () => {
     expect(find(plan, "examples")).toBeDefined();
   });
 
-  test('keywords match whole word starts: "food" never finds "dogfooding"', async () => {
-    expect(shown(await ask("favourite food"))).toEqual([]);
+  test('keywords match whole word starts: "food" never finds "dogfooding"', () => {
+    const p: Passage = { id: "x", kind: "highlight", text: "A dogfooding loop, and a block of tests.", source: "X" };
+    const ranker = new Ranker([p]);
+    expect(ranker.mentions(p, "food")).toBe(false);
+    expect(ranker.mentions(p, "blockchain")).toBe(false);
+    expect(ranker.mentions(p, "testing")).toBe(true);
   });
 });
 
