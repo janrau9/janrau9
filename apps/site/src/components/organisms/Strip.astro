@@ -6,7 +6,10 @@ import SkyToggle from "../atoms/SkyToggle.astro";
 interface Props {
   /** Tailored pages link their own PDF. */
   cvHref?: string | undefined;
-  /** False when the page's heading carries the seal: one seal per view. */
+  /**
+   * False when the page's heading carries the seal: one seal per view. The nav's j-dot then
+   * rests in ink and takes the seal only while that heading is out of view (the hand-off).
+   */
   seal?: boolean;
 }
 const { cvHref = CV_PDF, seal = true } = Astro.props;
@@ -14,7 +17,7 @@ const { cvHref = CV_PDF, seal = true } = Astro.props;
 
 <header class="strip">
   <nav class="frame strip-inner" aria-label="Main">
-    <a href="/" class="mark">{seal ? <SealedText text="janrau" /> : "janrau"}</a>
+    <a href="/" class:list={["mark", { handoff: !seal }]}><SealedText text="janrau" /></a>
     <div class="row links">
       <a href="/#work">Work</a>
       <a href={cvHref}>CV</a>
@@ -51,6 +54,13 @@ const { cvHref = CV_PDF, seal = true } = Astro.props;
     display: inline-flex;
     align-items: center;
   }
+  .handoff :global(.tittle) {
+    background: var(--ink);
+    transition: background-color var(--t-entrance) var(--settle);
+  }
+  :global(html.seal-handoff) .handoff :global(.tittle) {
+    background: var(--seal);
+  }
   .links a {
     font-size: 14px;
     color: var(--text-2);
@@ -68,4 +78,12 @@ const { cvHref = CV_PDF, seal = true } = Astro.props;
   const mark = () => document.documentElement.classList.toggle("scrolled", window.scrollY > 8);
   mark();
   window.addEventListener("scroll", mark, { passive: true });
+
+  // The hand-off: while the heading's seal is hidden (above the strip or off screen), the nav's j-dot holds it.
+  const heading = document.querySelector(".handoff") && document.querySelector("main .tittle");
+  if (heading) {
+    new IntersectionObserver(([e]) => document.documentElement.classList.toggle("seal-handoff", !e?.isIntersecting), {
+      rootMargin: "-64px 0px 0px 0px",
+    }).observe(heading);
+  }
 </script>

@@ -112,3 +112,30 @@ test("the lattice's seal never sits under text", async ({ page }) => {
     }
   }
 });
+
+// The hand-off: on a page whose heading carries the seal, the nav's j-dot rests in ink and
+// takes the seal only while the heading's dot is out of view, so the view still has one.
+for (const [label, path] of [
+  ["home", "/"],
+  ["a tailored page", "/for/acme-events-t3st1?preview"],
+] as const)
+  test(`${label} hands the seal to the nav when its heading scrolls away`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width: 375, height: 640 });
+    await page.goto(path, { waitUntil: "networkidle" });
+    const seal = await page.evaluate(() => {
+      const p = document.createElement("div");
+      p.style.color = "var(--seal)";
+      document.body.append(p);
+      const c = getComputedStyle(p).color;
+      p.remove();
+      return c;
+    });
+    const nav = page.locator(".strip .tittle");
+    await expect(nav).not.toHaveCSS("background-color", seal);
+    await page.mouse.wheel(0, 1200);
+    await expect(page.locator("h1 .tittle")).not.toBeInViewport();
+    await expect(nav).toHaveCSS("background-color", seal);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(nav).not.toHaveCSS("background-color", seal);
+  });
