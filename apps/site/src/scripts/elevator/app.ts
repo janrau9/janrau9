@@ -416,6 +416,7 @@ function reveal(origin?: Origin) {
   ctx.lineWidth = 1;
   const t0 = performance.now();
   const frame = (now: number) => {
+    if (!dialog.open) return done();
     const t = now - t0;
     ctx.clearRect(0, 0, w, h);
     const reached = new Path2D();
@@ -462,19 +463,24 @@ function reveal(origin?: Origin) {
     ctx.strokeStyle = line;
     ctx.stroke(reached);
     ctx.globalAlpha = 1;
-    // The page's lattice hands its hairlines to this one: both share one geometry, but each
-    // rounds to pixels its own way, and two copies of a line read as a misprint.
-    document.documentElement.classList.add("lattice-handed");
-    if (t < end) requestAnimationFrame(frame);
-    else {
-      dialog.classList.remove("el-arriving");
-      water.remove();
-      surface = () => {};
-    }
+    if (t < end && dialog.open) requestAnimationFrame(frame);
+    else done();
+  };
+  /** The room has landed, or was closed while arriving. */
+  const done = () => {
+    dialog.classList.remove("el-arriving");
+    water.remove();
+    surface = () => {};
   };
   dialog.classList.add("el-arriving");
   dialog.prepend(water);
-  requestAnimationFrame(frame);
+  // The page's lattice hands its hairlines to this one: both share one geometry, but each
+  // rounds to pixels its own way, and two copies of a line read as a misprint. Closing the
+  // room hands them back.
+  requestAnimationFrame((now) => {
+    if (dialog.open) document.documentElement.classList.add("lattice-handed");
+    frame(now);
+  });
   // Each part of the room surfaces once the room has formed under all of it, including parts
   // shown later while the wave is still spreading (the phone's download question).
   const start = performance.now();
