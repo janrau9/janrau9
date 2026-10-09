@@ -317,6 +317,8 @@ const crestAt = (r: number) => 1 / Math.sqrt(1 + r / 233);
 /** The lattice's cell (Lattice.astro): pointy-top, edge 21. */
 const HW = 36.3731;
 const PITCH = 31.5;
+/** One cell's surge, as the pond's (ms). */
+const SURGE = 377;
 
 /** Brings a part of the room up when the arriving wave reaches it; nothing once it has landed. */
 let surface: (el: HTMLElement) => void = () => {};
@@ -334,42 +336,79 @@ function reveal(origin?: { x: number; y: number }) {
   const w = window.innerWidth;
   const h = window.innerHeight;
   const { x, y } = origin ?? { x: w / 2, y: h / 2 };
-  const water = document.createElement("div");
+  // One canvas, drawn each frame: a thousand animated elements would stall the page.
+  const water = document.createElement("canvas");
   water.className = "el-water";
   water.setAttribute("aria-hidden", "true");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  water.width = Math.round(w * dpr);
+  water.height = Math.round(h * dpr);
+  const ctx = water.getContext("2d");
+  if (!ctx) return;
+  ctx.scale(dpr, dpr);
+  const css = getComputedStyle(dialog);
+  const ground = css.getPropertyValue("--ground").trim();
+  const crest = css.getPropertyValue("--line-strong").trim();
+  // The lattice's cells around the strike, each with its arrival time and crest strength.
+  const cells: { x: number; y: number; at: number; lit: number }[] = [];
   const rows = Math.ceil(y / PITCH) + 1;
   const cols = Math.ceil(x / HW) + 1;
-  let last: Animation | undefined;
-  let lastDelay = -1;
   for (let j = -rows; j * PITCH + y < h + PITCH; j++) {
     const cy = y + j * PITCH;
     const shift = Math.abs(j) % 2 ? HW / 2 : 0;
     for (let i = -cols; i * HW + x + shift < w + HW; i++) {
       const cx = x + shift + i * HW;
       const d = Math.hypot(cx - x, cy - y);
-      const cell = document.createElement("div");
-      cell.className = "el-cell";
-      cell.style.translate = `${cx - HW / 2}px ${cy - 21}px`;
-      const lit = Math.round(crestAt(d) * 100);
-      const delay = d / WAVE;
-      const a = cell.animate(
-        [
-          {
-            opacity: 0,
-            transform: "scale(0.62)",
-            backgroundColor: `color-mix(in oklab, var(--line-strong) ${lit}%, var(--ground))`,
-          },
-          { opacity: 1, transform: "scale(1.03)", offset: 0.4 },
-          { opacity: 1, transform: "scale(1.03)", backgroundColor: "var(--ground)" },
-        ],
-        { duration: 377, delay, easing: "ease-out", fill: "both" },
-      );
-      if (delay > lastDelay) [last, lastDelay] = [a, delay];
-      water.append(cell);
+      cells.push({ x: cx, y: cy, at: d / WAVE, lit: crestAt(d) });
     }
   }
+  const end = Math.max(...cells.map((c) => c.at)) + SURGE;
+  const hex = (path: Path2D, cx: number, cy: number, k: number) => {
+    const a = (HW / 2) * k;
+    path.moveTo(cx, cy - 21 * k);
+    path.lineTo(cx + a, cy - 10.5 * k);
+    path.lineTo(cx + a, cy + 10.5 * k);
+    path.lineTo(cx, cy + 21 * k);
+    path.lineTo(cx - a, cy + 10.5 * k);
+    path.lineTo(cx - a, cy - 10.5 * k);
+    path.closePath();
+  };
+  const t0 = performance.now();
+  const frame = (now: number) => {
+    const t = now - t0;
+    ctx.clearRect(0, 0, w, h);
+    const settled = new Path2D();
+    for (const c of cells) {
+      const p = (t - c.at) / SURGE;
+      if (p <= 0) continue;
+      if (p >= 1) {
+        hex(settled, c.x, c.y, 1.03);
+        continue;
+      }
+      // The surge: the cell grows in over the first 40%, lit by the crest, and the light ebbs.
+      const rise = 1 - (1 - Math.min(p / 0.4, 1)) ** 2;
+      const cell = new Path2D();
+      hex(cell, c.x, c.y, 0.62 + 0.41 * rise);
+      ctx.globalAlpha = rise;
+      ctx.fillStyle = ground;
+      ctx.fill(cell);
+      ctx.globalAlpha = rise * c.lit * (1 - p);
+      ctx.fillStyle = crest;
+      ctx.fill(cell);
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = ground;
+    ctx.fill(settled);
+    if (t < end) requestAnimationFrame(frame);
+    else {
+      dialog.classList.remove("el-arriving");
+      water.remove();
+      surface = () => {};
+    }
+  };
   dialog.classList.add("el-arriving");
   dialog.prepend(water);
+  requestAnimationFrame(frame);
   // Each part of the room surfaces when the front reaches it, including parts shown later
   // while the wave is still spreading (the phone's download question).
   const start = performance.now();
@@ -385,11 +424,6 @@ function reveal(origin?: { x: number; y: number }) {
     );
   };
   for (const el of dialog.querySelectorAll<HTMLElement>(".el-top > *, .el-ask > *, .el-trace, .el-chip")) surface(el);
-  void last?.finished.finally(() => {
-    dialog.classList.remove("el-arriving");
-    water.remove();
-    surface = () => {};
-  });
 }
 
 export async function open(origin?: { x: number; y: number }) {
