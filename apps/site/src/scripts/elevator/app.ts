@@ -317,8 +317,9 @@ const crestAt = (r: number) => 1 / Math.sqrt(1 + r / 233);
 /** The lattice's cell (Lattice.astro): pointy-top, edge 21. */
 const HW = 36.3731;
 const PITCH = 31.5;
-/** One cell's surge, as the pond's (ms). */
+/** One cell's surge, as the pond's (ms), and the lattice dissolving once the room has landed. */
 const SURGE = 377;
+const DISSOLVE = 377;
 
 /** Brings a part of the room up when the arriving wave reaches it; nothing once it has landed. */
 let surface: (el: HTMLElement) => void = () => {};
@@ -326,10 +327,12 @@ let surface: (el: HTMLElement) => void = () => {};
 /**
  * The room arrives as a ripple through the lattice, by the pond's physics: the screen is
  * tiled in the lattice's own cells around where it was asked for (on the home page, the red
- * cell's centre, so the tiling continues the hero's lattice), and a front spreads at constant
- * speed. Each cell the front reaches surges, lit in proportion to the crest's strength there,
- * and settles into the room's ground; each part of the room surfaces as the front reaches it.
- * The page beyond the front stays still. Reduced motion: the room is simply there.
+ * cell's centre, so the tiling continues the hero's lattice), and the wave runs cell to cell
+ * at constant speed, so its front is a ring of hexagons, not a circle. Each cell it reaches
+ * becomes the room's ground, drawn in the lattice's hairlines, and surges as the pond's cells
+ * do; once the room has landed the lattice dissolves into it. Each part of the room surfaces
+ * as the water covers it. The page beyond the front stays still. Reduced motion: the room is
+ * simply there.
  */
 function reveal(origin?: { x: number; y: number }) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -348,57 +351,69 @@ function reveal(origin?: { x: number; y: number }) {
   ctx.scale(dpr, dpr);
   const css = getComputedStyle(dialog);
   const ground = css.getPropertyValue("--ground").trim();
+  const line = css.getPropertyValue("--line").trim();
   const crest = css.getPropertyValue("--line-strong").trim();
-  // The lattice's cells around the strike, each with its arrival time and crest strength.
-  const cells: { x: number; y: number; at: number; lit: number }[] = [];
+  // The lattice's cells around the strike. The wave runs through the lattice, cell to cell, so
+  // its front is the lattice's own shape: ring k of hexagons around the struck cell.
+  const cells: { x: number; y: number; at: number; amp: number }[] = [];
   const rows = Math.ceil(y / PITCH) + 1;
-  const cols = Math.ceil(x / HW) + 1;
+  const cols = Math.ceil(x / HW) + 2;
   for (let j = -rows; j * PITCH + y < h + PITCH; j++) {
     const cy = y + j * PITCH;
-    const shift = Math.abs(j) % 2 ? HW / 2 : 0;
+    const shift = j & 1 ? HW / 2 : 0;
     for (let i = -cols; i * HW + x + shift < w + HW; i++) {
       const cx = x + shift + i * HW;
-      const d = Math.hypot(cx - x, cy - y);
-      cells.push({ x: cx, y: cy, at: d / WAVE, lit: crestAt(d) });
+      if (cx < -HW) continue;
+      const q = i - Math.floor(j / 2);
+      const ring = (Math.abs(q) + Math.abs(j) + Math.abs(q + j)) / 2;
+      // The pond's strike: spreading × absorption, kept visible to the far edge.
+      cells.push({ x: cx, y: cy, at: (ring * HW) / WAVE, amp: 0.55 * crestAt(ring * HW) });
     }
   }
-  const end = Math.max(...cells.map((c) => c.at)) + SURGE;
-  const hex = (path: Path2D, cx: number, cy: number, k: number) => {
-    const a = (HW / 2) * k;
-    path.moveTo(cx, cy - 21 * k);
-    path.lineTo(cx + a, cy - 10.5 * k);
-    path.lineTo(cx + a, cy + 10.5 * k);
-    path.lineTo(cx, cy + 21 * k);
-    path.lineTo(cx - a, cy + 10.5 * k);
-    path.lineTo(cx - a, cy - 10.5 * k);
+  const landed = Math.max(...cells.map((c) => c.at)) + SURGE;
+  const end = landed + DISSOLVE;
+  const hex = (path: Path2D, cx: number, cy: number) => {
+    const a = HW / 2;
+    path.moveTo(cx, cy - 21);
+    path.lineTo(cx + a, cy - 10.5);
+    path.lineTo(cx + a, cy + 10.5);
+    path.lineTo(cx, cy + 21);
+    path.lineTo(cx - a, cy + 10.5);
+    path.lineTo(cx - a, cy - 10.5);
     path.closePath();
   };
+  ctx.lineWidth = 1;
   const t0 = performance.now();
   const frame = (now: number) => {
     const t = now - t0;
     ctx.clearRect(0, 0, w, h);
-    const settled = new Path2D();
+    // Water the wave has reached becomes the room's ground, drawn in the lattice's hairlines.
+    const reached = new Path2D();
+    const surging: { cell: Path2D; alpha: number }[] = [];
     for (const c of cells) {
       const p = (t - c.at) / SURGE;
       if (p <= 0) continue;
-      if (p >= 1) {
-        hex(settled, c.x, c.y, 1.03);
-        continue;
+      hex(reached, c.x, c.y);
+      if (p < 1) {
+        const cell = new Path2D();
+        hex(cell, c.x, c.y);
+        surging.push({ cell, alpha: c.amp * (1 - p) });
       }
-      // The surge: the cell grows in over the first 40%, lit by the crest, and the light ebbs.
-      const rise = 1 - (1 - Math.min(p / 0.4, 1)) ** 2;
-      const cell = new Path2D();
-      hex(cell, c.x, c.y, 0.62 + 0.41 * rise);
-      ctx.globalAlpha = rise;
-      ctx.fillStyle = ground;
-      ctx.fill(cell);
-      ctx.globalAlpha = rise * c.lit * (1 - p);
-      ctx.fillStyle = crest;
-      ctx.fill(cell);
     }
     ctx.globalAlpha = 1;
     ctx.fillStyle = ground;
-    ctx.fill(settled);
+    ctx.fill(reached);
+    // The pond's surge: each cell the front reaches rises, then ebbs.
+    ctx.fillStyle = crest;
+    for (const s of surging) {
+      ctx.globalAlpha = s.alpha;
+      ctx.fill(s.cell);
+    }
+    // Once the room has landed, the lattice dissolves into it.
+    ctx.globalAlpha = t < landed ? 1 : Math.max(0, 1 - (t - landed) / DISSOLVE);
+    ctx.strokeStyle = line;
+    ctx.stroke(reached);
+    ctx.globalAlpha = 1;
     if (t < end) requestAnimationFrame(frame);
     else {
       dialog.classList.remove("el-arriving");
