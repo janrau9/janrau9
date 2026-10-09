@@ -1,5 +1,28 @@
 import cloudflare from "@astrojs/cloudflare";
+import { readFile } from "node:fs/promises";
 import { defineConfig } from "astro/config";
+
+/**
+ * Dev only: ONNX Runtime imports its loader (public/elevator/runtime/*.mjs) at runtime from
+ * the worker. Vite's dev server refuses a /public file imported from source, so serve those
+ * files as they are, before Vite sees them. A build copies them as-is and needs nothing.
+ */
+const elevatorRuntimeInDev = {
+  name: "elevator-runtime-in-dev",
+  configureServer(server) {
+    server.middlewares.use(async (req, res, next) => {
+      const path = req.url?.split("?")[0] ?? "";
+      if (!/^\/elevator\/runtime\/[\w.-]+\.mjs$/.test(path)) return next();
+      try {
+        const file = await readFile(new URL(`./public${path}`, import.meta.url));
+        res.setHeader("Content-Type", "text/javascript");
+        res.end(file);
+      } catch {
+        next();
+      }
+    });
+  },
+};
 
 export default defineConfig({
   site: "https://janrau.dev",
@@ -22,6 +45,7 @@ export default defineConfig({
     inlineStylesheets: "never",
   },
   vite: {
+    plugins: [elevatorRuntimeInDev],
     resolve: {
       // Elevator mode needs only the plain WebAssembly build of ONNX Runtime (11 MB), not the
       // default WebGPU build (22 MB).
