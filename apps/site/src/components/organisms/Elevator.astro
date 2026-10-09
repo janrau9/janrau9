@@ -173,31 +173,40 @@ const FLOORS = [
     grid-template-columns: minmax(0, 1fr);
   }
   /* The room arrives on a ripple (app.ts reveal): the page stays in view outside its front,
-     so the backdrop is clear; the room itself is the ground. Its contents rise as it lands. */
+     so the backdrop is clear; the room itself is the ground. */
   .elevator::backdrop {
     background: transparent;
-  }
-  .elevator[open] > * {
-    animation: el-rise var(--t-entrance) var(--settle) var(--t-reveal) backwards;
-  }
-  @keyframes el-rise {
-    from {
-      opacity: 0;
-      transform: translateY(13px);
-    }
   }
   html.in-elevator {
     overflow: hidden;
     /* The scrollbar's space stays, so the page beneath doesn't jump while the ripple spreads. */
     scrollbar-gutter: stable;
   }
-  /* The ripple's rings: hairlines running ahead of the room's edge, fading as they spread. */
-  .el-ripple {
-    position: fixed;
-    border: 1px solid var(--text-3);
-    border-radius: 50%;
+  /* The ripple's crest: a band of light just inside the room's edge, sharp at the front and
+     soft behind, then two weaker crests trailing (21px and 55px back). By day it darkens, by
+     night it brightens: further from the ground's lightness, as a risen thing is. */
+  @property --front {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
+  .el-crest {
+    --c: color-mix(in oklab, var(--ink) 16%, transparent);
+    --c2: color-mix(in oklab, var(--ink) 7%, transparent);
+    position: absolute;
+    inset: 0;
     pointer-events: none;
-    z-index: var(--z-modal);
+    z-index: 1;
+    background: radial-gradient(
+      circle at var(--x) var(--y),
+      transparent calc(var(--front) - 89px),
+      var(--c2) calc(var(--front) - 55px),
+      transparent calc(var(--front) - 40px),
+      var(--c2) calc(var(--front) - 21px),
+      transparent calc(var(--front) - 13px),
+      var(--c) calc(var(--front) - 1px),
+      transparent var(--front)
+    );
   }
   .el-top {
     display: flex;
@@ -464,10 +473,5 @@ const FLOORS = [
   }
   .el-link:hover {
     text-decoration-color: var(--ink);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .elevator[open] > * {
-      animation: none;
-    }
   }
 </style>

@@ -310,16 +310,17 @@ async function modelCached() {
 
 let opener: HTMLElement | null = null;
 
-/** The dive: slow to start, fast through the middle, landing gently (not seiza's settle). */
-const DIVE = "cubic-bezier(0.65, 0, 0.35, 1)";
-const DIVE_MS = 987;
+/** The wave's speed: constant, as a ripple's is (px per ms). */
+const WAVE = 1.6;
+/** Spreading: a crest's strength falls as 1/√(1 + r/233), so it is still felt at the far corner. */
+const crestAt = (r: number) => 1 / Math.sqrt(1 + r / 233);
 
 /**
- * Shuhari, named: the one dramatic motion on the site. The room opens as a ripple from where
- * it was asked for and the page zooms toward that point as the ripple fills the screen, three
- * rings spreading ahead of the front like a strike on the pond. 987ms, off the settle curve,
- * breaking "no bounce, nothing showy" on purpose: stepping into elevator mode is a change of
- * world, not a state change. Reduced motion: the room is simply there.
+ * The room arrives as a ripple from where it was asked for, by the pond's physics: one front
+ * at constant speed, its crest a band of light that weakens as it spreads with two weaker
+ * crests trailing, and the room is the water the wave has passed. The page outside the front
+ * stays still; each part of the room surfaces as the front reaches it. Reduced motion: the
+ * room is simply there.
  */
 function reveal(origin?: { x: number; y: number }) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -327,31 +328,32 @@ function reveal(origin?: { x: number; y: number }) {
   const h = window.innerHeight;
   const { x, y } = origin ?? { x: w / 2, y: h / 2 };
   const r = Math.hypot(Math.max(x, w - x), Math.max(y, h - y));
-  const timing = { duration: DIVE_MS, easing: DIVE };
-  dialog.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] }, timing);
-  // The page dives toward the point it was struck, and dims as the room closes over it.
-  document.body.animate(
-    {
-      transform: ["scale(1)", "scale(1.12)"],
-      opacity: [1, 0.4],
-      transformOrigin: [`${x}px ${y + window.scrollY}px`, `${x}px ${y + window.scrollY}px`],
-    },
-    timing,
+  const duration = r / WAVE;
+  dialog.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] }, { duration });
+  // The crest rides just inside the room's edge, so it is drawn in the room, above its contents.
+  const crest = document.createElement("div");
+  crest.className = "el-crest";
+  crest.setAttribute("aria-hidden", "true");
+  crest.style.setProperty("--x", `${x}px`);
+  crest.style.setProperty("--y", `${y}px`);
+  dialog.append(crest);
+  const steps = 8;
+  const fade = Array.from({ length: steps + 1 }, (_, i) => (i === steps ? 0 : crestAt((r * i) / steps)));
+  crest
+    .animate({ "--front": ["0px", `${r}px`], opacity: fade }, { duration, fill: "forwards" })
+    .finished.finally(() => crest.remove());
+  // Each part of the room surfaces when the front reaches it.
+  const parts = dialog.querySelectorAll<HTMLElement>(
+    ".el-top > *, .el-ask > *, .el-trace, .el-chip, .el-consent:not([hidden])",
   );
-  // Three rings run ahead of the front, each later and fainter, like water.
-  for (const [i, delay] of [0, 144, 288].entries()) {
-    const ring = document.createElement("div");
-    ring.className = "el-ripple";
-    ring.setAttribute("aria-hidden", "true");
-    Object.assign(ring.style, { left: `${x - r}px`, top: `${y - r}px`, width: `${2 * r}px`, height: `${2 * r}px` });
-    // Outside body, so the page's zoom doesn't carry the rings; the modal is in the top layer above.
-    document.documentElement.append(ring);
-    ring
-      .animate(
-        { transform: ["scale(0)", "scale(1.08)"], opacity: [0, 1 - i * 0.25, 0], offset: [0, 0.2, 1] },
-        { duration: DIVE_MS, delay, easing: DIVE, fill: "backwards" },
-      )
-      .finished.finally(() => ring.remove());
+  for (const el of parts) {
+    const b = el.getBoundingClientRect();
+    const dx = Math.max(b.left - x, 0, x - b.right);
+    const dy = Math.max(b.top - y, 0, y - b.bottom);
+    el.animate(
+      { opacity: [0, 1], transform: ["translateY(4px)", "none"] },
+      { duration: 377, delay: Math.hypot(dx, dy) / WAVE, easing: "cubic-bezier(0.16, 1, 0.3, 1)", fill: "backwards" },
+    );
   }
 }
 
