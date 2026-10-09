@@ -314,47 +314,82 @@ let opener: HTMLElement | null = null;
 const WAVE = 1.6;
 /** Spreading: a crest's strength falls as 1/√(1 + r/233), so it is still felt at the far corner. */
 const crestAt = (r: number) => 1 / Math.sqrt(1 + r / 233);
+/** The lattice's cell (Lattice.astro): pointy-top, edge 21. */
+const HW = 36.3731;
+const PITCH = 31.5;
+
+/** Brings a part of the room up when the arriving wave reaches it; nothing once it has landed. */
+let surface: (el: HTMLElement) => void = () => {};
 
 /**
- * The room arrives as a ripple from where it was asked for, by the pond's physics: one front
- * at constant speed, its crest a band of light that weakens as it spreads with two weaker
- * crests trailing, and the room is the water the wave has passed. The page outside the front
- * stays still; each part of the room surfaces as the front reaches it. Reduced motion: the
- * room is simply there.
+ * The room arrives as a ripple through the lattice, by the pond's physics: the screen is
+ * tiled in the lattice's own cells around where it was asked for (on the home page, the red
+ * cell's centre, so the tiling continues the hero's lattice), and a front spreads at constant
+ * speed. Each cell the front reaches surges, lit in proportion to the crest's strength there,
+ * and settles into the room's ground; each part of the room surfaces as the front reaches it.
+ * The page beyond the front stays still. Reduced motion: the room is simply there.
  */
 function reveal(origin?: { x: number; y: number }) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const w = window.innerWidth;
   const h = window.innerHeight;
   const { x, y } = origin ?? { x: w / 2, y: h / 2 };
-  const r = Math.hypot(Math.max(x, w - x), Math.max(y, h - y));
-  const duration = r / WAVE;
-  dialog.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] }, { duration });
-  // The crest rides just inside the room's edge, so it is drawn in the room, above its contents.
-  const crest = document.createElement("div");
-  crest.className = "el-crest";
-  crest.setAttribute("aria-hidden", "true");
-  crest.style.setProperty("--x", `${x}px`);
-  crest.style.setProperty("--y", `${y}px`);
-  dialog.append(crest);
-  const steps = 8;
-  const fade = Array.from({ length: steps + 1 }, (_, i) => (i === steps ? 0 : crestAt((r * i) / steps)));
-  crest
-    .animate({ "--front": ["0px", `${r}px`], opacity: fade }, { duration, fill: "forwards" })
-    .finished.finally(() => crest.remove());
-  // Each part of the room surfaces when the front reaches it.
-  const parts = dialog.querySelectorAll<HTMLElement>(
-    ".el-top > *, .el-ask > *, .el-trace, .el-chip, .el-consent:not([hidden])",
-  );
-  for (const el of parts) {
+  const water = document.createElement("div");
+  water.className = "el-water";
+  water.setAttribute("aria-hidden", "true");
+  const rows = Math.ceil(y / PITCH) + 1;
+  const cols = Math.ceil(x / HW) + 1;
+  let last: Animation | undefined;
+  let lastDelay = -1;
+  for (let j = -rows; j * PITCH + y < h + PITCH; j++) {
+    const cy = y + j * PITCH;
+    const shift = Math.abs(j) % 2 ? HW / 2 : 0;
+    for (let i = -cols; i * HW + x + shift < w + HW; i++) {
+      const cx = x + shift + i * HW;
+      const d = Math.hypot(cx - x, cy - y);
+      const cell = document.createElement("div");
+      cell.className = "el-cell";
+      cell.style.translate = `${cx - HW / 2}px ${cy - 21}px`;
+      const lit = Math.round(crestAt(d) * 100);
+      const delay = d / WAVE;
+      const a = cell.animate(
+        [
+          {
+            opacity: 0,
+            transform: "scale(0.62)",
+            backgroundColor: `color-mix(in oklab, var(--line-strong) ${lit}%, var(--ground))`,
+          },
+          { opacity: 1, transform: "scale(1.03)", offset: 0.4 },
+          { opacity: 1, transform: "scale(1.03)", backgroundColor: "var(--ground)" },
+        ],
+        { duration: 377, delay, easing: "ease-out", fill: "both" },
+      );
+      if (delay > lastDelay) [last, lastDelay] = [a, delay];
+      water.append(cell);
+    }
+  }
+  dialog.classList.add("el-arriving");
+  dialog.prepend(water);
+  // Each part of the room surfaces when the front reaches it, including parts shown later
+  // while the wave is still spreading (the phone's download question).
+  const start = performance.now();
+  surface = (el) => {
     const b = el.getBoundingClientRect();
-    const dx = Math.max(b.left - x, 0, x - b.right);
-    const dy = Math.max(b.top - y, 0, y - b.bottom);
+    // Its farthest corner: it surfaces once the water covers all of it, never over the page.
+    const dx = Math.max(Math.abs(b.left - x), Math.abs(b.right - x));
+    const dy = Math.max(Math.abs(b.top - y), Math.abs(b.bottom - y));
+    const delay = Math.max(0, Math.hypot(dx, dy) / WAVE + 89 - (performance.now() - start));
     el.animate(
       { opacity: [0, 1], transform: ["translateY(4px)", "none"] },
-      { duration: 377, delay: Math.hypot(dx, dy) / WAVE, easing: "cubic-bezier(0.16, 1, 0.3, 1)", fill: "backwards" },
+      { duration: 377, delay, easing: "cubic-bezier(0.16, 1, 0.3, 1)", fill: "backwards" },
     );
-  }
+  };
+  for (const el of dialog.querySelectorAll<HTMLElement>(".el-top > *, .el-ask > *, .el-trace, .el-chip")) surface(el);
+  void last?.finished.finally(() => {
+    dialog.classList.remove("el-arriving");
+    water.remove();
+    surface = () => {};
+  });
 }
 
 export async function open(origin?: { x: number; y: number }) {
@@ -370,6 +405,7 @@ export async function open(origin?: { x: number; y: number }) {
   if (phone && !(await modelCached())) {
     state = "asking";
     consent.hidden = false;
+    surface(consent);
     status("Waiting for your OK to download");
   } else start(false);
 }
