@@ -78,7 +78,9 @@ const FLOORS = [
     void app.then((m) => m.open(origin));
   };
   button?.addEventListener("click", () => enter());
-  window.addEventListener("elevator:enter", (e) => enter((e as CustomEvent<{ x: number; y: number }>).detail));
+  window.addEventListener("elevator:enter", (e) =>
+    enter((e as CustomEvent<import("../../scripts/elevator/app").Origin>).detail),
+  );
   document.addEventListener("keydown", (e) => {
     const t = e.target as HTMLElement | null;
     const typing = t?.isContentEditable || /^(input|textarea|select)$/i.test(t?.tagName ?? "");

@@ -158,11 +158,15 @@
     document.addEventListener("click", (e) => {
       const { x, y } = local(e);
       if (!onSeal(x, y) || (e.target as Element | null)?.closest("a, button, input, summary")) return;
-      // From the red cell's centre, so the room's cells continue this lattice exactly.
-      // Let the wave start before the room overtakes it.
+      // From the red cell's centre, so the room's cells continue this lattice exactly; the
+      // field's box tells elevator mode where this lattice's own cells carry the wave.
       const box = field.getBoundingClientRect();
-      const detail = { x: box.left + (seal?.x ?? x), y: box.top + (seal?.y ?? y) };
-      window.setTimeout(() => window.dispatchEvent(new CustomEvent("elevator:enter", { detail })), still ? 0 : 89);
+      const detail = {
+        x: box.left + (seal?.x ?? x),
+        y: box.top + (seal?.y ?? y),
+        field: { left: box.left, top: box.top, right: box.right, bottom: box.bottom },
+      };
+      window.dispatchEvent(new CustomEvent("elevator:enter", { detail }));
     });
   }
 
