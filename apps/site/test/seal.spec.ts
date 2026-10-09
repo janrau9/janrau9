@@ -158,3 +158,22 @@ test("striking the red lattice cell opens elevator mode on a ripple", async ({ p
   await page.mouse.click(box.x + box.width / 2 + 120, box.y + box.height / 2);
   await expect(page.locator("#elevator")).not.toHaveAttribute("open", "");
 });
+
+test("on the home page the nav's Elevator strikes the red cell; scrolled away, it opens from the nav", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator(".seal-cell")).toHaveCount(1);
+  await page.click("#elevator-open");
+  await expect(page.locator("#elevator")).toHaveAttribute("open", "");
+  // The red cell's own wave runs first.
+  await expect(page.locator("#lattice .hex-cell.red").first()).toBeAttached();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#lattice .hex-cell.red")).toHaveCount(0);
+  await page.mouse.wheel(0, 1500);
+  await expect(page.locator(".seal-cell")).not.toBeInViewport();
+  await page.click("#elevator-open");
+  await expect(page.locator("#elevator")).toHaveAttribute("open", "");
+  await expect(page.locator("#lattice .hex-cell.red")).toHaveCount(0);
+});

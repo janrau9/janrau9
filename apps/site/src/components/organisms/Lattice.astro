@@ -154,21 +154,34 @@
   /** The red cell under this point, if any. */
   const onSeal = (x: number, y: number) => seal && Math.hypot(seal.x - x, seal.y - y) < HW * 0.75;
 
+  /** Opens elevator mode from the red cell's centre, so the room's cells continue this lattice exactly. */
+  function enterFromSeal() {
+    if (!field || !seal) return;
+    // The field's box and cells tell elevator mode where this lattice's own cells carry the wave.
+    const box = field.getBoundingClientRect();
+    const detail = {
+      x: box.left + seal.x,
+      y: box.top + seal.y,
+      field: { left: box.left, top: box.top, right: box.right, bottom: box.bottom },
+      cells: cells.map((c) => ({ x: box.left + c.x, y: box.top + c.y, quiet: Boolean(c.quiet) })),
+    };
+    window.dispatchEvent(new CustomEvent("elevator:enter", { detail }));
+  }
+
   if (field) {
     document.addEventListener("click", (e) => {
       const { x, y } = local(e);
       if (!onSeal(x, y) || (e.target as Element | null)?.closest("a, button, input, summary")) return;
-      // From the red cell's centre, so the room's cells continue this lattice exactly; the
-      // field's box tells elevator mode where this lattice's own cells carry the wave.
-      const box = field.getBoundingClientRect();
-      const detail = {
-        x: box.left + (seal?.x ?? x),
-        y: box.top + (seal?.y ?? y),
-        field: { left: box.left, top: box.top, right: box.right, bottom: box.bottom },
-        // The cells this lattice draws itself, so the extension never draws over them.
-        cells: cells.map((c) => ({ x: box.left + c.x, y: box.top + c.y, quiet: Boolean(c.quiet) })),
-      };
-      window.dispatchEvent(new CustomEvent("elevator:enter", { detail }));
+      enterFromSeal();
+    });
+    // Asked for from the nav or the "/" key: while the red cell is in view, the room comes
+    // from it, as if it had been struck. Cancelling the ask tells the nav it is handled.
+    window.addEventListener("elevator:ask", (e) => {
+      const r = seal?.el.getBoundingClientRect();
+      if (!seal || !r?.width || r.top < 64 || r.bottom > window.innerHeight) return;
+      e.preventDefault();
+      if (!still) wave(seal.x, seal.y, true);
+      enterFromSeal();
     });
   }
 

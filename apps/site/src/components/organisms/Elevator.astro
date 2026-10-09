@@ -64,7 +64,8 @@ const FLOORS = [
 
 <script>
   // The only script every page carries for elevator mode: open on click, "/", or a strike on
-  // the lattice's red cell. The room ripples open from where it was asked for.
+  // the lattice's red cell. The room ripples open from the red cell when it is in view (the
+  // home page), else from the nav hexagon.
   const dialog = document.getElementById("elevator") as HTMLDialogElement | null;
   const button = document.getElementById("elevator-open");
   let app: Promise<typeof import("../../scripts/elevator/app")> | undefined;
@@ -77,7 +78,11 @@ const FLOORS = [
     app ??= import("../../scripts/elevator/app");
     void app.then((m) => m.open(origin));
   };
-  button?.addEventListener("click", () => enter());
+  /** The nav and the "/" key: the lattice's red cell answers if it is in view, else the nav hexagon. */
+  const ask = () => {
+    if (window.dispatchEvent(new CustomEvent("elevator:ask", { cancelable: true }))) enter();
+  };
+  button?.addEventListener("click", ask);
   window.addEventListener("elevator:enter", (e) =>
     enter((e as CustomEvent<import("../../scripts/elevator/app").Origin>).detail),
   );
@@ -86,7 +91,7 @@ const FLOORS = [
     const typing = t?.isContentEditable || /^(input|textarea|select)$/i.test(t?.tagName ?? "");
     if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey && !dialog?.open) {
       e.preventDefault();
-      enter();
+      ask();
     }
   });
 </script>
