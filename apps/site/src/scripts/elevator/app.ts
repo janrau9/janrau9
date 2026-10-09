@@ -337,6 +337,8 @@ const STILL_RING = 13;
 /** The room's ground forming under a cell, and the lattice dissolving once the room has landed. */
 const FORM = 377;
 const DISSOLVE = 377;
+/** Cells the wave reaches within one frame's time share one drawing group. */
+const GROUP_MS = 16;
 
 /** Brings a part of the room up when the arriving wave reaches it; nothing once it has landed. */
 let surface: (el: HTMLElement) => void = () => {};
@@ -358,29 +360,72 @@ function reveal(origin?: Origin) {
   const h = dialog.clientHeight;
   const { x, y, field, cells: own = [] } = origin ?? { x: w / 2, y: h / 2 };
   const speed = field ? POND_SPEED : NAV_SPEED;
-  // One canvas, drawn each frame: a thousand animated elements would stall the page.
-  const water = document.createElement("canvas");
-  water.className = "el-water";
-  water.setAttribute("aria-hidden", "true");
+  // Two canvases. "live" holds what changes each frame: cells surging, and the room forming
+  // under them. "still" holds what only accumulates: the lattice's hairlines and the formed
+  // room, each painted once; it fades out on the compositor at the end, never redrawn.
+  const canvas = () => {
+    const c = document.createElement("canvas");
+    c.className = "el-water";
+    c.setAttribute("aria-hidden", "true");
+    c.width = Math.round(w * dpr);
+    c.height = Math.round(h * dpr);
+    return c;
+  };
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  water.width = Math.round(w * dpr);
-  water.height = Math.round(h * dpr);
-  const ctx = water.getContext("2d");
-  if (!ctx) return;
-  ctx.scale(dpr, dpr);
+  const liveEl = canvas();
+  const stillEl = canvas();
+  const live = liveEl.getContext("2d");
+  const still = stillEl.getContext("2d");
+  if (!live || !still) return;
+  live.scale(dpr, dpr);
+  still.scale(dpr, dpr);
   const css = getComputedStyle(dialog);
   const ground = css.getPropertyValue("--ground").trim();
   const line = css.getPropertyValue("--line").trim();
   const crest = css.getPropertyValue("--line-strong").trim();
+
   // The lattice's cells around the strike (on the home page, the red cell's centre, so this
-  // tiling is the hero lattice's own, extended over the window).
-  // drawn: one of the page's own cells, whose hairlines this canvas takes over from the first frame.
-  // native: the page's lattice also does its surge (it stirs there, and the cell isn't quiet).
-  type Cell = { x: number; y: number; at: number; amp: number; drawn: boolean; native: boolean };
-  const cells: Cell[] = [];
+  // tiling is the hero lattice's own, extended over the window), grouped by the frame the wave
+  // reaches them. Cells in one group share their timing and, at one distance, their strength,
+  // so each group's outlines are built once and every frame is a few dozen fills.
+  // own: one of the page's lattice cells, whose hairlines this canvas takes over at once.
+  // native: the page's lattice also does its surge there (it stirs, and the cell isn't quiet).
+  type Group = { at: number; amp: number; cells: Path2D; surge: Path2D; edges: Path2D; surges: boolean };
+  const groups = new Map<number, Group>();
+  const ownEdges = new Path2D();
   // Cells sit at whole half-cells and rows from the strike, so this key never rounds at a tie.
-  const key = (cx: number, cy: number) => `${Math.round((cx - x) / (HW / 2))},${Math.round((cy - y) / PITCH)}`;
+  const key = (cx: number, cy: number) => Math.round((cx - x) / (HW / 2)) * 65536 + Math.round((cy - y) / PITCH);
   const page = new Map(own.map((c) => [key(c.x, c.y), c]));
+  const a = HW / 2;
+  type Point = { x: number; y: number };
+  /** A cell's six edges, clockwise from its top corner. */
+  const edgesOf = (cx: number, cy: number): [Point, Point][] => {
+    const top = { x: cx, y: cy - 21 };
+    const upRight = { x: cx + a, y: cy - 10.5 };
+    const downRight = { x: cx + a, y: cy + 10.5 };
+    const bottom = { x: cx, y: cy + 21 };
+    const downLeft = { x: cx - a, y: cy + 10.5 };
+    const upLeft = { x: cx - a, y: cy - 10.5 };
+    return [
+      [top, upRight],
+      [upRight, downRight],
+      [downRight, bottom],
+      [bottom, downLeft],
+      [downLeft, upLeft],
+      [upLeft, top],
+    ];
+  };
+  const hex = (path: Path2D, cx: number, cy: number) => {
+    path.moveTo(cx, cy - 21);
+    path.lineTo(cx + a, cy - 10.5);
+    path.lineTo(cx + a, cy + 10.5);
+    path.lineTo(cx, cy + 21);
+    path.lineTo(cx - a, cy + 10.5);
+    path.lineTo(cx - a, cy - 10.5);
+    path.closePath();
+  };
+  /** When the wave reaches a cell; the page's own cells count as reached before it starts. */
+  const reachedAt = (cx: number, cy: number) => (page.has(key(cx, cy)) ? -1 : Math.hypot(cx - x, cy - y) / speed);
   const rows = Math.ceil(y / PITCH) + 1;
   const cols = Math.ceil(x / HW) + 2;
   for (let j = -rows; j * PITCH + y < h + PITCH; j++) {
@@ -391,89 +436,97 @@ function reveal(origin?: Origin) {
       if (cx < -HW) continue;
       const d = Math.hypot(cx - x, cy - y);
       const ring = d / HW;
+      const at = d / speed;
       const mine = page.get(key(cx, cy));
-      const native = !!mine && !mine.quiet && ring < STILL_RING;
-      cells.push({ x: cx, y: cy, at: d / speed, amp: Math.max(pondAmp(ring), CARRY), drawn: !!mine, native });
+      const g0 = Math.floor(at / GROUP_MS);
+      let g = groups.get(g0);
+      if (!g) {
+        const amp = Math.max(pondAmp(ring), CARRY);
+        g = { at: g0 * GROUP_MS, amp, cells: new Path2D(), surge: new Path2D(), edges: new Path2D(), surges: false };
+        groups.set(g0, g);
+      }
+      hex(g.cells, cx, cy);
+      if (!(mine && !mine.quiet && ring < STILL_RING)) {
+        hex(g.surge, cx, cy);
+        g.surges = true;
+      }
+      // Each edge is stroked once, by the first of its two cells to be reached (a hairline
+      // painted twice darkens where its antialiased edges overlap). The cell across an edge
+      // mirrors this one through the edge's midpoint; on a tie, the first three edges are ours
+      // (the neighbour sees the same edge as one of its last three).
+      const mineAt = mine ? -1 : at;
+      for (const [k, [p, q]] of edgesOf(cx, cy).entries()) {
+        const theirs = reachedAt(p.x + q.x - cx, p.y + q.y - cy);
+        // Within a hair counts as a tie: the two cells compute each other's time from mirrored points.
+        const tie = Math.abs(theirs - mineAt) < 1e-6;
+        if ((!tie && theirs < mineAt) || (tie && k >= 3)) continue;
+        const path = mine ? ownEdges : g.edges;
+        path.moveTo(p.x, p.y);
+        path.lineTo(q.x, q.y);
+      }
     }
   }
-  // The room forms once the cell's surge is half released, and is whole as the surge ends.
-  const formed = (c: Cell) => c.at + RISE + DWELL + RELEASE / 2;
-  const landed = Math.max(...cells.map(formed)) + FORM;
-  const end = Math.max(landed, Math.max(...cells.map((c) => c.at)) + RISE + DWELL + RELEASE) + DISSOLVE;
-  const hex = (path: Path2D, cx: number, cy: number) => {
-    const a = HW / 2;
-    path.moveTo(cx, cy - 21);
-    path.lineTo(cx + a, cy - 10.5);
-    path.lineTo(cx + a, cy + 10.5);
-    path.lineTo(cx, cy + 21);
-    path.lineTo(cx - a, cy + 10.5);
-    path.lineTo(cx - a, cy - 10.5);
-    path.closePath();
-  };
+  const order = [...groups.values()].sort((p, q) => p.at - q.at);
+  // The room forms once a cell's surge is half released, and is whole as the surge ends.
+  const formsAt = (g: Group) => g.at + RISE + DWELL + RELEASE / 2;
+  const last = order.at(-1);
+  if (!last) return;
+  const landed = formsAt(last) + FORM;
   /** The pond's surge at time t since arrival: rise, dwell, then release. */
   const surge = (t: number) =>
     t <= 0 ? 0 : t < RISE ? t / RISE : t < RISE + DWELL ? 1 : Math.max(0, 1 - (t - RISE - DWELL) / RELEASE);
-  ctx.lineWidth = 1;
+
+  still.lineWidth = 1;
+  still.strokeStyle = line;
+  still.fillStyle = ground;
+  // The page's own cells keep their hairlines from the first frame; this canvas draws them now.
+  still.stroke(ownEdges);
+  let reached = 0;
+  let formed = 0;
   const t0 = performance.now();
   const frame = (now: number) => {
     if (!dialog.open) return done();
     const t = now - t0;
-    ctx.clearRect(0, 0, w, h);
-    const reached = new Path2D();
-    const solid = new Path2D();
-    const forming: { cell: Path2D; alpha: number }[] = [];
-    const stirring: { cell: Path2D; alpha: number }[] = [];
-    for (const c of cells) {
-      // The page's own cells keep their hairlines from the first frame (this canvas draws them
-      // now); the rest of the lattice is drawn as the wave reaches it.
-      if (c.drawn) hex(reached, c.x, c.y);
-      if (t <= c.at) continue;
-      const f = (t - formed(c)) / FORM;
-      if (!c.drawn) hex(reached, c.x, c.y);
-      if (f >= 1) hex(solid, c.x, c.y);
-      else if (f > 0) {
-        const cell = new Path2D();
-        hex(cell, c.x, c.y);
-        forming.push({ cell, alpha: f });
-      }
-      const s = c.native ? 0 : surge(t - c.at) * c.amp;
-      if (s > 0.01) {
-        const cell = new Path2D();
-        hex(cell, c.x, c.y);
-        stirring.push({ cell, alpha: s });
-      }
+    // Accumulating: hairlines where the wave has reached; the room, painted under them, where it has formed.
+    for (let g = order[reached]; g && g.at < t; g = order[++reached]) still.stroke(g.edges);
+    still.globalCompositeOperation = "destination-over";
+    for (let g = order[formed]; g && formsAt(g) + FORM <= t; g = order[++formed]) still.fill(g.cells);
+    still.globalCompositeOperation = "source-over";
+    // Changing: the room forming, and the wave's surge, for the groups between.
+    live.clearRect(0, 0, w, h);
+    live.fillStyle = ground;
+    for (const g of order.slice(formed, reached)) {
+      const f = (t - formsAt(g)) / FORM;
+      if (f <= 0) break;
+      live.globalAlpha = f;
+      live.fill(g.cells);
     }
-    // The room's ground, forming in the wave's wake.
-    ctx.fillStyle = ground;
-    ctx.globalAlpha = 1;
-    ctx.fill(solid);
-
-    for (const f of forming) {
-      ctx.globalAlpha = f.alpha;
-      ctx.fill(f.cell);
+    live.fillStyle = crest;
+    for (const g of order.slice(formed, reached)) {
+      const s = g.surges ? surge(t - g.at) * g.amp : 0;
+      if (s <= 0.01) continue;
+      live.globalAlpha = s;
+      live.fill(g.surge);
     }
-    // The wave itself: each cell it reaches surges as the pond's do.
-    ctx.fillStyle = crest;
-    for (const s of stirring) {
-      ctx.globalAlpha = s.alpha;
-      ctx.fill(s.cell);
-    }
-    // The lattice, drawn as the wave extends it; once the room has landed, it dissolves.
-    ctx.globalAlpha = t < landed ? 1 : Math.max(0, 1 - (t - landed) / DISSOLVE);
-    ctx.strokeStyle = line;
-    ctx.stroke(reached);
-    ctx.globalAlpha = 1;
-    if (t < end && dialog.open) requestAnimationFrame(frame);
-    else done();
+    live.globalAlpha = 1;
+    if (t < landed) requestAnimationFrame(frame);
+    else land();
+  };
+  /** The room has landed: it takes its own ground, and the lattice dissolves into it. */
+  const land = () => {
+    dialog.classList.remove("el-arriving");
+    liveEl.remove();
+    stillEl.animate({ opacity: [1, 0] }, { duration: DISSOLVE, easing: "ease-out" }).finished.finally(done);
   };
   /** The room has landed, or was closed while arriving. */
   const done = () => {
     dialog.classList.remove("el-arriving");
-    water.remove();
+    liveEl.remove();
+    stillEl.remove();
     surface = () => {};
   };
   dialog.classList.add("el-arriving");
-  dialog.prepend(water);
+  dialog.prepend(liveEl, stillEl);
   // The page's lattice hands its hairlines to this one: both share one geometry, but each
   // rounds to pixels its own way, and two copies of a line read as a misprint. Closing the
   // room hands them back.
