@@ -310,10 +310,37 @@ async function modelCached() {
 
 let opener: HTMLElement | null = null;
 
-export async function open() {
+const SETTLE = "cubic-bezier(0.16, 1, 0.3, 1)";
+
+/**
+ * The room opens as a ripple from where it was asked for: its edge is a circular front
+ * (constant 610ms, the settle), carrying a hairline ring that fades as it spreads, the
+ * pond's strike grown into the room. Reduced motion: the room is simply there.
+ */
+function reveal(origin?: { x: number; y: number }) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const { x, y } = origin ?? { x: w / 2, y: h / 2 };
+  const r = Math.hypot(Math.max(x, w - x), Math.max(y, h - y));
+  const timing = { duration: 610, easing: SETTLE };
+  dialog.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] }, timing);
+  const ring = document.createElement("div");
+  ring.className = "el-ripple";
+  ring.setAttribute("aria-hidden", "true");
+  Object.assign(ring.style, { left: `${x - r}px`, top: `${y - r}px`, width: `${2 * r}px`, height: `${2 * r}px` });
+  // The modal sits in the top layer; the ring rides just outside its edge, over the page.
+  document.body.append(ring);
+  ring
+    .animate({ transform: ["scale(0)", "scale(1)"], opacity: [1, 0.8, 0], offset: [0, 0.5, 1] }, timing)
+    .finished.finally(() => ring.remove());
+}
+
+export async function open(origin?: { x: number; y: number }) {
   if (dialog.open) return;
   opener = document.activeElement as HTMLElement | null;
   dialog.showModal();
+  reveal(origin);
   document.documentElement.classList.add("in-elevator");
   input.focus();
   if (state !== "cold") return;

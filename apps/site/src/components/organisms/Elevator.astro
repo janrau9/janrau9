@@ -63,14 +63,22 @@ const FLOORS = [
 </dialog>
 
 <script>
-  // The only script every page carries for elevator mode: open on click or "/".
+  // The only script every page carries for elevator mode: open on click, "/", or a strike on
+  // the lattice's red cell. The room ripples open from where it was asked for.
   const dialog = document.getElementById("elevator") as HTMLDialogElement | null;
+  const button = document.getElementById("elevator-open");
   let app: Promise<typeof import("../../scripts/elevator/app")> | undefined;
-  const enter = () => {
-    app ??= import("../../scripts/elevator/app");
-    void app.then((m) => m.open());
+  /** The nav hexagon's centre: where a click or the "/" key opens the room from. */
+  const fromButton = () => {
+    const r = button?.querySelector(".el-hex")?.getBoundingClientRect();
+    return r?.width ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : undefined;
   };
-  document.getElementById("elevator-open")?.addEventListener("click", enter);
+  const enter = (origin = fromButton()) => {
+    app ??= import("../../scripts/elevator/app");
+    void app.then((m) => m.open(origin));
+  };
+  button?.addEventListener("click", () => enter());
+  window.addEventListener("elevator:enter", (e) => enter((e as CustomEvent<{ x: number; y: number }>).detail));
   document.addEventListener("keydown", (e) => {
     const t = e.target as HTMLElement | null;
     const typing = t?.isContentEditable || /^(input|textarea|select)$/i.test(t?.tagName ?? "");
@@ -163,10 +171,14 @@ const FLOORS = [
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-columns: minmax(0, 1fr);
-    animation: el-rise var(--t-reveal) var(--settle);
   }
+  /* The room arrives on a ripple (app.ts reveal): the page stays in view outside its front,
+     so the backdrop is clear; the room itself is the ground. Its contents rise as it lands. */
   .elevator::backdrop {
-    background: var(--ground);
+    background: transparent;
+  }
+  .elevator[open] > * {
+    animation: el-rise var(--t-reveal) var(--settle) var(--t-micro) backwards;
   }
   @keyframes el-rise {
     from {
@@ -176,6 +188,16 @@ const FLOORS = [
   }
   html.in-elevator {
     overflow: hidden;
+    /* The scrollbar's space stays, so the page beneath doesn't jump while the ripple spreads. */
+    scrollbar-gutter: stable;
+  }
+  /* The ripple's front: a hairline ring riding the room's edge, fading as it spreads. */
+  .el-ripple {
+    position: fixed;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: var(--z-modal);
   }
   .el-top {
     display: flex;
@@ -444,7 +466,7 @@ const FLOORS = [
     text-decoration-color: var(--ink);
   }
   @media (prefers-reduced-motion: reduce) {
-    .elevator[open] {
+    .elevator[open] > * {
       animation: none;
     }
   }

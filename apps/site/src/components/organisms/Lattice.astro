@@ -4,6 +4,9 @@
 // the still pond answers the pointer; one lattice cell is washed in the seal.
 // Shuhari, named: the home page breaks "one seal per view" on purpose. The dot of the j is
 // the mark; the lattice cell is the sky's. Two vermilion marks, neither on a status.
+// A second break, named: the sky's seal is also a door. Struck, it sends its red wave and
+// opens elevator mode from that point. It is a discovery for the pointer, not a control:
+// aria-hidden, unfocusable, and the nav's Elevator button is the way everyone else goes in.
 // Decorative: aria-hidden, pointer-events none, hidden until its frontier mask exists.
 ---
 
@@ -148,6 +151,21 @@
 
   build();
 
+  /** The red cell under this point, if any. */
+  const onSeal = (x: number, y: number) => seal && Math.hypot(seal.x - x, seal.y - y) < HW * 0.75;
+
+  if (field) {
+    document.addEventListener("click", (e) => {
+      const { x, y } = local(e);
+      if (!onSeal(x, y) || (e.target as Element | null)?.closest("a, button, input, summary")) return;
+      // Let the wave start before the room overtakes it.
+      window.setTimeout(
+        () => window.dispatchEvent(new CustomEvent("elevator:enter", { detail: { x: e.clientX, y: e.clientY } })),
+        still ? 0 : 89,
+      );
+    });
+  }
+
   if (!still && field) {
     let resting: Cell | undefined;
     let frame = 0;
@@ -158,6 +176,7 @@
         frame = requestAnimationFrame(() => {
           const { x, y } = local(e);
           const cell = nearest(x, y);
+          document.documentElement.classList.toggle("on-seal", Boolean(cell && cell === seal));
           if (cell === resting) return;
           if (resting) release(resting);
           resting = cell;
@@ -175,8 +194,7 @@
     document.addEventListener("click", (e) => {
       const { x, y } = local(e);
       if (!nearest(x, y)) return;
-      const onSeal = seal && Math.hypot(seal.x - x, seal.y - y) < HW * 0.75;
-      wave(x, y, Boolean(onSeal));
+      wave(x, y, Boolean(onSeal(x, y)));
     });
     // Arrival: once, the seal strikes the water, then stillness.
     window.setTimeout(() => seal && wave(seal.x, seal.y), 987);
@@ -189,6 +207,10 @@
 </script>
 
 <style>
+  /* Over the red cell the pointer says it can be struck (the field itself takes no pointer). */
+  :global(html.on-seal:not(.in-elevator)) {
+    cursor: pointer;
+  }
   .field {
     position: absolute;
     inset: 0;

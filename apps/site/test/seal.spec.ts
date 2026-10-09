@@ -139,3 +139,19 @@ for (const [label, path] of [
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(nav).not.toHaveCSS("background-color", seal);
   });
+
+test("striking the red lattice cell opens elevator mode on a ripple", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/", { waitUntil: "networkidle" });
+  const box = await page.locator(".seal-cell").boundingBox();
+  if (!box) throw new Error("no red cell on a wide screen");
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(page.locator("#elevator")).toHaveAttribute("open", "");
+  await expect(page.locator("#el-q")).toBeFocused();
+  // The ripple's ring is gone once the room has landed.
+  await expect(page.locator(".el-ripple")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  // A click elsewhere on the lattice is only a wave.
+  await page.mouse.click(box.x + box.width / 2 + 120, box.y + box.height / 2);
+  await expect(page.locator("#elevator")).not.toHaveAttribute("open", "");
+});
