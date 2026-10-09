@@ -165,6 +165,8 @@
         x: box.left + (seal?.x ?? x),
         y: box.top + (seal?.y ?? y),
         field: { left: box.left, top: box.top, right: box.right, bottom: box.bottom },
+        // The cells this lattice draws itself, so the extension never draws over them.
+        cells: cells.map((c) => ({ x: box.left + c.x, y: box.top + c.y, quiet: Boolean(c.quiet) })),
       };
       window.dispatchEvent(new CustomEvent("elevator:enter", { detail }));
     });
@@ -245,6 +247,10 @@
   }
   :global(:root[data-theme="dark"]) .lattice {
     background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='36.3731'%20height='63'%3E%3Cpath%20d='M0%2010.5%20L18.1865%200%20L36.3731%2010.5%20M0%2010.5%20V31.5%20M36.3731%2010.5%20V31.5%20M0%2031.5%20L18.1865%2042%20L36.3731%2031.5%20M18.1865%2042%20V63'%20fill='none'%20stroke='%2324242d'%20stroke-width='1'/%3E%3C/svg%3E");
+  }
+  /* Elevator mode's arriving wave draws this lattice's hairlines while it passes (app.ts reveal). */
+  :global(html.lattice-handed) .lattice {
+    visibility: hidden;
   }
   .cells :global(.hex-cell) {
     position: absolute;

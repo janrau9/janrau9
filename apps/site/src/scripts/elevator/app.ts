@@ -315,6 +315,8 @@ export interface Origin {
   x: number;
   y: number;
   field?: { left: number; top: number; right: number; bottom: number };
+  /** The hero lattice's own cells (viewport centres); quiet ones sit behind text and never surge. */
+  cells?: { x: number; y: number; quiet: boolean }[];
 }
 
 /** The lattice's cell (Lattice.astro): pointy-top, edge 21. */
@@ -350,9 +352,11 @@ let surface: (el: HTMLElement) => void = () => {};
  */
 function reveal(origin?: Origin) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  const { x, y, field } = origin ?? { x: w / 2, y: h / 2 };
+  // The room's own box, not window.innerWidth: that counts the scrollbar's gutter, and a
+  // canvas sized to it is squeezed into the room, drifting off the page's lattice.
+  const w = dialog.clientWidth;
+  const h = dialog.clientHeight;
+  const { x, y, field, cells: own = [] } = origin ?? { x: w / 2, y: h / 2 };
   const speed = field ? POND_SPEED : NAV_SPEED;
   // One canvas, drawn each frame: a thousand animated elements would stall the page.
   const water = document.createElement("canvas");
@@ -370,10 +374,13 @@ function reveal(origin?: Origin) {
   const crest = css.getPropertyValue("--line-strong").trim();
   // The lattice's cells around the strike (on the home page, the red cell's centre, so this
   // tiling is the hero lattice's own, extended over the window).
-  type Cell = { x: number; y: number; at: number; amp: number; native: boolean };
+  // drawn: one of the page's own cells, whose hairlines this canvas takes over from the first frame.
+  // native: the page's lattice also does its surge (it stirs there, and the cell isn't quiet).
+  type Cell = { x: number; y: number; at: number; amp: number; drawn: boolean; native: boolean };
   const cells: Cell[] = [];
-  const inField = (cx: number, cy: number) =>
-    !!field && cx > field.left && cx < field.right && cy > field.top && cy < field.bottom;
+  // Cells sit at whole half-cells and rows from the strike, so this key never rounds at a tie.
+  const key = (cx: number, cy: number) => `${Math.round((cx - x) / (HW / 2))},${Math.round((cy - y) / PITCH)}`;
+  const page = new Map(own.map((c) => [key(c.x, c.y), c]));
   const rows = Math.ceil(y / PITCH) + 1;
   const cols = Math.ceil(x / HW) + 2;
   for (let j = -rows; j * PITCH + y < h + PITCH; j++) {
@@ -384,9 +391,9 @@ function reveal(origin?: Origin) {
       if (cx < -HW) continue;
       const d = Math.hypot(cx - x, cy - y);
       const ring = d / HW;
-      // Inside the hero lattice, where the pond still stirs, the page's own cells do the surge.
-      const native = inField(cx, cy) && ring < STILL_RING;
-      cells.push({ x: cx, y: cy, at: d / speed, amp: Math.max(pondAmp(ring), CARRY), native });
+      const mine = page.get(key(cx, cy));
+      const native = !!mine && !mine.quiet && ring < STILL_RING;
+      cells.push({ x: cx, y: cy, at: d / speed, amp: Math.max(pondAmp(ring), CARRY), drawn: !!mine, native });
     }
   }
   // The room forms once the cell's surge is half released, and is whole as the surge ends.
@@ -416,9 +423,12 @@ function reveal(origin?: Origin) {
     const forming: { cell: Path2D; alpha: number }[] = [];
     const stirring: { cell: Path2D; alpha: number }[] = [];
     for (const c of cells) {
+      // The page's own cells keep their hairlines from the first frame (this canvas draws them
+      // now); the rest of the lattice is drawn as the wave reaches it.
+      if (c.drawn) hex(reached, c.x, c.y);
       if (t <= c.at) continue;
-      hex(reached, c.x, c.y);
       const f = (t - formed(c)) / FORM;
+      if (!c.drawn) hex(reached, c.x, c.y);
       if (f >= 1) hex(solid, c.x, c.y);
       else if (f > 0) {
         const cell = new Path2D();
@@ -436,6 +446,7 @@ function reveal(origin?: Origin) {
     ctx.fillStyle = ground;
     ctx.globalAlpha = 1;
     ctx.fill(solid);
+
     for (const f of forming) {
       ctx.globalAlpha = f.alpha;
       ctx.fill(f.cell);
@@ -451,6 +462,9 @@ function reveal(origin?: Origin) {
     ctx.strokeStyle = line;
     ctx.stroke(reached);
     ctx.globalAlpha = 1;
+    // The page's lattice hands its hairlines to this one: both share one geometry, but each
+    // rounds to pixels its own way, and two copies of a line read as a misprint.
+    document.documentElement.classList.add("lattice-handed");
     if (t < end) requestAnimationFrame(frame);
     else {
       dialog.classList.remove("el-arriving");
@@ -505,7 +519,7 @@ function close() {
 }
 
 dialog.addEventListener("close", () => {
-  document.documentElement.classList.remove("in-elevator");
+  document.documentElement.classList.remove("in-elevator", "lattice-handed");
   opener?.focus();
 });
 $(".el-close").addEventListener("click", close);

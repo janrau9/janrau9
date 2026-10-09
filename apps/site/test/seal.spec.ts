@@ -151,6 +151,9 @@ test("striking the red lattice cell opens elevator mode on a ripple", async ({ p
   // The ripple's ring is gone once the room has landed.
   await expect(page.locator(".el-ripple")).toHaveCount(0);
   await page.keyboard.press("Escape");
+  // While the room arrived its canvas drew the lattice's hairlines; back on the page, the lattice draws its own.
+  await expect(page.locator("html")).not.toHaveClass(/\blattice-handed\b/);
+  await expect(page.locator("#lattice .lattice")).toBeVisible();
   // A click elsewhere on the lattice is only a wave.
   await page.mouse.click(box.x + box.width / 2 + 120, box.y + box.height / 2);
   await expect(page.locator("#elevator")).not.toHaveAttribute("open", "");
