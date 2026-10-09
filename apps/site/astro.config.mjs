@@ -1,5 +1,5 @@
-import cloudflare from "@astrojs/cloudflare";
 import { readFile } from "node:fs/promises";
+import cloudflare from "@astrojs/cloudflare";
 import { defineConfig } from "astro/config";
 
 /**
