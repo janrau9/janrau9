@@ -310,12 +310,16 @@ async function modelCached() {
 
 let opener: HTMLElement | null = null;
 
-const SETTLE = "cubic-bezier(0.16, 1, 0.3, 1)";
+/** The dive: slow to start, fast through the middle, landing gently (not seiza's settle). */
+const DIVE = "cubic-bezier(0.65, 0, 0.35, 1)";
+const DIVE_MS = 987;
 
 /**
- * The room opens as a ripple from where it was asked for: its edge is a circular front
- * (constant 610ms, the settle), carrying a hairline ring that fades as it spreads, the
- * pond's strike grown into the room. Reduced motion: the room is simply there.
+ * Shuhari, named: the one dramatic motion on the site. The room opens as a ripple from where
+ * it was asked for and the page zooms toward that point as the ripple fills the screen, three
+ * rings spreading ahead of the front like a strike on the pond. 987ms, off the settle curve,
+ * breaking "no bounce, nothing showy" on purpose: stepping into elevator mode is a change of
+ * world, not a state change. Reduced motion: the room is simply there.
  */
 function reveal(origin?: { x: number; y: number }) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -323,17 +327,32 @@ function reveal(origin?: { x: number; y: number }) {
   const h = window.innerHeight;
   const { x, y } = origin ?? { x: w / 2, y: h / 2 };
   const r = Math.hypot(Math.max(x, w - x), Math.max(y, h - y));
-  const timing = { duration: 610, easing: SETTLE };
+  const timing = { duration: DIVE_MS, easing: DIVE };
   dialog.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] }, timing);
-  const ring = document.createElement("div");
-  ring.className = "el-ripple";
-  ring.setAttribute("aria-hidden", "true");
-  Object.assign(ring.style, { left: `${x - r}px`, top: `${y - r}px`, width: `${2 * r}px`, height: `${2 * r}px` });
-  // The modal sits in the top layer; the ring rides just outside its edge, over the page.
-  document.body.append(ring);
-  ring
-    .animate({ transform: ["scale(0)", "scale(1)"], opacity: [1, 0.8, 0], offset: [0, 0.5, 1] }, timing)
-    .finished.finally(() => ring.remove());
+  // The page dives toward the point it was struck, and dims as the room closes over it.
+  document.body.animate(
+    {
+      transform: ["scale(1)", "scale(1.12)"],
+      opacity: [1, 0.4],
+      transformOrigin: [`${x}px ${y + window.scrollY}px`, `${x}px ${y + window.scrollY}px`],
+    },
+    timing,
+  );
+  // Three rings run ahead of the front, each later and fainter, like water.
+  for (const [i, delay] of [0, 144, 288].entries()) {
+    const ring = document.createElement("div");
+    ring.className = "el-ripple";
+    ring.setAttribute("aria-hidden", "true");
+    Object.assign(ring.style, { left: `${x - r}px`, top: `${y - r}px`, width: `${2 * r}px`, height: `${2 * r}px` });
+    // Outside body, so the page's zoom doesn't carry the rings; the modal is in the top layer above.
+    document.documentElement.append(ring);
+    ring
+      .animate(
+        { transform: ["scale(0)", "scale(1.08)"], opacity: [0, 1 - i * 0.25, 0], offset: [0, 0.2, 1] },
+        { duration: DIVE_MS, delay, easing: DIVE, fill: "backwards" },
+      )
+      .finished.finally(() => ring.remove());
+  }
 }
 
 export async function open(origin?: { x: number; y: number }) {

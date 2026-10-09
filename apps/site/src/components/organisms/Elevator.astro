@@ -178,7 +178,7 @@ const FLOORS = [
     background: transparent;
   }
   .elevator[open] > * {
-    animation: el-rise var(--t-reveal) var(--settle) var(--t-micro) backwards;
+    animation: el-rise var(--t-entrance) var(--settle) var(--t-reveal) backwards;
   }
   @keyframes el-rise {
     from {
@@ -191,10 +191,10 @@ const FLOORS = [
     /* The scrollbar's space stays, so the page beneath doesn't jump while the ripple spreads. */
     scrollbar-gutter: stable;
   }
-  /* The ripple's front: a hairline ring riding the room's edge, fading as it spreads. */
+  /* The ripple's rings: hairlines running ahead of the room's edge, fading as they spread. */
   .el-ripple {
     position: fixed;
-    border: 1px solid var(--line-strong);
+    border: 1px solid var(--text-3);
     border-radius: 50%;
     pointer-events: none;
     z-index: var(--z-modal);
