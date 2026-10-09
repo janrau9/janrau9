@@ -31,6 +31,8 @@ let worker: Worker | undefined;
 let state: "cold" | "asking" | "loading" | "ready" = "cold";
 let pending: string | undefined;
 let askId = 0;
+let answered = 0;
+let failed = false;
 const spans = new Map<string, Span>();
 const fit = [...document.querySelectorAll<HTMLElement>("[data-evidence]")].flatMap((e) => e.dataset.evidence ?? []);
 const slug = document.getElementById("tailored")?.dataset.slug;
@@ -40,6 +42,12 @@ let reported = false;
 
 function status(text: string) {
   nowEl.textContent = text;
+}
+
+/** The hexagons breathe while elevator mode is working: loading, or answering a question. */
+function busy() {
+  const working = !failed && (state === "loading" || answered < askId);
+  document.documentElement.classList.toggle("el-busy", working);
 }
 
 function renderTrace() {
@@ -260,6 +268,7 @@ function show(q: string, plan: Plan) {
 function start(keywordsOnly: boolean) {
   state = "loading";
   status(keywordsOnly ? "Loading the index" : "Fetching the index");
+  busy();
   worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
   worker.onmessage = (e: MessageEvent<FromWorker>) => {
     const m = e.data;
@@ -269,13 +278,22 @@ function start(keywordsOnly: boolean) {
       const all = [...spans.values()];
       const secs = ((now() - Math.min(...all.map((s) => s.start))) / 1000).toFixed(1);
       status(m.keywordsOnly ? "Ready · keywords only" : `Ready in ${secs} s`);
-    } else if (m.type === "answer") show(m.q, m.plan);
-    else status(m.message);
+      busy();
+    } else if (m.type === "answer") {
+      answered = Math.max(answered, m.id);
+      busy();
+      show(m.q, m.plan);
+    } else {
+      failed = true;
+      busy();
+      status(m.message);
+    }
   };
   send({ type: "load", keywordsOnly });
   if (pending) {
     send({ type: "ask", id: ++askId, q: pending, fit });
     pending = undefined;
+    busy();
   }
 }
 const send = (m: ToWorker) => worker?.postMessage(m);
@@ -340,6 +358,7 @@ function submit(q: string) {
     return;
   }
   send({ type: "ask", id: ++askId, q: question, fit });
+  busy();
 }
 form.addEventListener("submit", (e) => {
   e.preventDefault();

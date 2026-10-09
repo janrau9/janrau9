@@ -58,9 +58,12 @@ test("a desktop question is answered by the local model under the CSP, and only 
   await page.click("#elevator-open");
   // Asked before the model is ready: the question waits, and the trace says so.
   await ask(page, "go lang");
+  // The hexagons breathe while it works, and stop once it has answered.
+  await expect(page.locator("html")).toHaveClass(/\bel-busy\b/);
   await expect(page.locator(".el-answer")).toContainText("Go isn't in my work yet. Closest: TypeScript and C.", {
     timeout: MODEL_LOAD,
   });
+  await expect(page.locator("html")).not.toHaveClass(/\bel-busy\b/);
   await page.click(".el-trace summary");
   for (const step of ["Index", "Runtime", "Model", "Warm-up", "Embed", "Rank", "Compose"])
     await expect(page.locator(".el-span .el-what", { hasText: step }).first()).toBeVisible();
@@ -126,8 +129,13 @@ test.describe("on a phone", () => {
     const big: string[] = [];
     page.on("request", (r) => /\/elevator\/(models|runtime)\//.test(r.url()) && big.push(r.url()));
     await page.goto("/");
+    // The nav shows the same button as on a desktop: the hexagon and the word, no shortcut box.
+    await expect(page.locator("#elevator-open .el-hex")).toBeVisible();
+    await expect(page.locator("#elevator-open kbd")).toHaveCount(0);
     await page.click("#elevator-open");
     await expect(page.locator(".el-consent")).toBeVisible();
+    // Waiting for the visitor's OK is not work: the hexagons stay still.
+    await expect(page.locator("html")).not.toHaveClass(/\bel-busy\b/);
     await expect(page.locator(".el-consent")).toContainText("46 MB");
     await page.click(".el-no");
     await ask(page, "k8s");
