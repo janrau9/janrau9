@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.6.4",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
     "unpdf": "^1.4.0",
