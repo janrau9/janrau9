@@ -16,7 +16,7 @@
     "@janrau/schema": "workspace:*",
     "@myriaddreamin/typst-ts-node-compiler": "0.7.0",
     "@resvg/resvg-js": "^2.6.2",
-    "undici": "^7.29.1"
+    "undici": "^8.11.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
