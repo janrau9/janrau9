@@ -60,16 +60,13 @@ for (const [label, path] of [
     expect(await seals(page)).toEqual([expect.stringContaining("tittle")]);
   });
 
-test("availability and project status are never the seal", async ({ page }) => {
-  await page.goto("/for/acme-events-t3st1?preview");
-  const sealColour = await page.evaluate(() => {
-    const p = document.createElement("div");
-    p.style.color = "var(--seal)";
-    document.body.append(p);
-    return getComputedStyle(p).color;
+// No availability claim: the facts stay neutral, and the Email button is the invitation.
+for (const path of ["/", "/for/acme-events-t3st1?preview"])
+  test(`${path} makes no availability claim`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.locator(".facts")).not.toContainText(/available/i);
+    await expect(page.getByRole("link", { name: "Email me" })).toBeVisible();
   });
-  expect(await page.locator(".avail .dot").evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(sealColour);
-});
 
 test("screen readers hear the name, not the dotless j", async ({ page }) => {
   await page.goto("/");

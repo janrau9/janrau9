@@ -27,10 +27,6 @@ const month = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(
     <h1 class="display"><SealedText text={view.person.name.toLowerCase()} display /></h1>
     <p class="lede text-2">{view.headline}</p>
     <ul class="facts list-plain row micro">
-      <li class="row avail">
-        <span class="dot" aria-hidden="true" />
-        Available{view.person.availability ? ` · ${view.person.availability}` : ""}
-      </li>
       <li>{view.person.location}</li>
       <li>{view.person.workRights}</li>
       <li>{view.person.workMode}</li>
@@ -211,18 +207,6 @@ if (href.endsWith("/cv.pdf")) {
   }
   .facts {
     gap: 8px 24px;
-  }
-  .avail {
-    gap: 8px;
-    color: var(--text-2);
-  }
-  /* Availability is a fact, not a warning: a neutral dot. The seal lives in the name. */
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--text-2);
-    flex: none;
   }
   .requirement {
     color: var(--text-2);

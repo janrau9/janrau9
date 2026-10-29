@@ -23,7 +23,6 @@ const workMode = `Open to ${[prefs.remote && "remote", prefs.hybrid && "hybrid"]
       <h1 class="display"><SealedText text={person.name.toLowerCase()} display /></h1>
       <p class="lede text-2">{headline}</p>
       <ul class="facts list-plain row micro">
-        <li class="row avail"><span class="dot" aria-hidden="true"></span>Available{person.availability ? ` · ${person.availability}` : ""}</li>
         <li>{person.location}</li>
         <li>{person.workRights}</li>
         <li>{workMode}</li>
@@ -183,18 +182,6 @@ const workMode = `Open to ${[prefs.remote && "remote", prefs.hybrid && "hybrid"]
       bottom: 0;
       left: calc(var(--measure) - 64px);
     }
-  }
-  /* Availability is a fact, not a warning: a neutral dot. The seal lives in the name. */
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--text-2);
-    flex: none;
-  }
-  .avail {
-    gap: 8px;
-    color: var(--text-2);
   }
   .facts {
     gap: 8px 24px;

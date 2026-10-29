@@ -11,7 +11,6 @@ test("a tailored page shows the essentials above the fold on a phone", async ({ 
   for (const target of [
     page.getByText("Prepared for Acme Events · Software Engineer"),
     page.getByRole("heading", { level: 1 }),
-    page.getByText(/^\s*Available/),
     page.getByText("Eligible to work in Finland"),
     page.getByRole("link", { name: "Download CV" }),
   ])
