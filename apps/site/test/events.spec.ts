@@ -10,17 +10,30 @@ const ORIGIN = "http://localhost:4322";
 const PHONE_UA =
   "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36";
 
-/** Query the same local D1 the preview Worker uses. */
+/**
+ * Query the same local D1 the preview Worker uses. It is one SQLite file, and the Worker may
+ * still be writing a beacon from the test before, so a failed call is retried with backoff;
+ * one that still fails after 5 attempts reports Wrangler's own message.
+ */
 function sql<T>(command: string): T[] {
-  const out = execFileSync(
-    "pnpm",
-    ["exec", "wrangler", "d1", "execute", "janrau-dev", "--local", "--json", "--command", command],
-    {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    },
-  );
-  return (JSON.parse(out) as { results: T[] }[])[0]?.results ?? [];
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const out = execFileSync(
+        "pnpm",
+        ["exec", "wrangler", "d1", "execute", "janrau-dev", "--local", "--json", "--command", command],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      );
+      return (JSON.parse(out) as { results: T[] }[])[0]?.results ?? [];
+    } catch (err) {
+      const e = err as { stderr?: string; stdout?: string; message: string };
+      const detail = `${e.stderr ?? ""}${e.stdout ?? ""}`.trim() || e.message;
+      // The lock's wording varies by Wrangler version, so every failure is retried; a real error
+      // still surfaces, with its message, after the last attempt.
+      if (attempt >= 5) throw new Error(`wrangler d1 execute failed (attempt ${attempt}): ${command}\n${detail}`);
+      // Back off 200, 400, 800, 1600 ms: a beacon's write takes milliseconds.
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100 * 2 ** attempt);
+    }
+  }
 }
 const events = () =>
   sql<{ type: string; scanner: number; reason: string | null }>(
@@ -28,105 +41,108 @@ const events = () =>
   );
 
 test.describe.configure({ mode: "serial" });
-test.beforeEach(() => {
-  sql(`DELETE FROM events WHERE slug = '${SLUG}'`);
-});
+// Only these tests read or write D1; the pure tests below never touch it.
+test.describe("recording on a tailored link", () => {
+  test.beforeEach(() => {
+    sql(`DELETE FROM events WHERE slug = '${SLUG}'`);
+  });
 
-test("a real phone visit counts as a person, with what they did", async ({ browser }) => {
-  const ctx = await browser.newContext({ userAgent: PHONE_UA, viewport: { width: 375, height: 667 } });
-  const page = await ctx.newPage();
-  await page.goto(`/for/${SLUG}`);
-  await page.waitForTimeout(3500);
-  // Scroll as a reader would, to the fit table's middle, wherever the layout puts it.
-  await page.locator("#fit").evaluate((el) => el.scrollIntoView({ block: "center" }));
-  await page.waitForTimeout(500);
-  await ctx.close();
-  await expect
-    .poll(() =>
-      events()
-        .map((e) => e.type)
-        .sort(),
-    )
-    .toEqual(["fit_viewed", "human", "open"]);
-  // The phone's user agent is never mistaken for a scanner. (The network check depends on where
-  // the test runs: CI runners sit on a cloud network and are rightly flagged "network".)
-  expect(events().find((e) => e.type === "open")?.reason).not.toBe("agent");
-});
+  test("a real phone visit counts as a person, with what they did", async ({ browser }) => {
+    const ctx = await browser.newContext({ userAgent: PHONE_UA, viewport: { width: 375, height: 667 } });
+    const page = await ctx.newPage();
+    await page.goto(`/for/${SLUG}`);
+    await page.waitForTimeout(3500);
+    // Scroll as a reader would, to the fit table's middle, wherever the layout puts it.
+    await page.locator("#fit").evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await page.waitForTimeout(500);
+    await ctx.close();
+    await expect
+      .poll(() =>
+        events()
+          .map((e) => e.type)
+          .sort(),
+      )
+      .toEqual(["fit_viewed", "human", "open"]);
+    // The phone's user agent is never mistaken for a scanner. (The network check depends on where
+    // the test runs: CI runners sit on a cloud network and are rightly flagged "network".)
+    expect(events().find((e) => e.type === "open")?.reason).not.toBe("agent");
+  });
 
-test("an email scanner's open is flagged and never counts as a person", async ({ request }) => {
-  await request.get(`/for/${SLUG}`, { headers: { "user-agent": "Mozilla/5.0 (compatible; Barracuda Sentinel)" } });
-  await expect.poll(() => events()).toEqual([{ type: "open", scanner: 1, reason: "agent" }]);
-});
+  test("an email scanner's open is flagged and never counts as a person", async ({ request }) => {
+    await request.get(`/for/${SLUG}`, { headers: { "user-agent": "Mozilla/5.0 (compatible; Barracuda Sentinel)" } });
+    await expect.poll(() => events()).toEqual([{ type: "open", scanner: 1, reason: "agent" }]);
+  });
 
-test("Janrau's own signed-in visits are not recorded", async ({ browser }) => {
-  const ctx = await browser.newContext({ userAgent: PHONE_UA });
-  await ctx.addCookies([{ name: "CF_Authorization", value: "signed-in", url: ORIGIN }]);
-  const page = await ctx.newPage();
-  await page.goto(`/for/${SLUG}`);
-  await page.waitForTimeout(3500);
-  // Scroll as a reader would, to the fit table's middle, wherever the layout puts it.
-  await page.locator("#fit").evaluate((el) => el.scrollIntoView({ block: "center" }));
-  await ctx.close();
-  expect(events()).toEqual([]);
-});
+  test("Janrau's own signed-in visits are not recorded", async ({ browser }) => {
+    const ctx = await browser.newContext({ userAgent: PHONE_UA });
+    await ctx.addCookies([{ name: "CF_Authorization", value: "signed-in", url: ORIGIN }]);
+    const page = await ctx.newPage();
+    await page.goto(`/for/${SLUG}`);
+    await page.waitForTimeout(3500);
+    // Scroll as a reader would, to the fit table's middle, wherever the layout puts it.
+    await page.locator("#fit").evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await ctx.close();
+    expect(events()).toEqual([]);
+  });
 
-test("?preview opens are not recorded", async ({ browser }) => {
-  const ctx = await browser.newContext({ userAgent: PHONE_UA });
-  const page = await ctx.newPage();
-  await page.goto(`/for/${SLUG}?preview`);
-  await page.waitForTimeout(3500);
-  await ctx.close();
-  expect(events()).toEqual([]);
-});
+  test("?preview opens are not recorded", async ({ browser }) => {
+    const ctx = await browser.newContext({ userAgent: PHONE_UA });
+    const page = await ctx.newPage();
+    await page.goto(`/for/${SLUG}?preview`);
+    await page.waitForTimeout(3500);
+    await ctx.close();
+    expect(events()).toEqual([]);
+  });
 
-test("the beacon endpoint ignores junk and unknown links", async ({ request }) => {
-  for (const body of [
-    "not json",
-    JSON.stringify({ slug: SLUG, type: "open" }),
-    JSON.stringify({ slug: "nobody-zzzzz", type: "human" }),
-  ])
-    expect(
-      (await request.post("/e", { data: body, headers: { "content-type": "text/plain", origin: ORIGIN } })).status(),
-    ).toBe(204);
-  expect(events()).toEqual([]);
-  expect(sql<{ n: number }>("SELECT COUNT(*) AS n FROM events WHERE slug = 'nobody-zzzzz'")[0]?.n).toBe(0);
-});
+  test("the beacon endpoint ignores junk and unknown links", async ({ request }) => {
+    for (const body of [
+      "not json",
+      JSON.stringify({ slug: SLUG, type: "open" }),
+      JSON.stringify({ slug: "nobody-zzzzz", type: "human" }),
+    ])
+      expect(
+        (await request.post("/e", { data: body, headers: { "content-type": "text/plain", origin: ORIGIN } })).status(),
+      ).toBe(204);
+    expect(events()).toEqual([]);
+    expect(sql<{ n: number }>("SELECT COUNT(*) AS n FROM events WHERE slug = 'nobody-zzzzz'")[0]?.n).toBe(0);
+  });
 
-test("elevator mode records a use on the link, and counts term ids only", async ({ request }) => {
-  const post = (path: string, body: unknown) =>
-    request.post(path, { data: JSON.stringify(body), headers: { "content-type": "text/plain", origin: ORIGIN } });
-  sql("DELETE FROM elevator_terms");
-  expect((await post("/e", { slug: SLUG, type: "elevator" })).status()).toBe(204);
-  expect((await post("/q", { terms: ["kubernetes", "what I typed"] })).status()).toBe(204);
-  await post("/q", { terms: ["kubernetes"] });
-  await expect.poll(() => events().map((e) => e.type)).toEqual(["elevator"]);
-  await expect
-    .poll(() => sql<{ term: string; asks: number }>("SELECT term, asks FROM elevator_terms"))
-    .toEqual([{ term: "kubernetes", asks: 2 }]);
-});
+  test("elevator mode records a use on the link, and counts term ids only", async ({ request }) => {
+    const post = (path: string, body: unknown) =>
+      request.post(path, { data: JSON.stringify(body), headers: { "content-type": "text/plain", origin: ORIGIN } });
+    sql("DELETE FROM elevator_terms");
+    expect((await post("/e", { slug: SLUG, type: "elevator" })).status()).toBe(204);
+    expect((await post("/q", { terms: ["kubernetes", "what I typed"] })).status()).toBe(204);
+    await post("/q", { terms: ["kubernetes"] });
+    await expect.poll(() => events().map((e) => e.type)).toEqual(["elevator"]);
+    await expect
+      .poll(() => sql<{ term: string; asks: number }>("SELECT term, asks FROM elevator_terms"))
+      .toEqual([{ term: "kubernetes", asks: 2 }]);
+  });
 
-test("the first person-like read and the first CV download each notify once", async ({ request }) => {
-  sql(`UPDATE applications SET notified_human_at = NULL, notified_cv_at = NULL WHERE slug = '${SLUG}'`);
-  const notified = () =>
-    sql<{ human: number | null; cv: number | null }>(
-      `SELECT notified_human_at AS human, notified_cv_at AS cv FROM applications WHERE slug = '${SLUG}'`,
-    )[0];
-  const beacon = (type: string) =>
-    request.post("/e", {
-      data: JSON.stringify({ slug: SLUG, type }),
-      headers: { "content-type": "text/plain", origin: ORIGIN },
-    });
+  test("the first person-like read and the first CV download each notify once", async ({ request }) => {
+    sql(`UPDATE applications SET notified_human_at = NULL, notified_cv_at = NULL WHERE slug = '${SLUG}'`);
+    const notified = () =>
+      sql<{ human: number | null; cv: number | null }>(
+        `SELECT notified_human_at AS human, notified_cv_at AS cv FROM applications WHERE slug = '${SLUG}'`,
+      )[0];
+    const beacon = (type: string) =>
+      request.post("/e", {
+        data: JSON.stringify({ slug: SLUG, type }),
+        headers: { "content-type": "text/plain", origin: ORIGIN },
+      });
 
-  await beacon("fit_viewed");
-  await beacon("human");
-  await expect.poll(() => notified()?.human).not.toBeNull();
-  expect(notified()?.cv).toBeNull();
-  const first = notified()?.human;
-  await beacon("human");
-  await beacon("cv_download");
-  await expect.poll(() => notified()?.cv).not.toBeNull();
-  // A second read changes nothing: the claim is the record that the email went out.
-  expect(notified()?.human).toBe(first);
+    await beacon("fit_viewed");
+    await beacon("human");
+    await expect.poll(() => notified()?.human).not.toBeNull();
+    expect(notified()?.cv).toBeNull();
+    const first = notified()?.human;
+    await beacon("human");
+    await beacon("cv_download");
+    await expect.poll(() => notified()?.cv).not.toBeNull();
+    // A second read changes nothing: the claim is the record that the email went out.
+    expect(notified()?.human).toBe(first);
+  });
 });
 
 test("admin refuses requests without a valid Access token", async ({ request }) => {
