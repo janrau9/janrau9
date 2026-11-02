@@ -21,7 +21,7 @@ Integrations Developer, Localization SaaS startup.
 ## Selected work
 
 - [Slash](https://janrau.dev/work/slash): Darts tournament app for pub nights. Players join by PIN or QR code, and every match syncs live across three phones.
-- [kiln](https://janrau.dev/work/kiln): Command-line tool that gives AI coding agents IDE-grade references, definitions, type errors and one-shot runtime debugging.
+- [kiln](https://janrau.dev/work/kiln): Command-line tool that gives AI coding agents IDE-grade references, definitions, type errors, one-shot runtime debugging and a measured map of the code.
 - [Sisu Shift](https://janrau.dev/work/sisu-shift): Mobile app for Finnish nurses that tracks shifts and calculates pay; team leads can generate schedules from members' preferences.
 
 <details><summary>More projects</summary>

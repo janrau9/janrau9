@@ -161,7 +161,7 @@ projects:
   - id: proj.kiln
     name: kiln
     status: in-use
-    summary: Command-line tool that gives AI coding agents IDE-grade references, definitions, type errors and one-shot runtime debugging.
+    summary: Command-line tool that gives AI coding agents IDE-grade references, definitions, type errors, one-shot runtime debugging and a measured map of the code.
     repo: private                         # going public after open field reports are fixed
     stack: [typescript, node, lsp, cdp, dap, python]
     featured: true
@@ -170,17 +170,29 @@ projects:
         text: Built a CLI giving coding agents language-server-exact references, definitions and type errors for TypeScript and Python.
         tags: [tooling, ai, developer-experience]
       - id: proj.kiln.h2
-        text: Used it across 41 of my own projects; 1,114 agent calls logged from July to October 2026.
+        text: "Used daily by my agents: 3,492 calls in 94 project folders from July to November 2026."
         tags: [tooling, dogfooding]
       - id: proj.kiln.h3
-        text: Run a dogfooding loop where every wrong answer becomes a field report; 39 reports logged so far.
+        text: Run a dogfooding loop where every wrong answer becomes a field report; 55 logged, 49 fixed.
         tags: [dogfooding, quality]
       - id: proj.kiln.h4
         text: Added Python runtime debugging through the Debug Adapter Protocol without changing the four debug commands' interface.
         tags: [tooling, architecture]
       - id: proj.kiln.h5
-        text: Keep an append-only log of 30 dated design decisions with their reasons.
+        text: Keep an append-only log of 40 dated design decisions with their reasons.
         tags: [architecture, documentation]
+      - id: proj.kiln.h6
+        text: Built a measured code map; it runs a real flow and flags couplings no import explains, such as an HTTP call from frontend to backend.
+        tags: [tooling, architecture, developer-experience]
+      - id: proj.kiln.h7
+        text: Replaced a language-server adapter with tsserver's own protocol after reviewing all 55 field reports; one cross-repo reference search fell from 98 s to 5 s.
+        tags: [tooling, performance, quality]
+    decisions:
+      - id: proj.kiln.d.tsserver
+        chose: Driving tsserver over its own protocol
+        over: typescript-language-server, an LSP adapter
+        because: A review of all 55 field reports traced most of them to the adapter, from diagnostics one version behind to a dead server behind a live adapter.
+        tags: [tooling, architecture]
 
   - id: proj.sisu-shift
     name: Sisu Shift
