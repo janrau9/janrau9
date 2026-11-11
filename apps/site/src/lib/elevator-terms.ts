@@ -5,6 +5,8 @@ export interface GlossaryTerm {
   id: string;
   label: string;
   status: "have" | "adjacent" | "not-yet";
+  /** For "adjacent" and "not-yet": ids of the closest terms I have. */
+  near?: string[];
 }
 
 const data = siteData as unknown as { glossary: GlossaryTerm[]; questions: { id: string; question: string }[] };

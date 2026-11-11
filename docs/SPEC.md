@@ -334,6 +334,10 @@ events(
 
 IP and user agent are read at classification time and never stored.
 
+### Visits
+
+Every beacon from a tailored page carries a **visit id**: `crypto.randomUUID()` made per page load and held in that page's memory only (no cookie, no storage), so one visit's events group together. Each event may carry a validated **detail** (`lib/beacon.ts`): the case study slug on `case_click`, known glossary term ids on `elevator` (sent per question), whole visible seconds on `visit_end` (reported each time the page is hidden or left). The `human` event carries a **reader**: device class plus an 8-hex SHA-256 of the link slug and the network's ASN. That tells "another device or network read this" from "the same reader came back", and nothing about who.
+
 ### Dashboard `/admin`
 
 Behind Cloudflare Access. Lists applications with status, last human open and CV downloads. Funnel: published → human open → CV download → interview → offer. Status is editable: `draft | applied | interview | rejected | offer | no_reply`.
@@ -351,6 +355,16 @@ Behind Cloudflare Access. Lists applications with status, last human open and CV
 ### Notifications
 
 One email to Janrau per application on the first `human` event and on the first `cv_download` (`lib/notify.ts`). Setting `notified_human_at` / `notified_cv_at` claims the email before sending, so racing beacons send one; a failed send clears the claim. Sent through the Worker's `send_email` binding `NOTIFY`, from `notify@janrau.dev`; without a paid sending plan, Cloudflare delivers only to the account's verified Email Routing destinations. The destination is the `NOTIFY_TO` Worker secret, never in the repo. `pnpm job notify-test` checks the setup.
+
+**Visit digests** (`lib/digest.ts`, cron every 10 minutes): one email per visit with a `human` event, sent once nothing has happened for 10 minutes (visits older than 2 days are skipped, so a deploy never sends a backlog). It says how long they read, what they did (fit table, case studies by title, elevator terms by name, CV download), and whether the reader is the first, returning, new (another device or network: probably shared), or unknown (earlier reads predate reader keys). Terms they asked about that are `adjacent` or `not-yet` in the glossary become prep notes with the closest terms I have. `digests(visit)` is claimed before sending.
+
+**Reminder emails** (`lib/reminder-mail.ts`, cron 06:00 UTC): the dashboard's Next steps, in one email, each once per basis (publishing, or the last follow-up), recorded in `reminder_emails`.
+
+**Comments** (`/c`, `lib/comments.ts`): a form on every tailored page ("06 — questions"): a message (≤ 2,000 characters) and an optional contact. Stored in `comments`, and emailed at once with the contact as Reply-To when it is an email address (sent again without Reply-To if Cloudflare refuses it). At most 20 per link per day; a hidden honeypot field drops bots (told "sent"); staged and withdrawn links take none; preview shows the form with sending off. Without JavaScript the form posts and the page shows the result.
+
+`POST /admin/api/sweep {job: "digests" | "reminders", dry?: true}` runs either job now; a dry run claims and sends nothing and returns the emails.
+
+Real-time chat was considered and rejected: presence and live chat pressure a recruiter and promise availability; an instant email and a fast reply give the same speed without either.
 
 ### General traffic
 
@@ -431,7 +445,10 @@ applications(slug PK, company, role, source_url, post_hash UNIQUE,
              notified_human_at, notified_cv_at,                -- §8 Notifications (0003)
              followed_up_at)                                   -- §8 Next steps (0004)
 variants(slug PK → applications, variant_json, cv_version)   -- cv.yaml git hash at publish
-events(...)                                                  -- §8; type 'elevator' added (0005)
+events(..., visit, detail, reader)                           -- §8; 'elevator' (0005); 'visit_end', visit/detail/reader (0006)
+digests(visit PK, slug, sent_at)                             -- §8 Visit digests (0006)
+reminder_emails(slug, kind, basis, sent_at)                  -- §8 Reminder emails (0006)
+comments(id, slug, ts, message, contact)                     -- §8 Comments (0006)
 elevator_terms(day, term, asks)                              -- §7 Elevator mode (0005); term or q:<question id>
 ```
 

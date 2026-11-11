@@ -36,7 +36,6 @@ let failed = false;
 const spans = new Map<string, Span>();
 const fit = [...document.querySelectorAll<HTMLElement>("[data-evidence]")].flatMap((e) => e.dataset.evidence ?? []);
 const slug = document.getElementById("tailored")?.dataset.slug;
-let reported = false;
 
 // ———— the trace: every step as a timed span ————
 
@@ -256,9 +255,10 @@ function show(q: string, plan: Plan) {
       ...(plan.questionId ? { question: plan.questionId } : {}),
     }),
   );
-  if (slug && !reported) {
-    reported = true;
-    navigator.sendBeacon?.("/e", JSON.stringify({ slug, type: "elevator" }));
+  // On a tailored link, each question is recorded against the visit, with the same term ids.
+  if (slug) {
+    const visit = document.getElementById("tailored")?.dataset.visit;
+    navigator.sendBeacon?.("/e", JSON.stringify({ slug, visit, type: "elevator", terms: plan.termIds.slice(0, 3) }));
   }
   void q;
 }

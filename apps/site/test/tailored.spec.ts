@@ -88,3 +88,23 @@ test.describe("when the database fails", () => {
     expect((await lookup(corrupt, "acme-events-t3st1")).kind).toBe("unavailable");
   });
 });
+
+test("a reader can ask a question in place, and is told plainly that it arrived", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto(PAGE);
+  const form = page.locator("form.comment");
+  await form.getByLabel("Message").fill("How big is the team you'd put me in?");
+  await form.getByLabel(/Your email/).fill("recruiter@acme.example");
+  await form.getByRole("button", { name: "Send" }).click();
+  await expect(form.getByRole("status")).toHaveText("Sent. Thank you: it went straight to my inbox.");
+  await expect(form.getByLabel("Message")).toHaveValue("");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+  await form.screenshot({ path: "test-results/comment-form-phone.png" });
+});
+
+test("in preview the form is shown but sending is off", async ({ page }) => {
+  await page.goto(`${PAGE}?preview`);
+  const form = page.locator("form.comment");
+  await expect(form.getByRole("button", { name: "Send" })).toBeDisabled();
+  await expect(form.getByRole("status")).toHaveText("Preview: sending is off here.");
+});

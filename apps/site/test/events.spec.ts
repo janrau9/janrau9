@@ -254,3 +254,91 @@ test.describe("Access token verification", () => {
     expect(await verifyAccess(await sign(good), undefined, fetchKeys, now)).toBeNull();
   });
 });
+
+test.describe("engagement on a tailored link", () => {
+  test.beforeEach(() => {
+    sql(`DELETE FROM events WHERE slug = '${SLUG}'`);
+    sql(`DELETE FROM comments WHERE slug = '${SLUG}'`);
+  });
+
+  const VISIT = "0f8fad5b-d9cb-469f-a165-70867728950e";
+  const beacon = (request: import("@playwright/test").APIRequestContext, body: object) =>
+    request.post("/e", {
+      data: JSON.stringify({ slug: SLUG, visit: VISIT, ...body }),
+      headers: { "content-type": "text/plain", origin: ORIGIN, "user-agent": PHONE_UA },
+    });
+
+  test("a visit's events carry its id, what each was about, and only a coarse reader", async ({ request }) => {
+    await beacon(request, { type: "human" });
+    await beacon(request, { type: "case_click", case: "kiln" });
+    await beacon(request, { type: "elevator", terms: ["kubernetes", "made-up"] });
+    await beacon(request, { type: "visit_end", seconds: 95 });
+    // Junk details are dropped; a visit_end without sane seconds isn't stored at all.
+    await beacon(request, { type: "case_click", case: "../admin" });
+    await beacon(request, { type: "visit_end", seconds: 999_999 });
+    const rows = () =>
+      sql<{ type: string; visit: string | null; detail: string | null; reader: string | null }>(
+        `SELECT type, visit, detail, reader FROM events WHERE slug = '${SLUG}' ORDER BY id`,
+      );
+    await expect.poll(() => rows().length).toBe(5);
+    const r = rows();
+    expect(r.every((e) => e.visit === VISIT)).toBe(true);
+    expect(r.map((e) => [e.type, e.detail])).toEqual([
+      ["human", null],
+      ["case_click", "kiln"],
+      ["elevator", "kubernetes"],
+      ["visit_end", "95"],
+      ["case_click", null],
+    ]);
+    expect(r[0]?.reader).toMatch(/^phone:[0-9a-f]{8}$/);
+    expect(r.slice(1).every((e) => e.reader === null)).toBe(true);
+  });
+
+  const comment = (request: import("@playwright/test").APIRequestContext, body: object) =>
+    request.post("/c", { data: { slug: SLUG, ...body }, headers: { origin: ORIGIN } });
+  const comments = () =>
+    sql<{ message: string; contact: string | null }>(`SELECT message, contact FROM comments WHERE slug = '${SLUG}'`);
+
+  test("a comment is stored and acknowledged; empty, honeypot and over-limit ones are not stored", async ({
+    request,
+  }) => {
+    const ok = await comment(request, { message: "How big is the team?", contact: "r@acme.example" });
+    expect(await ok.json()).toEqual({ ok: true, message: "Sent. Thank you: it went straight to my inbox." });
+    expect(comments()).toEqual([{ message: "How big is the team?", contact: "r@acme.example" }]);
+
+    const empty = await comment(request, { message: "  " });
+    expect(empty.status()).toBe(400);
+    expect((await empty.json()).message).toBe("Write a message first.");
+    // The honeypot is told it worked, so a bot learns nothing, and nothing is stored.
+    expect((await comment(request, { message: "buy now", website: "http://spam" })).status()).toBe(200);
+    expect(comments()).toHaveLength(1);
+
+    // A link takes 20 a day.
+    sql(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 19)
+       INSERT INTO comments (slug, ts, message) SELECT '${SLUG}', ${Math.floor(Date.now() / 1000)}, 'x' FROM n`,
+    );
+    const over = await comment(request, { message: "one more" });
+    expect(over.status()).toBe(429);
+    expect(comments()).toHaveLength(20);
+  });
+
+  test("without JavaScript, the form posts and comes back to the page with the result", async ({ request }) => {
+    const res = await request.post("/c", {
+      form: { slug: SLUG, message: "Posted without JavaScript", contact: "" },
+      headers: { origin: ORIGIN },
+      maxRedirects: 0,
+    });
+    expect(res.status()).toBe(303);
+    expect(res.headers().location).toMatch(new RegExp(`/for/${SLUG}\\?comment=sent#comment$`));
+    expect(comments()).toEqual([{ message: "Posted without JavaScript", contact: null }]);
+  });
+
+  test("a staged link takes no comments", async ({ request }) => {
+    const res = await request.post("/c", {
+      data: { slug: "staged-co-st4gd", message: "Hello" },
+      headers: { origin: ORIGIN },
+    });
+    expect(res.status()).toBe(429);
+  });
+});

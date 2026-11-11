@@ -10,7 +10,7 @@ export function isOwnerVisit(request: Request): boolean {
 }
 
 /** Events the browser may report. 'open' is recorded by the server only. */
-export const CLIENT_EVENTS = ["human", "fit_viewed", "cv_download", "case_click", "elevator"] as const;
+export const CLIENT_EVENTS = ["human", "fit_viewed", "cv_download", "case_click", "elevator", "visit_end"] as const;
 export type ClientEvent = (typeof CLIENT_EVENTS)[number];
 export type EventType = "open" | ClientEvent;
 
@@ -59,6 +59,16 @@ export function classifyOpen(v: Visit): Verdict {
   return { scanner: false };
 }
 
+/** What ties an event to one visit, and what it was about. All optional. */
+export interface EventContext {
+  /** Random per page load, held only in that page's memory. */
+  visit?: string | null;
+  /** A case study slug, elevator term ids, or seconds read. */
+  detail?: string | null;
+  /** On 'human': device class and a hash of the network. */
+  reader?: string | null;
+}
+
 /** Record an event, but only for a link that exists, so junk slugs can't fill the table. */
 export async function recordEvent(
   db: Db,
@@ -66,13 +76,51 @@ export async function recordEvent(
   type: EventType,
   verdict: Verdict = { scanner: false },
   now = Math.floor(Date.now() / 1000),
+  context: EventContext = {},
 ): Promise<void> {
   await db
     .prepare(
-      "INSERT INTO events (slug, type, ts, scanner, reason) SELECT ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM applications WHERE slug = ?)",
+      "INSERT INTO events (slug, type, ts, scanner, reason, visit, detail, reader) SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM applications WHERE slug = ?)",
     )
-    .bind(slug, type, now, verdict.scanner ? 1 : 0, verdict.scanner ? verdict.reason : null, slug)
+    .bind(
+      slug,
+      type,
+      now,
+      verdict.scanner ? 1 : 0,
+      verdict.scanner ? verdict.reason : null,
+      context.visit ?? null,
+      context.detail ?? null,
+      context.reader ?? null,
+      slug,
+    )
     .run();
+}
+
+/** A visit id: what the page generates with crypto.randomUUID(). */
+export const VISIT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+/** A case study's path segment, as in /work/<slug>. */
+export const CASE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+/** The longest visit worth recording, in seconds: longer means a forgotten tab. */
+export const MAX_VISIT_SECONDS = 6 * 3600;
+
+/** Phone, tablet or desktop, from the user agent; nothing finer. */
+export function deviceClass(userAgent: string | null): "phone" | "tablet" | "desktop" {
+  const ua = userAgent ?? "";
+  if (/ipad|tablet|kindle|silk/i.test(ua) || (/android/i.test(ua) && !/mobile/i.test(ua))) return "tablet";
+  if (/mobi|iphone|ipod|android/i.test(ua)) return "phone";
+  return "desktop";
+}
+
+/**
+ * A reader, coarsely: the device class and a short hash of the network (the ASN, salted with
+ * the link, so the same network hashes differently on every link). Enough to tell "another
+ * device or network read this" from "the same reader came back"; not enough to say who.
+ */
+export async function readerKey(slug: string, asn: number | undefined, userAgent: string | null): Promise<string> {
+  const bytes = new TextEncoder().encode(`${slug}:${asn ?? "?"}`);
+  const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  const short = [...hash.slice(0, 4)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `${deviceClass(userAgent)}:${short}`;
 }
 
 export const STATUSES = ["draft", "applied", "interview", "rejected", "offer", "no_reply", "withdrawn"] as const;

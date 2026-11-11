@@ -2,7 +2,9 @@ import type { Db } from "./tailored";
 
 /** The part of Cloudflare's send_email binding used here. */
 export interface Mailer {
-  send(message: { to: string; from: string; subject: string; text: string }): Promise<{ messageId: string }>;
+  send(message: { to: string; from: string; subject: string; text: string; replyTo?: string }): Promise<{
+    messageId: string;
+  }>;
 }
 
 export const NOTIFY_FROM = "notify@janrau.dev";

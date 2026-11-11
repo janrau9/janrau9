@@ -3,7 +3,10 @@
   "name": "janrau-dev",
   "account_id": "89e482717ef4fe02bba6bb072e8673fa",
   // The Astro adapter's Worker serves /for/* (tailored pages); everything else is a static asset.
-  "main": "@astrojs/cloudflare/entrypoints/server",
+  // A custom entry adds the scheduled handler (src/worker.ts); requests still go to Astro.
+  "main": "./src/worker.ts",
+  // Visit digests every 10 minutes; follow-up reminders once a day (DAILY in src/worker.ts).
+  "triggers": { "crons": ["*/10 * * * *", "0 6 * * *"] },
   "compatibility_date": "2026-10-06",
   "assets": {
     "directory": "./dist/client",

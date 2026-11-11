@@ -123,3 +123,63 @@ test("a follow-up is recorded by the server and answers the reminder in place", 
   await page.reload();
   await expect(page.locator(".next li", { hasText: "Acme Events" })).toHaveCount(0);
 });
+
+test.describe("scheduled emails, as a dry run", () => {
+  const SLUG = "event-test-ev3nt";
+  const VISIT = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
+
+  test("a finished visit becomes one digest, with what they did and prep for what I lack", async ({ request }) => {
+    // Event Test is moved to interview earlier in this file; a digest only needs a live link.
+    for (const body of [
+      { type: "human" },
+      { type: "fit_viewed" },
+      { type: "case_click", case: "kiln" },
+      { type: "elevator", terms: ["kubernetes"] },
+      { type: "visit_end", seconds: 240 },
+    ])
+      await request.post("/e", {
+        data: JSON.stringify({ slug: SLUG, visit: VISIT, ...body }),
+        headers: { "content-type": "text/plain", origin: "http://localhost:4323" },
+      });
+    const later = Math.floor(Date.now() / 1000) + 11 * 60;
+    await expect
+      .poll(async () => {
+        const res = await request.post("/admin/api/sweep", {
+          data: { job: "digests", dry: true, now: later },
+          headers: { origin: "http://localhost:4323" },
+        });
+        const { emails } = (await res.json()) as { emails: { subject: string; text: string }[] };
+        return emails.find((m) => m.subject.startsWith("Event Test:"))?.text ?? "";
+      })
+      .toContain("Asked elevator mode about Kubernetes.");
+    const res = await request.post("/admin/api/sweep", {
+      data: { job: "digests", dry: true, now: later },
+      headers: { origin: "http://localhost:4323" },
+    });
+    const text = ((await res.json()) as { emails: { subject: string; text: string }[] }).emails.find((m) =>
+      m.subject.startsWith("Event Test:"),
+    )?.text;
+    expect(text).toContain("Read for 4 min.");
+    expect(text).toContain("Opened the case study: kiln.");
+    expect(text).toMatch(/- Kubernetes: not in my work yet\. Closest: Docker/);
+  });
+
+  test("a visit still going on is not emailed yet", async ({ request }) => {
+    const res = await request.post("/admin/api/sweep", {
+      data: { job: "digests", dry: true },
+      headers: { origin: "http://localhost:4323" },
+    });
+    const { emails } = (await res.json()) as { emails: { subject: string }[] };
+    expect(emails.filter((m) => m.subject.startsWith("Event Test:"))).toEqual([]);
+  });
+
+  test("the dashboard's reminders come as one email", async ({ request }) => {
+    const res = await request.post("/admin/api/sweep", {
+      data: { job: "reminders", dry: true },
+      headers: { origin: "http://localhost:4323" },
+    });
+    const { emails } = (await res.json()) as { emails: { subject: string; text: string }[] };
+    // Acme Events is "applied", published long ago, with no follow-up: a no-reply reminder.
+    expect(emails[0]?.text).toContain("Acme Events: No reply");
+  });
+});

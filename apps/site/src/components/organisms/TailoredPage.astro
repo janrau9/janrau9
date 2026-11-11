@@ -15,6 +15,8 @@ interface Props {
 }
 
 const { view, slug, pdf, track } = Astro.props;
+// Without JavaScript the form posts to /c and comes back here with the result.
+const commentResult = Astro.url.searchParams.get("comment");
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const month = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
 ---
@@ -141,6 +143,44 @@ const month = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(
     </ul>
   </section>
 
+  <section class="section" id="comment" aria-labelledby="comment-title">
+    <p class="micro" aria-hidden="true">
+      06 — questions
+    </p>
+    <h2 id="comment-title">Questions or comments?</h2>
+    <form class="comment stack-24 measure" method="post" action="/c" data-track={track ? "" : undefined}>
+      <input type="hidden" name="slug" value={slug} />
+      <p class="text-2">Ask anything about my work or this application. It goes straight to my inbox.</p>
+      <label class="stack-8">
+        <span class="small">Message</span>
+        <textarea name="message" rows="5" maxlength="2000" required></textarea>
+      </label>
+      <label class="stack-8">
+        <span class="small">Your email, if you'd like a reply <span class="text-3">(optional)</span></span>
+        <input type="email" name="contact" maxlength="200" autocomplete="email" />
+      </label>
+      {/* A field people never see; scripts that fill every field give themselves away. */}
+      <label class="trap" aria-hidden="true">
+        Website <input type="text" name="website" tabindex="-1" autocomplete="off" />
+      </label>
+      <div class="row">
+        <button type="submit" class="button button-ink" disabled={!track}>Send</button>
+        <p class="small text-2" role="status">
+          {
+            !track
+              ? "Preview: sending is off here."
+              : commentResult === "sent"
+                ? "Sent. Thank you: it went straight to my inbox."
+                : commentResult === "failed"
+                  ? "Your message didn't send. Try again, or email me instead."
+                  : ""
+          }
+        </p>
+      </div>
+      <p class="micro">Your email is used only to reply to you.</p>
+    </form>
+  </section>
+
   <p class="micro measure">
     This page was made for this application by my own pipeline: one source file, validated and rendered per
     job. <a href="/work/this-site">How it works →</a>
@@ -150,17 +190,37 @@ const month = (ym: string) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(
 <script>
   // Beacons: what a person did, never who they are. "human" fires only once the page has
   // been visible for 3 seconds or the visitor scrolls, clicks or presses a key; link
-  // scanners rarely run scripts and never linger.
+  // scanners rarely run scripts and never linger. The visit id groups one page load's
+  // events; it lives in this page's memory only, never in storage or a cookie.
   const page = document.getElementById("tailored");
   const slug = page?.dataset.slug;
   if (slug) {
+    const visit = crypto.randomUUID();
+    if (page) page.dataset.visit = visit;
+    const beacon = (body: Record<string, unknown>) =>
+navigator.sendBeacon("/e", JSON.stringify({ slug, visit, ...body }));
     const sent = new Set<string>();
-    const send = (type: string) => {
-if (sent.has(type)) return;
-sent.add(type);
-navigator.sendBeacon("/e", JSON.stringify({ slug, type }));
+    const send = (type: string, extra: Record<string, unknown> = {}) => {
+const key = `${type}:${JSON.stringify(extra)}`;
+if (sent.has(key)) return;
+sent.add(key);
+beacon({ type, ...extra });
     };
     const human = () => send("human");
+
+    // Time read: visible seconds only, reported each time the page is hidden or left.
+    let visibleSince = document.visibilityState === "visible" ? performance.now() : null;
+    let readMs = 0;
+    const reportRead = () => {
+if (visibleSince !== null) readMs += performance.now() - visibleSince;
+visibleSince = null;
+if (sent.has("human:{}")) beacon({ type: "visit_end", seconds: Math.round(readMs / 1000) });
+    };
+    document.addEventListener("visibilitychange", () => {
+if (document.visibilityState === "hidden") reportRead();
+else visibleSince = performance.now();
+    });
+    window.addEventListener("pagehide", reportRead);
     let timer: ReturnType<typeof setTimeout> | undefined;
     const arm = () => {
 clearTimeout(timer);
@@ -186,6 +246,32 @@ new IntersectionObserver(
   { threshold: Array.from({ length: 21 }, (_, i) => i / 20) },
 ).observe(fit);
     }
+    // The comment form, in place: send, then say plainly whether it arrived.
+    const form = document.querySelector<HTMLFormElement>("form.comment[data-track]");
+    form?.addEventListener("submit", async (e) => {
+e.preventDefault();
+const status = form.querySelector<HTMLElement>("[role=status]");
+const button = form.querySelector<HTMLButtonElement>("button[type=submit]");
+const data = Object.fromEntries(new FormData(form).entries());
+if (button) button.disabled = true;
+if (status) status.textContent = "Sending…";
+let message = "Your message didn't send. Try again, or email me instead.";
+try {
+  const res = await fetch("/c", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ ...data, visit }),
+  });
+  const body = (await res.json()) as { ok: boolean; message: string };
+  message = body.message;
+  if (body.ok) form.querySelector("textarea")?.form?.reset();
+} catch {
+  // The default message says what to do.
+}
+if (status) status.textContent = message;
+if (button) button.disabled = false;
+    });
+
     document.addEventListener("click", (e) => {
 const a = (e.target as Element).closest("a");
 const href = a?.getAttribute("href") ?? "";
@@ -194,13 +280,43 @@ if (href.endsWith("/cv.pdf")) {
   send("cv_download");
 } else if (href.startsWith("/work/")) {
   human();
-  send("case_click");
+  send("case_click", { case: href.slice("/work/".length).split(/[?#/]/)[0] });
 }
     });
   }
 </script>
 
 <style>
+  /* The comment form: Seiza's input recipe (40px tall, radius 8, hairline that comes to ink on focus). */
+  .comment input,
+  .comment textarea {
+    font: inherit;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--ink);
+    background: none;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 8px 16px;
+    width: 100%;
+  }
+  .comment textarea {
+    min-height: 104px;
+    resize: vertical;
+  }
+  .comment input:focus,
+  .comment textarea:focus {
+    border-color: var(--ink);
+    outline: 1px solid var(--ink);
+    outline-offset: 3px;
+  }
+  .comment .trap {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
   .lede {
     font-size: 20px;
     line-height: 28px;

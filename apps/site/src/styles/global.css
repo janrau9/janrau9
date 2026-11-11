@@ -192,6 +192,13 @@ ol {
 .button-ink:hover {
   background: var(--ink-hover);
 }
+/* Unavailable sinks toward the ground (the lightness law), rather than fading. */
+.button-ink:disabled {
+  background: var(--line-strong);
+  border-color: var(--line-strong);
+  color: var(--text-3);
+  cursor: not-allowed;
+}
 .button-outline {
   color: var(--ink);
   background: transparent; /* not the browser's default button grey */
