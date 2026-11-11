@@ -179,7 +179,10 @@ test.describe("scheduled emails, as a dry run", () => {
       headers: { origin: "http://localhost:4323" },
     });
     const { emails } = (await res.json()) as { emails: { subject: string; text: string }[] };
-    // Acme Events is "applied", published long ago, with no follow-up: a no-reply reminder.
-    expect(emails[0]?.text).toContain("Acme Events: No reply");
+    // The seeded links were published at time 0, so whichever is "applied" now (other tests
+    // here change statuses) is long past the no-reply mark: one email lists them all.
+    expect(emails).toHaveLength(1);
+    expect(emails[0]?.text).toMatch(/: No reply \d+ days after publishing\./);
+    expect(emails[0]?.text).toContain("https://janrau.dev/admin/review/");
   });
 });
