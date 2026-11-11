@@ -326,6 +326,12 @@ projects:
       - id: proj.this-site.h4
         text: The same pipeline runs on the laptop and in cloud Claude Code sessions, because its state lives on the site and a scoped token reaches it.
         tags: [tooling, architecture, edge]
+      - id: proj.this-site.h5
+        text: "Built elevator mode: an embedding model runs in the visitor's browser and answers questions by quoting my CV, ranking about 350 passages embedded at build time."
+        tags: [ai, frontend, product]
+      - id: proj.this-site.h6
+        text: Measured retrieval before trusting it; the right evidence came top three 64% of the time, so the model finds and quotes my words but never writes.
+        tags: [ai, quality, correctness]
     decisions:
       - id: proj.this-site.d.state
         chose: Staging applications on the site behind Cloudflare Access, reached with a service token
